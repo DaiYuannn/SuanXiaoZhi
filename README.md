@@ -1,6 +1,17 @@
 # SuanXiaoZhi
 
-算小智：基于类脑大模型的记账系统（前端 Web + 后端 API + 文档与脚本）。
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+算小智金融助手：基于类脑大模型的记账系统（前端 Web + 后端 API + 文档与脚本）。
+
+## 仓库信息（建议）
+
+GitHub 仓库 Settings 页面建议填写：
+
+- **About / Description**：算小智金融助手
+- **Topics**（可选）：`finance` `bookkeeping` `accounting` `ai` `llm` `react` `vite` `express` `prisma` `pm2`
+
+> 说明：本仓库是“前端 + 后端”的一体化项目。GitHub Pages 仅适用于“纯静态前端”，如需启用请参考下方说明。
 
 ## 目录结构
 
@@ -86,3 +97,12 @@ pm2 save
 ```
 
 更多运维细节见 [server/README-deploy.md](server/README-deploy.md)。
+
+## GitHub Pages（可选，仅前端静态演示）
+
+如果你只想用 Pages 做前端静态演示（不包含后端 API）：
+
+1) 仅构建前端：`pnpm install` 后执行 `pnpm build`
+2) 将构建产物 `dist/` 部署到 Pages（可用 GitHub Actions 或手工上传）
+
+注意：如果前端路由使用 History 模式（SPA），Pages 需要额外处理 404 回退，否则刷新子路由会 404。

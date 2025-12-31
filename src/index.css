@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 移动端底部 TabBar 预留空间，避免被遮挡 */
+@media (max-width: 768px) {
+	body { padding-bottom: 3.5rem; }
+}
+
+/* 提升触摸区域可用性 */
+button, a { -webkit-tap-highlight-color: transparent; }

@@ -1,0 +1,71 @@
+
+
+.pageWrapper {
+  background-color: #F9FAFB;
+  min-height: 100vh;
+}
+
+.gradientBg {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+}
+
+.gradientCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.gradientText {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modalBackdrop {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.progressBar {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  transition: width 0.3s ease;
+}
+
+.optionCard {
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.optionCard:hover {
+  border-color: #969FFF;
+  background-color: rgba(150, 159, 255, 0.05);
+}
+
+.optionCard.selected {
+  border-color: #969FFF;
+  background-color: rgba(150, 159, 255, 0.1);
+}
+
+.questionContainer {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.questionHidden {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.fadeIn {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+

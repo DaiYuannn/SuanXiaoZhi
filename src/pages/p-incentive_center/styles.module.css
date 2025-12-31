@@ -1,0 +1,8 @@
+.pageWrapper{min-height:100vh;background:linear-gradient(180deg,#f9fafb 0,#fff 80%)}
+.gradientBg{background:linear-gradient(135deg,#6366f1,#8b5cf6)}
+.gradientText{background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sidebarItem{transition:all .2s}
+.sidebarItem:hover{background:#f5f7ff;color:#6366f1}
+.sidebarItemActive{background:#eef2ff;color:#6366f1}
+.gradientCard{background:linear-gradient(180deg,#fff,rgba(99,102,241,.06))}
+.shadow-card{box-shadow:0 4px 16px rgba(0,0,0,.06)}

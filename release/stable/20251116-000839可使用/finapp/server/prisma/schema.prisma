@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  amountCent  Int
+  category    String
+  note        String?
+  ts          DateTime
+  isAnomaly   Boolean  @default(false)
+  source      String   @default("manual")
+  createdAt   DateTime @default(now())
+}
+
+model Reminder {
+  id        String   @id @default(cuid())
+  type      String
+  status    String   @default("ACTIVE")
+  config    String?
+  updatedAt DateTime @updatedAt
+}
+
+model Persona {
+  id                 String  @id @default("default")
+  ageBand            String?
+  incomeBand         String?
+  savingRate         Float?
+  riskProfile        String? @default("稳健")
+  spendTopCategories String?
+}

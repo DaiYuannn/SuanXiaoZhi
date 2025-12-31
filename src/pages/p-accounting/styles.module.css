@@ -1,0 +1,60 @@
+
+
+.pageWrapper {
+  background-color: #F9FAFB;
+  min-height: 100vh;
+}
+
+.gradientBg {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+}
+
+.gradientCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.gradientText {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebarItem:hover {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.sidebarItem.active {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.transactionRow:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.tableChecked {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.tableChecked .text-text-secondary {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sortIcon {
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.sortAsc .sortIcon {
+  opacity: 1;
+  transform: rotate(0deg);
+}
+
+.sortDesc .sortIcon {
+  opacity: 1;
+  transform: rotate(180deg);
+}
+

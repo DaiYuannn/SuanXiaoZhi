@@ -1,0 +1,51 @@
+{
+  "name": "test-vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "dev:server": "pnpm -C server dev",
+    "dev:all": "concurrently -n server,web -c green,blue \"pnpm -C server dev\" \"pnpm dev\"",
+    "build:all": "pnpm -C server build && pnpm build",
+    "serve:prod": "pnpm -C server start",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "smoke": "tsx scripts/smoke/run.ts"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.4.0",
+    "chart.js": "^4.5.0",
+    "dompurify": "^3.1.7",
+    "marked": "^12.0.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@types/node": "^20.17.6",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.4.5",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "form-data": "^4.0.4",
+    "globals": "^16.3.0",
+    "node-fetch": "^3.3.2",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.1",
+    "tesseract.js": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.35.1",
+    "vite": "^7.0.3",
+    "zod": "^3.23.8"
+  }
+}

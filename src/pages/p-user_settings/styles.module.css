@@ -1,0 +1,67 @@
+
+
+.pageWrapper {
+  background-color: #F9FAFB;
+  min-height: 100vh;
+}
+
+.gradientBg {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+}
+
+.gradientCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.gradientText {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebarItem:hover {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.sidebarItemActive {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.settingsTab:hover {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.settingsTabActive {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.formInputFocus:focus {
+  outline: none;
+  border-color: #969FFF;
+  box-shadow: 0 0 0 2px rgba(150, 159, 255, 0.2);
+}
+
+.settingSection {
+  display: none;
+}
+
+.settingSectionActive {
+  display: block;
+}
+
+.accountCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.accountCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
+}
+

@@ -1,0 +1,52 @@
+
+
+.pageWrapper {
+  background-color: #F9FAFB;
+  min-height: 100vh;
+}
+
+.gradientBg {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+}
+
+.gradientCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.gradientText {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebarItem:hover {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.sidebarItem.active {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.chartContainer {
+  position: relative;
+  height: 300px;
+}
+
+.statCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
+}
+
+.transactionRow:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+

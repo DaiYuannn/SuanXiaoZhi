@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 产品详情</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'drawer': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .drawer-overlay {
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .drawer-enter {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .drawer-enter-active {
+            transform: translateX(0);
+        }
+        
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .risk-low {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10B981;
+        }
+        
+        .risk-medium {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: #F59E0B;
+        }
+        
+        .risk-high {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .calculator-input:focus {
+            outline: none;
+            border-color: #969FFF;
+            box-shadow: 0 0 0 3px rgba(150, 159, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 抽屉遮罩层 -->
+    <div id="drawer-overlay" class="fixed inset-0 drawer-overlay z-50 hidden"></div>
+    
+    <!-- 产品详情抽屉 -->
+    <div id="product-detail-drawer" class="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-drawer z-50 drawer-enter overflow-y-auto">
+        <!-- 抽屉头部 -->
+        <div id="drawer-header" class="gradient-bg text-white p-6 sticky top-0 z-10">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold">产品详情</h2>
+                <button id="close-drawer-btn" class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center hover:bg-opacity-30 transition-all">
+                    <i class="fas fa-times text-white"></i>
+                </button>
+            </div>
+            <div class="space-y-2">
+                <h3 id="product-name" class="text-2xl font-bold">稳健理财计划</h3>
+                <div class="flex items-center space-x-2">
+                    <span id="product-type" class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">混合型基金</span>
+                    <span id="risk-level" class="risk-badge risk-medium">中等风险</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 抽屉内容区 -->
+        <div id="drawer-content" class="p-6 space-y-6">
+            <!-- 产品基本信息 -->
+            <section id="basic-info" class="space-y-4">
+                <h4 class="text-lg font-semibold text-text-primary border-b border-border-light pb-2">基本信息</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center">
+                        <p class="text-text-secondary text-sm mb-1">预期年化收益率</p>
+                        <p id="expected-return" class="text-2xl font-bold text-success">6.8%</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-text-secondary text-sm mb-1">起购金额</p>
+                        <p id="minimum-amount" class="text-2xl font-bold text-text-primary">¥1,000</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-text-secondary text-sm mb-1">产品期限</p>
+                        <p id="product-term" class="text-2xl font-bold text-text-primary">180天</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-text-secondary text-sm mb-1">成立日期</p>
+                        <p id="establishment-date" class="text-lg font-semibold text-text-primary">2024-01-01</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 产品特色 -->
+            <section id="product-features" class="space-y-4">
+                <h4 class="text-lg font-semibold text-text-primary border-b border-border-light pb-2">产品特色</h4>
+                <div class="space-y-3">
+                    <div class="feature-card rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-success bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-shield-alt text-success"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-medium text-text-primary">风险可控</h5>
+                                <p class="text-sm text-text-secondary">专业团队管理，风险分散投资</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-info bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-line text-info"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-medium text-text-primary">稳定收益</h5>
+                                <p class="text-sm text-text-secondary">历史业绩表现优异，收益稳定</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-warning bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-warning"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-medium text-text-primary">灵活期限</h5>
+                                <p class="text-sm text-text-secondary">多种期限选择，满足不同需求</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 投资策略 -->
+            <section id="investment-strategy" class="space-y-4">
+                <h4 class="text-lg font-semibold text-text-primary border-b border-border-light pb-2">投资策略</h4>
+                <div class="space-y-3">
+                    <div class="bg-white rounded-lg p-4 border border-border-light">
+                        <h5 class="font-medium text-text-primary mb-2">资产配置</h5>
+                        <ul class="text-sm text-text-secondary space-y-1">
+                            <li>• 债券类资产：60-80%</li>
+                            <li>• 股票类资产：10-30%</li>
+                            <li>• 货币市场工具：5-15%</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg p-4 border border-border-light">
+                        <h5 class="font-medium text-text-primary mb-2">投资理念</h5>
+                        <p class="text-sm text-text-secondary">
+                            采用价值投资理念，通过深入的基本面分析，精选优质债券和股票，追求长期稳定的投资回报。
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 风险提示 -->
+            <section id="risk-warning" class="space-y-4">
+                <h4 class="text-lg font-semibold text-text-primary border-b border-border-light pb-2">风险提示</h4>
+                <div class="bg-danger bg-opacity-5 rounded-lg p-4 border border-danger border-opacity-20">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-exclamation-triangle text-danger mt-1"></i>
+                        <div class="flex-1">
+                            <h5 class="font-medium text-danger mb-2">投资有风险，入市需谨慎</h5>
+                            <ul class="text-sm text-text-secondary space-y-1">
+                                <li>• 本产品属于中等风险等级，不保证本金不受损失</li>
+                                <li>• 预期收益率仅供参考，实际收益可能存在波动</li>
+                                <li>• 投资者应根据自身风险承受能力谨慎投资</li>
+                                <li>• 详细风险说明请查看产品说明书</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 收益测算 -->
+            <section id="return-calculator" class="space-y-4">
+                <h4 class="text-lg font-semibold text-text-primary border-b border-border-light pb-2">收益测算</h4>
+                <div class="bg-white rounded-lg p-4 border border-border-light">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="investment-amount" class="block text-sm font-medium text-text-primary mb-2">投资金额</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary">¥</span>
+                                <input type="number" id="investment-amount" 
+                                       class="w-full pl-8 pr-4 py-3 border border-border-light rounded-lg calculator-input" 
+                                       placeholder="请输入投资金额" value="10000">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="text-center p-3 bg-bg-light rounded-lg">
+                                <p class="text-sm text-text-secondary mb-1">预期收益</p>
+                                <p id="expected-earnings" class="text-xl font-bold text-success">¥335.62</p>
+                            </div>
+                            <div class="text-center p-3 bg-bg-light rounded-lg">
+                                <p class="text-sm text-text-secondary mb-1">到期本息</p>
+                                <p id="total-amount" class="text-xl font-bold text-text-primary">¥10,335.62</p>
+                            </div>
+                        </div>
+                        
+                        <p class="text-xs text-text-secondary text-center">
+                            注：以上测算基于预期年化收益率6.8%，投资期限180天，仅供参考
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 操作按钮区 -->
+            <section id="action-buttons" class="space-y-4 pt-6 border-t border-border-light">
+                <div class="space-y-3">
+                    <button id="purchase-btn" class="w-full gradient-bg text-white py-4 rounded-lg font-medium text-lg hover:shadow-lg transition-all">
+                        <i class="fas fa-shopping-cart mr-2"></i>
+                        立即申购
+                    </button>
+                    <button id="redemption-btn" class="w-full bg-white text-primary border-2 border-primary py-4 rounded-lg font-medium text-lg hover:bg-primary hover:text-white transition-all" disabled>
+                        <i class="fas fa-arrow-down mr-2"></i>
+                        赎回 (暂未持有)
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 解析URL参数的辅助函数
+            function getUrlParams() {
+                const params = {};
+                const queryString = window.location.search.substring(1);
+                const urlParams = new URLSearchParams(queryString);
+                
+                for(const [key, value] of urlParams.entries()) {
+                    params[key] = value;
+                }
+                return params;
+            }
+            
+            // 模拟产品数据
+            const productData = {
+                'prod1': {
+                    name: '稳健理财计划',
+                    type: '混合型基金',
+                    riskLevel: '中等风险',
+                    riskClass: 'risk-medium',
+                    expectedReturn: '6.8%',
+                    minimumAmount: '¥1,000',
+                    term: '180天',
+                    establishmentDate: '2024-01-01',
+                    hasHolding: false
+                },
+                'prod2': {
+                    name: '高收益债券基金',
+                    type: '债券型基金',
+                    riskLevel: '中高风险',
+                    riskClass: 'risk-high',
+                    expectedReturn: '8.5%',
+                    minimumAmount: '¥5,000',
+                    term: '365天',
+                    establishmentDate: '2023-12-15',
+                    hasHolding: true
+                },
+                'prod3': {
+                    name: '货币宝',
+                    type: '货币市场基金',
+                    riskLevel: '低风险',
+                    riskClass: 'risk-low',
+                    expectedReturn: '3.2%',
+                    minimumAmount: '¥100',
+                    term: '灵活申赎',
+                    establishmentDate: '2023-11-20',
+                    hasHolding: false
+                }
+            };
+            
+            // 获取URL参数
+            const params = getUrlParams();
+            const productId = params.productId || 'prod1';
+            
+            // 加载产品数据
+            function loadProductData(productId) {
+                const product = productData[productId];
+                if (!product) {
+                    console.error('产品未找到');
+                    return;
+                }
+                
+                // 更新产品基本信息
+                document.querySelector('#product-name').textContent = product.name;
+                document.querySelector('#product-type').textContent = product.type;
+                document.querySelector('#risk-level').textContent = product.riskLevel;
+                document.querySelector('#risk-level').className = `risk-badge ${product.riskClass}`;
+                document.querySelector('#expected-return').textContent = product.expectedReturn;
+                document.querySelector('#minimum-amount').textContent = product.minimumAmount;
+                document.querySelector('#product-term').textContent = product.term;
+                document.querySelector('#establishment-date').textContent = product.establishmentDate;
+                
+                // 更新赎回按钮状态
+                const redemptionBtn = document.querySelector('#redemption-btn');
+                if (product.hasHolding) {
+                    redemptionBtn.disabled = false;
+                    redemptionBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    redemptionBtn.disabled = true;
+                    redemptionBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+                
+                // 重新计算收益
+                calculateReturn();
+            }
+            
+            // 收益测算功能
+            function calculateReturn() {
+                const investmentAmount = parseFloat(document.querySelector('#investment-amount').value) || 0;
+                const expectedReturn = parseFloat(document.querySelector('#expected-return').textContent) / 100;
+                const term = document.querySelector('#product-term').textContent.includes('天') 
+                    ? parseInt(document.querySelector('#product-term').textContent)
+                    : 365; // 灵活申赎按一年计算
+                
+                if (investmentAmount > 0 && expectedReturn > 0) {
+                    const earnings = investmentAmount * expectedReturn * (term / 365);
+                    const total = investmentAmount + earnings;
+                    
+                    document.querySelector('#expected-earnings').textContent = `¥${earnings.toFixed(2)}`;
+                    document.querySelector('#total-amount').textContent = `¥${total.toFixed(2)}`;
+                } else {
+                    document.querySelector('#expected-earnings').textContent = '¥0.00';
+                    document.querySelector('#total-amount').textContent = '¥0.00';
+                }
+            }
+            
+            // 初始化产品数据
+            loadProductData(productId);
+            
+            // 投资金额输入事件
+            document.querySelector('#investment-amount').addEventListener('input', calculateReturn);
+            
+            // 关闭抽屉
+            function closeDrawer() {
+                const drawer = document.querySelector('#product-detail-drawer');
+                const overlay = document.querySelector('#drawer-overlay');
+                
+                drawer.classList.remove('drawer-enter-active');
+                drawer.classList.add('drawer-enter');
+                
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    // 返回到理财产品页面
+                    window.location.href = 'P-FINANCIAL_PRODUCTS.html';
+                }, 300);
+            }
+            
+            // 关闭按钮事件
+            document.querySelector('#close-drawer-btn').addEventListener('click', closeDrawer);
+            
+            // 点击遮罩层关闭抽屉
+            document.querySelector('#drawer-overlay').addEventListener('click', closeDrawer);
+            
+            // ESC键关闭抽屉
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeDrawer();
+                }
+            });
+            
+            // 申购按钮事件
+            document.querySelector('#purchase-btn').addEventListener('click', function() {
+                console.log('申购产品:', productId);
+                // 在实际应用中，这里会跳转到申购确认页面
+                alert('跳转到申购确认页面');
+            });
+            
+            // 赎回按钮事件
+            document.querySelector('#redemption-btn').addEventListener('click', function() {
+                if (!this.disabled) {
+                    console.log('赎回产品:', productId);
+                    // 在实际应用中，这里会跳转到赎回确认页面
+                    alert('跳转到赎回确认页面');
+                }
+            });
+            
+            // 抽屉进入动画
+            setTimeout(() => {
+                const drawer = document.querySelector('#product-detail-drawer');
+                drawer.classList.remove('drawer-enter');
+                drawer.classList.add('drawer-enter-active');
+            }, 100);
+            
+            // 显示遮罩层
+            document.querySelector('#drawer-overlay').classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 风险测评</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'modal': '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .option-card {
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .option-card:hover {
+            border-color: #969FFF;
+            background-color: rgba(150, 159, 255, 0.05);
+        }
+        
+        .option-card.selected {
+            border-color: #969FFF;
+            background-color: rgba(150, 159, 255, 0.1);
+        }
+        
+        .question-container {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .question-hidden {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 模态弹窗背景 -->
+    <div id="modal-backdrop" class="fixed inset-0 modal-backdrop flex items-center justify-center z-50 p-4">
+        <!-- 风险测评弹窗 -->
+        <div id="risk-assessment-modal" class="gradient-card rounded-2xl shadow-modal w-full max-w-2xl max-h-[90vh] overflow-y-auto fade-in">
+            <!-- 弹窗头部 -->
+            <div id="modal-header" class="flex items-center justify-between p-6 border-b border-border-light">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-white text-lg"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-text-primary">风险测评</h2>
+                </div>
+                <button id="close-modal-btn" class="p-2 text-text-secondary hover:text-text-primary hover:bg-gray-100 rounded-lg transition-all">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+
+            <!-- 弹窗内容区 -->
+            <div id="modal-content" class="p-6">
+                <!-- 进度条 -->
+                <div id="progress-section" class="mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-text-secondary">测评进度</span>
+                        <span id="progress-text" class="text-sm font-medium text-primary">1/10</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="progress-bar h-2 rounded-full" style="width: 10%"></div>
+                    </div>
+                </div>
+
+                <!-- 测评问卷 -->
+                <form id="risk-assessment-form" class="space-y-6">
+                    <!-- 问题1 -->
+                    <div id="question-1" class="question-container">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">1. 您的年龄范围是？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="age" value="18-25" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">18-25岁</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="age" value="26-35" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">26-35岁</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="age" value="36-45" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">36-45岁</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="age" value="46-55" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">46-55岁</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="age" value="56+" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">56岁以上</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题2 -->
+                    <div id="question-2" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">2. 您的投资经验如何？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="experience" value="none" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">无投资经验</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="experience" value="beginner" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">1年以内投资经验</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="experience" value="intermediate" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">1-3年投资经验</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="experience" value="advanced" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">3-5年投资经验</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="experience" value="expert" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">5年以上投资经验</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题3 -->
+                    <div id="question-3" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">3. 您的月收入水平是？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="income" value="5k-below" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">5000元以下</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="income" value="5k-10k" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">5000-10000元</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="income" value="10k-20k" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">10000-20000元</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="income" value="20k-50k" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">20000-50000元</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="income" value="50k-above" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">50000元以上</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题4 -->
+                    <div id="question-4" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">4. 您的投资目标是什么？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="goal" value="preserve" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">保值增值，稳健收益</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="goal" value="growth" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">资产增值，追求较高收益</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="goal" value="wealth" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">财富快速增长，追求高收益</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="goal" value="speculate" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">短期投机，追求最大收益</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题5 -->
+                    <div id="question-5" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">5. 您能接受的最大亏损是多少？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="loss" value="0" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">不能承受任何亏损</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="loss" value="5%" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">5%以内的亏损</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="loss" value="10%" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">10%以内的亏损</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="loss" value="20%" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">20%以内的亏损</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="loss" value="30%+" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">30%以上的亏损也能接受</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题6 -->
+                    <div id="question-6" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">6. 您的投资期限是多久？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="timeframe" value="short" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">3个月以内</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="timeframe" value="medium-short" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">3-12个月</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="timeframe" value="medium" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">1-3年</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="timeframe" value="medium-long" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">3-5年</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="timeframe" value="long" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">5年以上</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题7 -->
+                    <div id="question-7" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">7. 您的投资知识水平如何？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="knowledge" value="basic" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">基础了解</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="knowledge" value="intermediate" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">一般了解</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="knowledge" value="advanced" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">比较了解</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="knowledge" value="expert" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">非常了解</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题8 -->
+                    <div id="question-8" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">8. 您的家庭负担情况如何？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="burden" value="heavy" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">家庭负担较重</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="burden" value="medium" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">家庭负担一般</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="burden" value="light" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">家庭负担较轻</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="burden" value="none" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">无家庭负担</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题9 -->
+                    <div id="question-9" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">9. 您的投资金额占总资产的比例？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="proportion" value="10%below" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">10%以下</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="proportion" value="10-30%" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">10-30%</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="proportion" value="30-50%" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">30-50%</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="proportion" value="50-70%" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">50-70%</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="proportion" value="70%above" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">70%以上</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 问题10 -->
+                    <div id="question-10" class="question-container question-hidden">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">10. 您更倾向于哪种投资风格？</h3>
+                        <div class="space-y-3">
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="style" value="conservative" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">保守型：追求稳定，厌恶风险</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="style" value="stable" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">稳健型：平衡风险与收益</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="style" value="growth" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">成长型：适度承担风险获取收益</span>
+                                </div>
+                            </label>
+                            <label class="option-card block p-4 rounded-lg cursor-pointer">
+                                <input type="radio" name="style" value="aggressive" class="hidden">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-5 h-5 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                        <div class="w-3 h-3 bg-primary rounded-full hidden radio-dot"></div>
+                                    </div>
+                                    <span class="text-text-primary">积极型：愿意承担高风险追求高收益</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- 操作按钮区 -->
+                <div id="action-buttons" class="flex items-center justify-between mt-8 pt-6 border-t border-border-light">
+                    <button id="prev-btn" class="px-6 py-2 text-text-secondary border border-border-light rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-chevron-left mr-2"></i>
+                        上一题
+                    </button>
+                    <button id="next-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                        下一题
+                        <i class="fas fa-chevron-right ml-2"></i>
+                    </button>
+                    <button id="submit-btn" class="px-6 py-2 gradient-bg text-white rounded-lg hover:shadow-lg transition-all hidden">
+                        <i class="fas fa-check mr-2"></i>
+                        提交测评
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentQuestion = 1;
+            const totalQuestions = 10;
+            const answers = {};
+
+            // 初始化进度条
+            function updateProgress() {
+                const progress = (currentQuestion / totalQuestions) * 100;
+                document.querySelector('#progress-bar').style.width = progress + '%';
+                document.querySelector('#progress-text').textContent = `${currentQuestion}/${totalQuestions}`;
+            }
+
+            // 显示指定问题
+            function showQuestion(questionNumber) {
+                // 隐藏所有问题
+                for (let i = 1; i <= totalQuestions; i++) {
+                    const question = document.querySelector(`#question-${i}`);
+                    if (question) {
+                        question.classList.add('question-hidden');
+                    }
+                }
+
+                // 显示当前问题
+                const currentQuestionElement = document.querySelector(`#question-${questionNumber}`);
+                if (currentQuestionElement) {
+                    currentQuestionElement.classList.remove('question-hidden');
+                    currentQuestionElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+
+                // 更新按钮状态
+                updateButtons();
+                updateProgress();
+            }
+
+            // 更新按钮状态
+            function updateButtons() {
+                const prevBtn = document.querySelector('#prev-btn');
+                const nextBtn = document.querySelector('#next-btn');
+                const submitBtn = document.querySelector('#submit-btn');
+
+                // 上一题按钮
+                prevBtn.disabled = currentQuestion === 1;
+                if (currentQuestion === 1) {
+                    prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                // 下一题/提交按钮
+                if (currentQuestion === totalQuestions) {
+                    nextBtn.classList.add('hidden');
+                    submitBtn.classList.remove('hidden');
+                } else {
+                    nextBtn.classList.remove('hidden');
+                    submitBtn.classList.add('hidden');
+                }
+
+                // 检查当前问题是否已回答
+                const currentQuestionName = getQuestionName(currentQuestion);
+                const hasAnswer = answers[currentQuestionName] !== undefined;
+                
+                if (currentQuestion < totalQuestions) {
+                    nextBtn.disabled = !hasAnswer;
+                    if (!hasAnswer) {
+                        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                }
+            }
+
+            // 获取问题名称
+            function getQuestionName(questionNumber) {
+                const questionNames = {
+                    1: 'age',
+                    2: 'experience',
+                    3: 'income',
+                    4: 'goal',
+                    5: 'loss',
+                    6: 'timeframe',
+                    7: 'knowledge',
+                    8: 'burden',
+                    9: 'proportion',
+                    10: 'style'
+                };
+                return questionNames[questionNumber];
+            }
+
+            // 处理选项选择
+            function handleOptionSelect(questionNumber, value) {
+                const questionName = getQuestionName(questionNumber);
+                answers[questionName] = value;
+
+                // 更新UI状态
+                const currentQuestionElement = document.querySelector(`#question-${questionNumber}`);
+                const options = currentQuestionElement.querySelectorAll('.option-card');
+                
+                options.forEach(option => {
+                    option.classList.remove('selected');
+                    const radioDot = option.querySelector('.radio-dot');
+                    radioDot.classList.add('hidden');
+                });
+
+                const selectedOption = currentQuestionElement.querySelector(`input[value="${value}"]`).closest('.option-card');
+                selectedOption.classList.add('selected');
+                const selectedRadioDot = selectedOption.querySelector('.radio-dot');
+                selectedRadioDot.classList.remove('hidden');
+
+                updateButtons();
+            }
+
+            // 上一题按钮
+            document.querySelector('#prev-btn').addEventListener('click', function() {
+                if (currentQuestion > 1) {
+                    currentQuestion--;
+                    showQuestion(currentQuestion);
+                }
+            });
+
+            // 下一题按钮
+            document.querySelector('#next-btn').addEventListener('click', function() {
+                if (currentQuestion < totalQuestions) {
+                    currentQuestion++;
+                    showQuestion(currentQuestion);
+                }
+            });
+
+            // 提交按钮
+            document.querySelector('#submit-btn').addEventListener('click', function() {
+                // 检查是否所有问题都已回答
+                const allAnswered = Object.keys(answers).length === totalQuestions;
+                
+                if (!allAnswered) {
+                    alert('请完成所有问题后再提交');
+                    return;
+                }
+
+                // 计算风险等级
+                const riskLevel = calculateRiskLevel(answers);
+                
+                // 显示结果（在实际应用中会跳转到结果页面）
+                alert(`测评完成！您的风险等级为：${riskLevel}`);
+                
+                // 关闭弹窗
+                closeModal();
+            });
+
+            // 关闭弹窗
+            function closeModal() {
+                document.querySelector('#modal-backdrop').style.display = 'none';
+                // 在实际应用中，这里会返回到调用页面
+                window.history.back();
+            }
+
+            // 关闭按钮
+            document.querySelector('#close-modal-btn').addEventListener('click', closeModal);
+
+            // 点击背景关闭弹窗
+            document.querySelector('#modal-backdrop').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+
+            // 键盘事件
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                } else if (e.key === 'ArrowLeft' && currentQuestion > 1) {
+                    currentQuestion--;
+                    showQuestion(currentQuestion);
+                } else if (e.key === 'ArrowRight' && currentQuestion < totalQuestions) {
+                    const currentQuestionName = getQuestionName(currentQuestion);
+                    if (answers[currentQuestionName] !== undefined) {
+                        currentQuestion++;
+                        showQuestion(currentQuestion);
+                    }
+                }
+            });
+
+            // 为所有选项添加点击事件
+            for (let i = 1; i <= totalQuestions; i++) {
+                const questionElement = document.querySelector(`#question-${i}`);
+                if (questionElement) {
+                    const options = questionElement.querySelectorAll('input[type="radio"]');
+                    options.forEach(option => {
+                        option.addEventListener('change', function() {
+                            handleOptionSelect(i, this.value);
+                        });
+                    });
+                }
+            }
+
+            // 计算风险等级
+            function calculateRiskLevel(answers) {
+                let score = 0;
+
+                // 年龄评分
+                const ageScores = {
+                    '18-25': 5,
+                    '26-35': 4, 
+                    '36-45': 3,
+                    '46-55': 2,
+                    '56+': 1
+                };
+                score += ageScores[answers.age] || 0;
+
+                // 投资经验评分
+                const experienceScores = {
+                    'none': 1,
+                    'beginner': 2,
+                    'intermediate': 3,
+                    'advanced': 4,
+                    'expert': 5
+                };
+                score += experienceScores[answers.experience] || 0;
+
+                // 收入评分
+                const incomeScores = {
+                    '5k-below': 1,
+                    '5k-10k': 2,
+                    '10k-20k': 3,
+                    '20k-50k': 4,
+                    '50k-above': 5
+                };
+                score += incomeScores[answers.income] || 0;
+
+                // 投资目标评分
+                const goalScores = {
+                    'preserve': 1,
+                    'growth': 3,
+                    'wealth': 4,
+                    'speculate': 5
+                };
+                score += goalScores[answers.goal] || 0;
+
+                // 亏损承受能力评分
+                const lossScores = {
+                    '0': 1,
+                    '5%': 2,
+                    '10%': 3,
+                    '20%': 4,
+                    '30%+': 5
+                };
+                score += lossScores[answers.loss] || 0;
+
+                // 投资期限评分
+                const timeframeScores = {
+                    'short': 1,
+                    'medium-short': 2,
+                    'medium': 3,
+                    'medium-long': 4,
+                    'long': 5
+                };
+                score += timeframeScores[answers.timeframe] || 0;
+
+                // 投资知识评分
+                const knowledgeScores = {
+                    'basic': 1,
+                    'intermediate': 3,
+                    'advanced': 4,
+                    'expert': 5
+                };
+                score += knowledgeScores[answers.knowledge] || 0;
+
+                // 家庭负担评分
+                const burdenScores = {
+                    'heavy': 1,
+                    'medium': 2,
+                    'light': 4,
+                    'none': 5
+                };
+                score += burdenScores[answers.burden] || 0;
+
+                // 投资比例评分
+                const proportionScores = {
+                    '10%below': 1,
+                    '10-30%': 2,
+                    '30-50%': 3,
+                    '50-70%': 4,
+                    '70%above': 5
+                };
+                score += proportionScores[answers.proportion] || 0;
+
+                // 投资风格评分
+                const styleScores = {
+                    'conservative': 1,
+                    'stable': 2,
+                    'growth': 4,
+                    'aggressive': 5
+                };
+                score += styleScores[answers.style] || 0;
+
+                // 确定风险等级
+                if (score <= 15) {
+                    return '保守型';
+                } else if (score <= 25) {
+                    return '稳健型';
+                } else if (score <= 35) {
+                    return '成长型';
+                } else {
+                    return '积极型';
+                }
+            }
+
+            // 初始化显示第一题
+            showQuestion(1);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+
+
+.pageWrapper {
+  background-color: #F9FAFB;
+  min-height: 100vh;
+}
+
+.gradientBg {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+}
+
+.gradientCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.gradientText {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebarItem:hover {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.sidebarItemActive {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  color: white;
+}
+
+.planCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.planCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
+  border-color: #969FFF;
+}
+
+.planCardActive {
+  border-color: #969FFF;
+  box-shadow: 0 4px 12px rgba(150, 159, 255, 0.2);
+}
+
+.progressBar {
+  background: linear-gradient(90deg, #969FFF 0%, #5147FF 100%);
+  transition: width 0.3s ease;
+}
+
+.recommendationCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.recommendationCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(150, 159, 255, 0.1);
+}
+

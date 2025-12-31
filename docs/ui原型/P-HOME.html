@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 首页</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script src="https://unpkg.byted-static.com/chart.js/4.5.0/dist/chart.umd.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sidebar-item:hover {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
+        }
+        
+        .transaction-row:hover {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header id="top-navbar" class="fixed top-0 left-0 right-0 bg-white border-b border-border-light z-50 h-16">
+        <div class="flex items-center justify-between h-full px-6">
+            <!-- Logo和品牌 -->
+            <div id="brand-section" class="flex items-center space-x-3">
+                <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold gradient-text">金智通</h1>
+            </div>
+            
+            <!-- 主导航 -->
+            <nav id="main-nav" class="hidden md:flex items-center space-x-8">
+                <a href="#" id="main-nav-home" class="text-primary font-medium border-b-2 border-primary py-1">首页</a>
+                <a href="#" id="main-nav-accounting" class="text-text-secondary hover:text-primary py-1 transition-colors">记账</a>
+                <a href="#" id="main-nav-analysis" class="text-text-secondary hover:text-primary py-1 transition-colors">分析</a>
+                <a href="#" id="main-nav-planning" class="text-text-secondary hover:text-primary py-1 transition-colors">规划</a>
+                <a href="#" id="main-nav-products" class="text-text-secondary hover:text-primary py-1 transition-colors">产品</a>
+                <a href="#" id="main-nav-service" class="text-text-secondary hover:text-primary py-1 transition-colors">客服</a>
+            </nav>
+            
+            <!-- 用户操作区 -->
+            <div id="user-actions" class="flex items-center space-x-4">
+                <button id="search-btn" class="p-2 text-text-secondary hover:text-primary transition-colors">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button id="notification-btn" class="p-2 text-text-secondary hover:text-primary transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-danger rounded-full"></span>
+                </button>
+                <div id="user-profile" class="flex items-center space-x-2 cursor-pointer">
+                    <img src="https://s.coze.cn/image/e27yF8ymuuY/" 
+                         alt="用户头像" class="w-8 h-8 rounded-full" data-category="人物">
+                    <span class="text-text-primary font-medium">张先生</span>
+                    <i class="fas fa-chevron-down text-text-secondary text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主布局容器 -->
+    <div id="main-layout" class="flex pt-16">
+        <!-- 左侧菜单 -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-border-light min-h-screen">
+            <nav id="sidebar-nav" class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="nav-home" class="sidebar-item active flex items-center space-x-3 px-4 py-3 rounded-lg transition-all">
+                            <i class="fas fa-home text-lg"></i>
+                            <span class="font-medium">首页</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-accounting" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-calculator text-lg"></i>
+                            <span class="font-medium">智能记账</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-analysis" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-chart-bar text-lg"></i>
+                            <span class="font-medium">消费分析</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-planning" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-target text-lg"></i>
+                            <span class="font-medium">财务规划</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-products" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-coins text-lg"></i>
+                            <span class="font-medium">理财产品</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-service" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-comments text-lg"></i>
+                            <span class="font-medium">智能客服</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-settings" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-cog text-lg"></i>
+                            <span class="font-medium">个人中心</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main id="main-content" class="flex-1 p-6">
+            <!-- 页面头部 -->
+            <div id="page-header" class="mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-text-primary mb-1">欢迎回来，张先生</h2>
+                        <nav id="breadcrumb" class="text-sm text-text-secondary">
+                            <span>首页</span>
+                        </nav>
+                    </div>
+                    <button id="add-transaction-btn" class="gradient-bg text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all">
+                        <i class="fas fa-plus mr-2"></i>
+                        添加交易
+                    </button>
+                </div>
+            </div>
+
+            <!-- 账户总览区 -->
+            <section id="account-overview" class="mb-8">
+                <h3 class="text-lg font-semibold text-text-primary mb-4">账户总览</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div id="total-assets-card" class="stat-card rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center">
+                                <i class="fas fa-wallet text-white text-xl"></i>
+                            </div>
+                            <span class="text-success text-sm font-medium">+5.2%</span>
+                        </div>
+                        <h4 class="text-2xl font-bold text-text-primary mb-1">¥128,560.00</h4>
+                        <p class="text-text-secondary text-sm">总资产</p>
+                    </div>
+                    
+                    <div id="total-debt-card" class="stat-card rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-warning bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-credit-card text-warning text-xl"></i>
+                            </div>
+                            <span class="text-danger text-sm font-medium">+2.1%</span>
+                        </div>
+                        <h4 class="text-2xl font-bold text-text-primary mb-1">¥25,320.00</h4>
+                        <p class="text-text-secondary text-sm">总负债</p>
+                    </div>
+                    
+                    <div id="net-assets-card" class="stat-card rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-success bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-chart-line text-success text-xl"></i>
+                            </div>
+                            <span class="text-success text-sm font-medium">+8.3%</span>
+                        </div>
+                        <h4 class="text-2xl font-bold text-text-primary mb-1">¥103,240.00</h4>
+                        <p class="text-text-secondary text-sm">净资产</p>
+                    </div>
+                    
+                    <div id="monthly-income-card" class="stat-card rounded-xl p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="w-12 h-12 bg-info bg-opacity-20 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-money-bill-wave text-info text-xl"></i>
+                            </div>
+                            <span class="text-success text-sm font-medium">+3.5%</span>
+                        </div>
+                        <h4 class="text-2xl font-bold text-text-primary mb-1">¥15,680.00</h4>
+                        <p class="text-text-secondary text-sm">本月收入</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 内容区域 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 消费趋势图表区 -->
+                <section id="spending-trends" class="lg:col-span-2">
+                    <div class="gradient-card rounded-xl p-6 shadow-card">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-text-primary">消费趋势</h3>
+                            <div class="flex space-x-2">
+                                <button id="trend-7d" class="px-3 py-1 text-sm bg-primary text-white rounded-lg">近7天</button>
+                                <button id="trend-30d" class="px-3 py-1 text-sm text-text-secondary hover:text-primary rounded-lg">近30天</button>
+                                <button id="trend-3m" class="px-3 py-1 text-sm text-text-secondary hover:text-primary rounded-lg">近3月</button>
+                            </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="spending-chart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 待办事项/提醒区 -->
+                <section id="todo-reminders" class="lg:col-span-1">
+                    <div class="gradient-card rounded-xl p-6 shadow-card">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">待办提醒</h3>
+                        <div class="space-y-4">
+                            <div id="reminder-1" class="flex items-center space-x-3 p-3 bg-warning bg-opacity-10 rounded-lg">
+                                <div class="w-2 h-2 bg-warning rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-text-primary">信用卡还款</p>
+                                    <p class="text-xs text-text-secondary">招商银行信用卡，3天后到期</p>
+                                </div>
+                                <span class="text-xs text-warning font-medium">¥5,280</span>
+                            </div>
+                            
+                            <div id="reminder-2" class="flex items-center space-x-3 p-3 bg-info bg-opacity-10 rounded-lg">
+                                <div class="w-2 h-2 bg-info rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-text-primary">理财产品到期</p>
+                                    <p class="text-xs text-text-secondary">稳健理财计划，1周后到期</p>
+                                </div>
+                                <span class="text-xs text-info font-medium">¥50,000</span>
+                            </div>
+                            
+                            <div id="reminder-3" class="flex items-center space-x-3 p-3 bg-success bg-opacity-10 rounded-lg">
+                                <div class="w-2 h-2 bg-success rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-text-primary">工资到账</p>
+                                    <p class="text-xs text-text-secondary">预计明天到账</p>
+                                </div>
+                                <span class="text-xs text-success font-medium">+¥15,680</span>
+                            </div>
+                            
+                            <div id="reminder-4" class="flex items-center space-x-3 p-3 bg-danger bg-opacity-10 rounded-lg">
+                                <div class="w-2 h-2 bg-danger rounded-full"></div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-text-primary">异常交易提醒</p>
+                                    <p class="text-xs text-text-secondary">发现一笔大额支出</p>
+                                </div>
+                                <i class="fas fa-exclamation-triangle text-danger text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- 最近交易记录区 -->
+            <section id="recent-transactions" class="mb-8">
+                <div class="gradient-card rounded-xl p-6 shadow-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-text-primary">最近交易</h3>
+                        <a href="#" id="view-all-transactions" class="text-primary text-sm font-medium hover:underline">查看全部</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table id="transactions-table" class="w-full">
+                            <thead>
+                                <tr class="border-b border-border-light">
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">交易时间</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">交易描述</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">分类</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">金额</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">账户</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="transaction-1" class="transaction-row border-b border-border-light transition-all">
+                                    <td class="py-3 px-4 text-sm text-text-primary">2024-01-15 14:30</td>
+                                    <td class="py-3 px-4 text-sm text-text-primary">星巴克咖啡</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 bg-warning bg-opacity-20 text-warning text-xs rounded-full">餐饮</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm font-medium text-danger">-¥45.00</td>
+                                    <td class="py-3 px-4 text-sm text-text-secondary">招商银行储蓄卡</td>
+                                    <td class="py-3 px-4">
+                                        <button class="view-transaction-detail text-primary text-sm hover:underline" data-transaction-id="txn_001">详情</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr id="transaction-2" class="transaction-row border-b border-border-light transition-all">
+                                    <td class="py-3 px-4 text-sm text-text-primary">2024-01-15 10:15</td>
+                                    <td class="py-3 px-4 text-sm text-text-primary">工资收入</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 bg-success bg-opacity-20 text-success text-xs rounded-full">工资</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm font-medium text-success">+¥15,680.00</td>
+                                    <td class="py-3 px-4 text-sm text-text-secondary">工商银行储蓄卡</td>
+                                    <td class="py-3 px-4">
+                                        <button class="view-transaction-detail text-primary text-sm hover:underline" data-transaction-id="txn_002">详情</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr id="transaction-3" class="transaction-row border-b border-border-light transition-all">
+                                    <td class="py-3 px-4 text-sm text-text-primary">2024-01-14 19:45</td>
+                                    <td class="py-3 px-4 text-sm text-text-primary">超市购物</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 bg-info bg-opacity-20 text-info text-xs rounded-full">购物</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm font-medium text-danger">-¥236.80</td>
+                                    <td class="py-3 px-4 text-sm text-text-secondary">支付宝</td>
+                                    <td class="py-3 px-4">
+                                        <button class="view-transaction-detail text-primary text-sm hover:underline" data-transaction-id="txn_003">详情</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr id="transaction-4" class="transaction-row border-b border-border-light transition-all">
+                                    <td class="py-3 px-4 text-sm text-text-primary">2024-01-14 16:20</td>
+                                    <td class="py-3 px-4 text-sm text-text-primary">理财产品申购</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 bg-secondary bg-opacity-20 text-secondary text-xs rounded-full">投资</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm font-medium text-danger">-¥10,000.00</td>
+                                    <td class="py-3 px-4 text-sm text-text-secondary">建设银行储蓄卡</td>
+                                    <td class="py-3 px-4">
+                                        <button class="view-transaction-detail text-primary text-sm hover:underline" data-transaction-id="txn_004">详情</button>
+                                    </td>
+                                </tr>
+                                
+                                <tr id="transaction-5" class="transaction-row transition-all">
+                                    <td class="py-3 px-4 text-sm text-text-primary">2024-01-14 09:30</td>
+                                    <td class="py-3 px-4 text-sm text-text-primary">地铁出行</td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 bg-accent bg-opacity-20 text-accent text-xs rounded-full">交通</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm font-medium text-danger">-¥6.00</td>
+                                    <td class="py-3 px-4 text-sm text-text-secondary">交通卡</td>
+                                    <td class="py-3 px-4">
+                                        <button class="view-transaction-detail text-primary text-sm hover:underline" data-transaction-id="txn_005">详情</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 快捷功能入口区 -->
+            <section id="quick-actions" class="mb-8">
+                <h3 class="text-lg font-semibold text-text-primary mb-4">快捷功能</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <div id="quick-action-1" class="gradient-card rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer">
+                        <div class="w-12 h-12 gradient-bg rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-plus text-white text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-text-primary">添加交易</p>
+                    </div>
+                    
+                    <div id="quick-action-2" class="gradient-card rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer">
+                        <div class="w-12 h-12 bg-success bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-chart-pie text-success text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-text-primary">消费分析</p>
+                    </div>
+                    
+                    <div id="quick-action-3" class="gradient-card rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer">
+                        <div class="w-12 h-12 bg-warning bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-target text-warning text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-text-primary">财务规划</p>
+                    </div>
+                    
+                    <div id="quick-action-4" class="gradient-card rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer">
+                        <div class="w-12 h-12 bg-info bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-coins text-info text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-text-primary">理财产品</p>
+                    </div>
+                    
+                    <div id="quick-action-5" class="gradient-card rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer">
+                        <div class="w-12 h-12 bg-secondary bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-file-invoice text-secondary text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-text-primary">账单提醒</p>
+                    </div>
+                    
+                    <div id="quick-action-6" class="gradient-card rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer">
+                        <div class="w-12 h-12 bg-accent bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-comments text-accent text-xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-text-primary">智能客服</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化消费趋势图表
+            const ctx = document.querySelector('#spending-chart').getContext('2d');
+            const spendingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1/9', '1/10', '1/11', '1/12', '1/13', '1/14', '1/15'],
+                    datasets: [{
+                        label: '支出',
+                        data: [120, 190, 300, 250, 220, 350, 180],
+                        borderColor: '#969FFF',
+                        backgroundColor: 'rgba(150, 159, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#969FFF',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 3,
+                        pointRadius: 6
+                    }, {
+                        label: '收入',
+                        data: [0, 0, 15680, 0, 0, 0, 0],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 3,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            hoverRadius: 8
+                        }
+                    }
+                }
+            });
+
+            // 左侧菜单导航
+            document.querySelector('#nav-home').addEventListener('click', function(e) {
+                e.preventDefault();
+                // 已在首页，无需操作
+            });
+
+            document.querySelector('#nav-accounting').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-ACCOUNTING.html';
+            });
+
+            document.querySelector('#nav-analysis').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CONSUMPTION_ANALYSIS.html';
+            });
+
+            document.querySelector('#nav-planning').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PLANNING.html';
+            });
+
+            document.querySelector('#nav-products').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PRODUCTS.html';
+            });
+
+            document.querySelector('#nav-service').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CUSTOMER_SERVICE.html';
+            });
+
+            document.querySelector('#nav-settings').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-USER_SETTINGS.html';
+            });
+
+            // 顶部主导航
+            document.querySelector('#main-nav-home').addEventListener('click', function(e) {
+                e.preventDefault();
+                // 已在首页，无需操作
+            });
+
+            document.querySelector('#main-nav-accounting').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-ACCOUNTING.html';
+            });
+
+            document.querySelector('#main-nav-analysis').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CONSUMPTION_ANALYSIS.html';
+            });
+
+            document.querySelector('#main-nav-planning').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PLANNING.html';
+            });
+
+            document.querySelector('#main-nav-products').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PRODUCTS.html';
+            });
+
+            document.querySelector('#main-nav-service').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CUSTOMER_SERVICE.html';
+            });
+
+            // 添加交易按钮
+            document.querySelector('#add-transaction-btn').addEventListener('click', function() {
+                window.location.href = 'P-ADD_TRANSACTION.html';
+            });
+
+            // 查看全部交易
+            document.querySelector('#view-all-transactions').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-ACCOUNTING.html';
+            });
+
+            // 交易详情按钮
+            document.querySelectorAll('.view-transaction-detail').forEach(button => {
+                button.addEventListener('click', function() {
+                    const transactionId = this.getAttribute('data-transaction-id');
+                    window.location.href = `P-TRANSACTION_DETAIL.html?transactionId=${transactionId}`;
+                });
+            });
+
+            // 快捷功能点击事件
+            document.querySelector('#quick-action-1').addEventListener('click', function() {
+                window.location.href = 'P-ADD_TRANSACTION.html';
+            });
+
+            document.querySelector('#quick-action-2').addEventListener('click', function() {
+                window.location.href = 'P-CONSUMPTION_ANALYSIS.html';
+            });
+
+            document.querySelector('#quick-action-3').addEventListener('click', function() {
+                window.location.href = 'P-FINANCIAL_PLANNING.html';
+            });
+
+            document.querySelector('#quick-action-4').addEventListener('click', function() {
+                window.location.href = 'P-FINANCIAL_PRODUCTS.html';
+            });
+
+            document.querySelector('#quick-action-5').addEventListener('click', function() {
+                console.log('跳转到账单提醒功能');
+                // 可以跳转到智能记账页面的账单提醒部分
+                window.location.href = 'P-ACCOUNTING.html';
+            });
+
+            document.querySelector('#quick-action-6').addEventListener('click', function() {
+                window.location.href = 'P-CUSTOMER_SERVICE.html';
+            });
+
+            // 消费趋势时间范围切换
+            document.querySelector('#trend-7d').addEventListener('click', function() {
+                document.querySelectorAll('[id^="trend-"]').forEach(btn => {
+                    btn.classList.remove('bg-primary', 'text-white');
+                    btn.classList.add('text-text-secondary');
+                });
+                this.classList.add('bg-primary', 'text-white');
+                this.classList.remove('text-text-secondary');
+                // 这里可以更新图表数据
+            });
+
+            document.querySelector('#trend-30d').addEventListener('click', function() {
+                document.querySelectorAll('[id^="trend-"]').forEach(btn => {
+                    btn.classList.remove('bg-primary', 'text-white');
+                    btn.classList.add('text-text-secondary');
+                });
+                this.classList.add('bg-primary', 'text-white');
+                this.classList.remove('text-text-secondary');
+                // 这里可以更新图表数据
+            });
+
+            document.querySelector('#trend-3m').addEventListener('click', function() {
+                document.querySelectorAll('[id^="trend-"]').forEach(btn => {
+                    btn.classList.remove('bg-primary', 'text-white');
+                    btn.classList.add('text-text-secondary');
+                });
+                this.classList.add('bg-primary', 'text-white');
+                this.classList.remove('text-text-secondary');
+                // 这里可以更新图表数据
+            });
+
+            // 用户头像点击
+            document.querySelector('#user-profile').addEventListener('click', function() {
+                window.location.href = 'P-USER_SETTINGS.html';
+            });
+
+            // 搜索按钮
+            document.querySelector('#search-btn').addEventListener('click', function() {
+                console.log('打开搜索功能');
+                // 这里可以实现搜索功能
+            });
+
+            // 通知按钮
+            document.querySelector('#notification-btn').addEventListener('click', function() {
+                console.log('打开通知中心');
+                // 这里可以实现通知中心功能
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         String   @default("user")
+  isActive     Boolean  @default(true)
+  points       Int      @default(0)
+
+  familyId     String?
+  family       Family?  @relation(fields: [familyId], references: [id])
+
+  transactions Transaction[]
+  ledgers      Ledger[]
+  reminders    Reminder[]
+  persona      Persona?
+  chatSessions ChatSession[]
+  pointLogs    PointLog[]
+  userTasks    UserTask[]
+  userAchievements UserAchievement[]
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Family {
+  id        String   @id @default(cuid())
+  name      String
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  members   User[]
+  ledgers   Ledger[]
+}
+
+model Ledger {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  type         String        @default("PERSONAL") // PERSONAL, FAMILY
+  
+  ownerId      String?
+  owner        User?         @relation(fields: [ownerId], references: [id])
+  
+  familyId     String?
+  family       Family?       @relation(fields: [familyId], references: [id])
+  
+  transactions Transaction[]
+  
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model PointLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+}
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  title     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  messages  ChatMessage[]
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  session   ChatSession @relation(fields: [sessionId], references: [id])
+  role      String      // system, user, assistant
+  content   String
+  createdAt DateTime    @default(now())
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  amountCent  Int
+  category    String
+  note        String?
+  ts          DateTime
+  isAnomaly   Boolean  @default(false)
+  source      String   @default("manual")
+
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  ledgerId    String?
+  ledger      Ledger?  @relation(fields: [ledgerId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Reminder {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  type      String
+  status    String   @default("ACTIVE")
+  config    String?
+  updatedAt DateTime @updatedAt
+}
+
+model Persona {
+  id                 String  @id @default(cuid())
+  userId             String? @unique
+  user               User?   @relation(fields: [userId], references: [id])
+  ageBand            String?
+  incomeBand         String?
+  savingRate         Float?
+  riskProfile        String? @default("稳健")
+  spendTopCategories String?
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  code        String   @unique // e.g., "DAILY_LOGIN", "ADD_TRANSACTION"
+  name        String
+  description String?
+  points      Int      @default(10)
+  type        String   @default("DAILY") // DAILY, WEEKLY, ONE_TIME, MILESTONE
+  condition   String?  // JSON logic or simple string for backend to parse
+  target      Int      @default(1) // Target count to complete
+  
+  userTasks   UserTask[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserTask {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  taskId      String
+  task        Task     @relation(fields: [taskId], references: [id])
+  
+  status      String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED, CLAIMED
+  progress    Int      @default(0)
+  
+  lastCompletedAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, taskId])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  icon        String?
+  condition   String?
+  
+  userAchievements UserAchievement[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  unlockedAt    DateTime    @default(now())
+  
+  @@unique([userId, achievementId])
+}

@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 个人中心</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sidebar-item:hover {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .settings-tab:hover {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .settings-tab.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .form-input-focus:focus {
+            outline: none;
+            border-color: #969FFF;
+            box-shadow: 0 0 0 2px rgba(150, 159, 255, 0.2);
+        }
+        
+        .setting-section {
+            display: none;
+        }
+        
+        .setting-section.active {
+            display: block;
+        }
+        
+        .account-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .account-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header id="top-navbar" class="fixed top-0 left-0 right-0 bg-white border-b border-border-light z-50 h-16">
+        <div class="flex items-center justify-between h-full px-6">
+            <!-- Logo和品牌 -->
+            <div id="brand-section" class="flex items-center space-x-3">
+                <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold gradient-text">金智通</h1>
+            </div>
+            
+            <!-- 主导航 -->
+            <nav id="main-nav" class="hidden md:flex items-center space-x-8">
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">首页</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">记账</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">分析</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">规划</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">产品</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">客服</a>
+            </nav>
+            
+            <!-- 用户操作区 -->
+            <div id="user-actions" class="flex items-center space-x-4">
+                <button id="search-btn" class="p-2 text-text-secondary hover:text-primary transition-colors">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button id="notification-btn" class="p-2 text-text-secondary hover:text-primary transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-danger rounded-full"></span>
+                </button>
+                <div id="user-profile" class="flex items-center space-x-2 cursor-pointer">
+                    <img src="https://s.coze.cn/image/6JVYtRIZZWc/" 
+                         alt="用户头像" class="w-8 h-8 rounded-full" data-category="人物">
+                    <span class="text-text-primary font-medium">张先生</span>
+                    <i class="fas fa-chevron-down text-text-secondary text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主布局容器 -->
+    <div id="main-layout" class="flex pt-16">
+        <!-- 左侧菜单 -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-border-light min-h-screen">
+            <nav id="sidebar-nav" class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="nav-home" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-home text-lg"></i>
+                            <span class="font-medium">首页</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-accounting" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-calculator text-lg"></i>
+                            <span class="font-medium">智能记账</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-analysis" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-chart-bar text-lg"></i>
+                            <span class="font-medium">消费分析</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-planning" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-target text-lg"></i>
+                            <span class="font-medium">财务规划</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-products" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-coins text-lg"></i>
+                            <span class="font-medium">理财产品</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-service" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-comments text-lg"></i>
+                            <span class="font-medium">智能客服</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-settings" class="sidebar-item active flex items-center space-x-3 px-4 py-3 rounded-lg transition-all">
+                            <i class="fas fa-cog text-lg"></i>
+                            <span class="font-medium">个人中心</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main id="main-content" class="flex-1 p-6">
+            <!-- 页面头部 -->
+            <div id="page-header" class="mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-text-primary mb-1">个人中心</h2>
+                        <nav id="breadcrumb" class="text-sm text-text-secondary">
+                            <span>个人中心</span>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 二级菜单和内容区域 -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- 左侧二级菜单 -->
+                <aside id="settings-sidebar" class="lg:col-span-1">
+                    <div class="gradient-card rounded-xl p-4 shadow-card">
+                        <h3 class="text-lg font-semibold text-text-primary mb-4">设置选项</h3>
+                        <nav id="settings-nav" class="space-y-2">
+                            <button id="tab-profile" class="settings-tab active w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-left">
+                                <i class="fas fa-user text-lg"></i>
+                                <span class="font-medium">基本资料</span>
+                            </button>
+                            <button id="tab-accounts" class="settings-tab w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-left text-text-secondary">
+                                <i class="fas fa-university text-lg"></i>
+                                <span class="font-medium">账户管理</span>
+                            </button>
+                            <button id="tab-security" class="settings-tab w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-left text-text-secondary">
+                                <i class="fas fa-shield-alt text-lg"></i>
+                                <span class="font-medium">安全设置</span>
+                            </button>
+                            <button id="tab-notifications" class="settings-tab w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-left text-text-secondary">
+                                <i class="fas fa-bell text-lg"></i>
+                                <span class="font-medium">通知偏好</span>
+                            </button>
+                            <button id="tab-risk" class="settings-tab w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-left text-text-secondary">
+                                <i class="fas fa-chart-pie text-lg"></i>
+                                <span class="font-medium">风险测评</span>
+                            </button>
+                        </nav>
+                    </div>
+                </aside>
+
+                <!-- 右侧内容区 -->
+                <div id="settings-content" class="lg:col-span-3 space-y-6">
+                    <!-- 基本资料 -->
+                    <section id="profile-section" class="setting-section active">
+                        <div class="gradient-card rounded-xl p-6 shadow-card">
+                            <h3 class="text-lg font-semibold text-text-primary mb-6">基本资料</h3>
+                            <form id="profile-form" class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label for="username" class="block text-sm font-medium text-text-primary">用户名</label>
+                                        <input type="text" id="username" name="username" 
+                                               class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus" 
+                                               value="张先生" required>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label for="email" class="block text-sm font-medium text-text-primary">邮箱</label>
+                                        <input type="email" id="email" name="email" 
+                                               class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus" 
+                                               value="zhang.san@example.com" required>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-2">
+                                        <label for="phone" class="block text-sm font-medium text-text-primary">手机号</label>
+                                        <input type="tel" id="phone" name="phone" 
+                                               class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus" 
+                                               value="138****8888" required>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label for="gender" class="block text-sm font-medium text-text-primary">性别</label>
+                                        <select id="gender" name="gender" 
+                                                class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus">
+                                            <option value="male" selected>男</option>
+                                            <option value="female">女</option>
+                                            <option value="other">其他</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="address" class="block text-sm font-medium text-text-primary">联系地址</label>
+                                    <textarea id="address" name="address" rows="3" 
+                                              class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus" 
+                                              placeholder="请输入联系地址">北京市朝阳区金融街88号</textarea>
+                                </div>
+                                <div class="flex justify-end space-x-4 pt-4">
+                                    <button type="button" id="profile-cancel" 
+                                            class="px-6 py-3 border border-border-light text-text-secondary rounded-lg hover:bg-gray-50 transition-all">
+                                        取消
+                                    </button>
+                                    <button type="submit" id="profile-save" 
+                                            class="gradient-bg text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all">
+                                        保存
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- 账户管理 -->
+                    <section id="accounts-section" class="setting-section">
+                        <div class="gradient-card rounded-xl p-6 shadow-card">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg font-semibold text-text-primary">账户管理</h3>
+                                <button id="add-account-btn" 
+                                        class="gradient-bg text-white px-4 py-2 rounded-lg font-medium hover:shadow-lg transition-all text-sm">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    添加账户
+                                </button>
+                            </div>
+                            <div class="space-y-4">
+                                <div id="account-1" class="account-card rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-university text-blue-600 text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium text-text-primary">招商银行储蓄卡</h4>
+                                                <p class="text-sm text-text-secondary">****1234</p>
+                                                <p class="text-sm text-success">余额：¥85,680.00</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="text-primary hover:text-secondary transition-colors">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="text-danger hover:text-red-700 transition-colors">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="account-2" class="account-card rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                                <i class="fas fa-credit-card text-red-600 text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium text-text-primary">招商银行信用卡</h4>
+                                                <p class="text-sm text-text-secondary">****5678</p>
+                                                <p class="text-sm text-warning">欠款：¥5,280.00</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="text-primary hover:text-secondary transition-colors">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="text-danger hover:text-red-700 transition-colors">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="account-3" class="account-card rounded-lg p-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                                <i class="fab fa-alipay text-green-600 text-xl"></i>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-medium text-text-primary">支付宝</h4>
+                                                <p class="text-sm text-text-secondary">zhang.san@example.com</p>
+                                                <p class="text-sm text-success">余额：¥12,580.00</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="text-primary hover:text-secondary transition-colors">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="text-danger hover:text-red-700 transition-colors">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 安全设置 -->
+                    <section id="security-section" class="setting-section">
+                        <div class="gradient-card rounded-xl p-6 shadow-card">
+                            <h3 class="text-lg font-semibold text-text-primary mb-6">安全设置</h3>
+                            <div class="space-y-6">
+                                <div class="border-b border-border-light pb-6">
+                                    <h4 class="font-medium text-text-primary mb-4">修改密码</h4>
+                                    <form id="password-form" class="space-y-4">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div class="space-y-2">
+                                                <label for="current-password" class="block text-sm font-medium text-text-primary">当前密码</label>
+                                                <input type="password" id="current-password" name="current-password" 
+                                                       class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus" 
+                                                       placeholder="请输入当前密码">
+                                            </div>
+                                            <div class="space-y-2">
+                                                <label for="new-password" class="block text-sm font-medium text-text-primary">新密码</label>
+                                                <input type="password" id="new-password" name="new-password" 
+                                                       class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus" 
+                                                       placeholder="请输入新密码">
+                                            </div>
+                                        </div>
+                                        <div class="space-y-2">
+                                            <label for="confirm-password" class="block text-sm font-medium text-text-primary">确认新密码</label>
+                                            <input type="password" id="confirm-password" name="confirm-password" 
+                                                   class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus" 
+                                                   placeholder="请再次输入新密码">
+                                        </div>
+                                        <div class="flex justify-end space-x-4">
+                                            <button type="button" id="password-cancel" 
+                                                    class="px-6 py-3 border border-border-light text-text-secondary rounded-lg hover:bg-gray-50 transition-all">
+                                                取消
+                                            </button>
+                                            <button type="submit" id="password-save" 
+                                                    class="gradient-bg text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all">
+                                                保存
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                                
+                                <div class="border-b border-border-light pb-6">
+                                    <h4 class="font-medium text-text-primary mb-4">绑定手机</h4>
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-text-primary">138****8888</p>
+                                            <p class="text-sm text-text-secondary">已绑定</p>
+                                        </div>
+                                        <button id="change-phone" 
+                                                class="px-4 py-2 border border-border-light text-text-secondary rounded-lg hover:bg-gray-50 transition-all">
+                                            更换
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="font-medium text-text-primary mb-4">登录日志</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div>
+                                                <p class="text-sm font-medium text-text-primary">2024-01-15 14:30</p>
+                                                <p class="text-xs text-text-secondary">IP: 192.168.1.100 | 设备: Windows Chrome</p>
+                                            </div>
+                                            <span class="text-xs text-success">成功</span>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div>
+                                                <p class="text-sm font-medium text-text-primary">2024-01-14 09:15</p>
+                                                <p class="text-xs text-text-secondary">IP: 192.168.1.100 | 设备: Windows Chrome</p>
+                                            </div>
+                                            <span class="text-xs text-success">成功</span>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div>
+                                                <p class="text-sm font-medium text-text-primary">2024-01-13 20:45</p>
+                                                <p class="text-xs text-text-secondary">IP: 10.0.0.5 | 设备: Mac Safari</p>
+                                            </div>
+                                            <span class="text-xs text-success">成功</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- 通知偏好 -->
+                    <section id="notifications-section" class="setting-section">
+                        <div class="gradient-card rounded-xl p-6 shadow-card">
+                            <h3 class="text-lg font-semibold text-text-primary mb-6">通知偏好</h3>
+                            <form id="notification-form" class="space-y-6">
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <h4 class="font-medium text-text-primary">账单提醒</h4>
+                                            <p class="text-sm text-text-secondary">信用卡还款、水电费等账单提醒</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="bill-reminder" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <h4 class="font-medium text-text-primary">交易通知</h4>
+                                            <p class="text-sm text-text-secondary">大额交易、异常交易提醒</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="transaction-notification" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <h4 class="font-medium text-text-primary">理财产品到期提醒</h4>
+                                            <p class="text-sm text-text-secondary">理财产品到期、收益变动通知</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="product-maturity" class="sr-only peer" checked>
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <h4 class="font-medium text-text-primary">系统通知</h4>
+                                            <p class="text-sm text-text-secondary">系统更新、功能优化等通知</p>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" id="system-notification" class="sr-only peer">
+                                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-border-light pt-6">
+                                    <h4 class="font-medium text-text-primary mb-4">通知方式</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="flex items-center space-x-3">
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="email-notification" class="sr-only peer" checked>
+                                                <div class="w-5 h-5 border-2 border-gray-300 rounded peer peer-checked:bg-primary peer-checked:border-primary"></div>
+                                            </label>
+                                            <span class="text-sm text-text-primary">邮件通知</span>
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="sms-notification" class="sr-only peer" checked>
+                                                <div class="w-5 h-5 border-2 border-gray-300 rounded peer peer-checked:bg-primary peer-checked:border-primary"></div>
+                                            </label>
+                                            <span class="text-sm text-text-primary">短信通知</span>
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="push-notification" class="sr-only peer">
+                                                <div class="w-5 h-5 border-2 border-gray-300 rounded peer peer-checked:bg-primary peer-checked:border-primary"></div>
+                                            </label>
+                                            <span class="text-sm text-text-primary">推送通知</span>
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" id="inapp-notification" class="sr-only peer" checked>
+                                                <div class="w-5 h-5 border-2 border-gray-300 rounded peer peer-checked:bg-primary peer-checked:border-primary"></div>
+                                            </label>
+                                            <span class="text-sm text-text-primary">站内通知</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-4 pt-6">
+                                    <button type="button" id="notification-cancel" 
+                                            class="px-6 py-3 border border-border-light text-text-secondary rounded-lg hover:bg-gray-50 transition-all">
+                                        取消
+                                    </button>
+                                    <button type="submit" id="notification-save" 
+                                            class="gradient-bg text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all">
+                                        保存
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- 风险测评 -->
+                    <section id="risk-section" class="setting-section">
+                        <div class="gradient-card rounded-xl p-6 shadow-card">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg font-semibold text-text-primary">风险测评</h3>
+                                <button id="start-risk-assessment" 
+                                        class="gradient-bg text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all">
+                                    开始测评
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-6">
+                                <div class="p-4 bg-success bg-opacity-10 rounded-lg border border-success border-opacity-20">
+                                    <div class="flex items-center space-x-3 mb-3">
+                                        <div class="w-10 h-10 bg-success bg-opacity-20 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-check text-success text-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-medium text-text-primary">已完成风险测评</h4>
+                                            <p class="text-sm text-text-secondary">测评时间：2024-01-01</p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="text-center p-3 bg-white rounded-lg">
+                                            <p class="text-2xl font-bold text-primary">稳健型</p>
+                                            <p class="text-sm text-text-secondary">风险等级</p>
+                                        </div>
+                                        <div class="text-center p-3 bg-white rounded-lg">
+                                            <p class="text-2xl font-bold text-success">75分</p>
+                                            <p class="text-sm text-text-secondary">测评得分</p>
+                                        </div>
+                                        <div class="text-center p-3 bg-white rounded-lg">
+                                            <p class="text-2xl font-bold text-warning">中等</p>
+                                            <p class="text-sm text-text-secondary">承受能力</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t border-border-light pt-6">
+                                    <h4 class="font-medium text-text-primary mb-4">历史测评记录</h4>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div>
+                                                <p class="text-sm font-medium text-text-primary">2024-01-01</p>
+                                                <p class="text-xs text-text-secondary">稳健型 | 75分</p>
+                                            </div>
+                                            <button class="text-primary text-sm hover:underline">查看详情</button>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div>
+                                                <p class="text-sm font-medium text-text-primary">2023-07-15</p>
+                                                <p class="text-xs text-text-secondary">稳健型 | 72分</p>
+                                            </div>
+                                            <button class="text-primary text-sm hover:underline">查看详情</button>
+                                        </div>
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <div>
+                                                <p class="text-sm font-medium text-text-primary">2023-01-20</p>
+                                                <p class="text-xs text-text-secondary">保守型 | 65分</p>
+                                            </div>
+                                            <button class="text-primary text-sm hover:underline">查看详情</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏导航交互
+            document.querySelector('#nav-home').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-HOME.html';
+            });
+
+            document.querySelector('#nav-accounting').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-ACCOUNTING.html';
+            });
+
+            document.querySelector('#nav-analysis').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CONSUMPTION_ANALYSIS.html';
+            });
+
+            document.querySelector('#nav-planning').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PLANNING.html';
+            });
+
+            document.querySelector('#nav-products').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PRODUCTS.html';
+            });
+
+            document.querySelector('#nav-service').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CUSTOMER_SERVICE.html';
+            });
+
+            // 设置页面二级菜单切换
+            const tabs = document.querySelectorAll('.settings-tab');
+            const sections = document.querySelectorAll('.setting-section');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有active状态
+                    tabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.classList.add('text-text-secondary');
+                    });
+                    
+                    sections.forEach(s => {
+                        s.classList.remove('active');
+                    });
+
+                    // 设置当前tab为active
+                    this.classList.add('active');
+                    this.classList.remove('text-text-secondary');
+
+                    // 显示对应内容
+                    const tabId = this.id.replace('tab-', '');
+                    const targetSection = document.querySelector(`#${tabId}-section`);
+                    if (targetSection) {
+                        targetSection.classList.add('active');
+                    }
+                });
+            });
+
+            // 基本资料表单提交
+            document.querySelector('#profile-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                // 模拟保存操作
+                console.log('保存基本资料');
+                alert('基本资料保存成功！');
+            });
+
+            document.querySelector('#profile-cancel').addEventListener('click', function() {
+                // 重置表单
+                document.querySelector('#profile-form').reset();
+                // 或者恢复原始值
+                document.querySelector('#username').value = '张先生';
+                document.querySelector('#email').value = 'zhang.san@example.com';
+                document.querySelector('#phone').value = '138****8888';
+                document.querySelector('#gender').value = 'male';
+                document.querySelector('#address').value = '北京市朝阳区金融街88号';
+            });
+
+            // 密码修改表单提交
+            document.querySelector('#password-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const currentPassword = document.querySelector('#current-password').value;
+                const newPassword = document.querySelector('#new-password').value;
+                const confirmPassword = document.querySelector('#confirm-password').value;
+
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                    alert('请填写完整的密码信息');
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    alert('新密码与确认密码不一致');
+                    return;
+                }
+
+                console.log('修改密码');
+                alert('密码修改成功！');
+                // 重置表单
+                this.reset();
+            });
+
+            document.querySelector('#password-cancel').addEventListener('click', function() {
+                document.querySelector('#password-form').reset();
+            });
+
+            // 通知偏好设置提交
+            document.querySelector('#notification-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('保存通知偏好设置');
+                alert('通知偏好设置保存成功！');
+            });
+
+            document.querySelector('#notification-cancel').addEventListener('click', function() {
+                // 恢复默认设置
+                document.querySelector('#bill-reminder').checked = true;
+                document.querySelector('#transaction-notification').checked = true;
+                document.querySelector('#product-maturity').checked = true;
+                document.querySelector('#system-notification').checked = false;
+                document.querySelector('#email-notification').checked = true;
+                document.querySelector('#sms-notification').checked = true;
+                document.querySelector('#push-notification').checked = false;
+                document.querySelector('#inapp-notification').checked = true;
+            });
+
+            // 添加账户按钮
+            document.querySelector('#add-account-btn').addEventListener('click', function() {
+                console.log('添加新账户');
+                alert('添加账户功能开发中...');
+            });
+
+            // 账户编辑和删除按钮
+            document.querySelectorAll('.account-card button').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    if (this.querySelector('.fa-edit')) {
+                        console.log('编辑账户');
+                        alert('编辑账户功能开发中...');
+                    } else if (this.querySelector('.fa-trash')) {
+                        if (confirm('确定要删除这个账户吗？')) {
+                            console.log('删除账户');
+                            this.closest('.account-card').remove();
+                        }
+                    }
+                });
+            });
+
+            // 更换手机号
+            document.querySelector('#change-phone').addEventListener('click', function() {
+                console.log('更换手机号');
+                alert('更换手机号功能开发中...');
+            });
+
+            // 风险测评按钮
+            document.querySelector('#start-risk-assessment').addEventListener('click', function() {
+                console.log('开始风险测评');
+                // 这里应该打开风险测评弹窗
+                alert('即将跳转到风险测评页面...');
+                // window.location.href = 'P-RISK_ASSESSMENT.html';
+            });
+
+            // 历史测评详情查看
+            document.querySelectorAll('#risk-section button').forEach(button => {
+                if (button.textContent.trim() === '查看详情') {
+                    button.addEventListener('click', function() {
+                        console.log('查看测评详情');
+                        alert('查看测评详情功能开发中...');
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

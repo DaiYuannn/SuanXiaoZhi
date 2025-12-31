@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 添加交易</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'modal': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+        
+        .form-input-focus:focus {
+            outline: none;
+            border-color: #969FFF;
+            box-shadow: 0 0 0 3px rgba(150, 159, 255, 0.1);
+        }
+        
+        .radio-custom:checked + .radio-label {
+            background-color: #969FFF;
+            color: white;
+            border-color: #969FFF;
+        }
+        
+        .radio-label {
+            transition: all 0.3s ease;
+            border: 2px solid #E5E7EB;
+        }
+        
+        .radio-label:hover {
+            border-color: #969FFF;
+            background-color: rgba(150, 159, 255, 0.05);
+        }
+        
+        .modal-enter {
+            animation: modalEnter 0.3s ease-out;
+        }
+        
+        @keyframes modalEnter {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 模态弹窗遮罩 -->
+    <div id="modal-overlay" class="fixed inset-0 modal-overlay z-50 flex items-center justify-center p-4">
+        <!-- 模态弹窗内容 -->
+        <div id="modal-content" class="bg-white rounded-xl shadow-modal w-full max-w-md modal-enter">
+            <!-- 弹窗头部 -->
+            <div id="modal-header" class="flex items-center justify-between p-6 border-b border-border-light">
+                <h2 id="modal-title" class="text-xl font-semibold text-text-primary">添加新交易</h2>
+                <button id="close-modal-btn" class="p-2 text-text-secondary hover:text-text-primary hover:bg-gray-100 rounded-lg transition-all">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+            </div>
+            
+            <!-- 弹窗内容区 -->
+            <div id="modal-body" class="p-6">
+                <form id="transaction-form" class="space-y-6">
+                    <!-- 交易日期 -->
+                    <div id="date-field" class="space-y-2">
+                        <label for="transaction-date" class="block text-sm font-medium text-text-primary">交易日期 *</label>
+                        <input type="date" id="transaction-date" name="transaction-date" 
+                               class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus transition-all" 
+                               required>
+                    </div>
+                    
+                    <!-- 交易类型 -->
+                    <div id="type-field" class="space-y-2">
+                        <label class="block text-sm font-medium text-text-primary">交易类型 *</label>
+                        <div class="flex space-x-3">
+                            <input type="radio" id="type-expense" name="transaction-type" value="expense" 
+                                   class="radio-custom hidden" checked>
+                            <label for="type-expense" class="radio-label flex-1 px-4 py-3 text-center rounded-lg cursor-pointer">
+                                <i class="fas fa-minus-circle mr-2"></i>
+                                支出
+                            </label>
+                            
+                            <input type="radio" id="type-income" name="transaction-type" value="income" 
+                                   class="radio-custom hidden">
+                            <label for="type-income" class="radio-label flex-1 px-4 py-3 text-center rounded-lg cursor-pointer">
+                                <i class="fas fa-plus-circle mr-2"></i>
+                                收入
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- 交易金额 -->
+                    <div id="amount-field" class="space-y-2">
+                        <label for="transaction-amount" class="block text-sm font-medium text-text-primary">交易金额 *</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary">¥</span>
+                            <input type="number" id="transaction-amount" name="transaction-amount" 
+                                   class="w-full pl-8 pr-4 py-3 border border-border-light rounded-lg form-input-focus transition-all" 
+                                   placeholder="0.00" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <!-- 交易账户 -->
+                    <div id="account-field" class="space-y-2">
+                        <label for="transaction-account" class="block text-sm font-medium text-text-primary">交易账户 *</label>
+                        <select id="transaction-account" name="transaction-account" 
+                                class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus transition-all" 
+                                required>
+                            <option value="">请选择账户</option>
+                            <option value="icbc-savings">工商银行储蓄卡</option>
+                            <option value="cmb-savings">招商银行储蓄卡</option>
+                            <option value="ccb-savings">建设银行储蓄卡</option>
+                            <option value="alipay">支付宝</option>
+                            <option value="wechat-pay">微信支付</option>
+                            <option value="cash">现金</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 交易分类 -->
+                    <div id="category-field" class="space-y-2">
+                        <label for="transaction-category" class="block text-sm font-medium text-text-primary">交易分类 *</label>
+                        <select id="transaction-category" name="transaction-category" 
+                                class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus transition-all" 
+                                required>
+                            <option value="">请选择分类</option>
+                            <option value="food">餐饮</option>
+                            <option value="shopping">购物</option>
+                            <option value="transport">交通</option>
+                            <option value="entertainment">娱乐</option>
+                            <option value="medical">医疗</option>
+                            <option value="education">教育</option>
+                            <option value="housing">住房</option>
+                            <option value="utilities">水电煤</option>
+                            <option value="salary">工资</option>
+                            <option value="bonus">奖金</option>
+                            <option value="investment">投资收益</option>
+                            <option value="other-income">其他收入</option>
+                            <option value="investment-out">投资支出</option>
+                            <option value="transfer">转账</option>
+                            <option value="other">其他</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 交易描述 -->
+                    <div id="description-field" class="space-y-2">
+                        <label for="transaction-description" class="block text-sm font-medium text-text-primary">交易描述 *</label>
+                        <input type="text" id="transaction-description" name="transaction-description" 
+                               class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus transition-all" 
+                               placeholder="请输入交易描述" required>
+                    </div>
+                    
+                    <!-- 备注 -->
+                    <div id="note-field" class="space-y-2">
+                        <label for="transaction-note" class="block text-sm font-medium text-text-primary">备注</label>
+                        <textarea id="transaction-note" name="transaction-note" rows="3" 
+                                  class="w-full px-4 py-3 border border-border-light rounded-lg form-input-focus transition-all resize-none" 
+                                  placeholder="选填，可添加交易相关备注信息"></textarea>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- 弹窗底部 -->
+            <div id="modal-footer" class="flex items-center justify-end space-x-3 p-6 border-t border-border-light bg-gray-50 rounded-b-xl">
+                <button type="button" id="cancel-btn" 
+                        class="px-6 py-3 text-text-secondary border border-border-light rounded-lg hover:bg-gray-100 transition-all">
+                    取消
+                </button>
+                <button type="submit" id="save-btn" form="transaction-form"
+                        class="px-6 py-3 gradient-bg text-white rounded-lg hover:shadow-lg transition-all">
+                    <i class="fas fa-save mr-2"></i>
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 解析URL参数的辅助函数
+            function getUrlParams() {
+                const params = {};
+                const queryString = window.location.search.substring(1);
+                const urlParams = new URLSearchParams(queryString);
+                
+                for(const [key, value] of urlParams.entries()) {
+                    params[key] = value;
+                }
+                return params;
+            }
+            
+            // 获取URL参数
+            const params = getUrlParams();
+            const isEditMode = params.transactionId;
+            
+            // 根据模式设置弹窗标题
+            if (isEditMode) {
+                document.querySelector('#modal-title').textContent = '编辑交易';
+                document.querySelector('#save-btn i').className = 'fas fa-edit mr-2';
+                document.querySelector('#save-btn').innerHTML = '<i class="fas fa-edit mr-2"></i>保存修改';
+                
+                // 模拟加载交易数据（在实际应用中这里会调用API）
+                loadTransactionData(params.transactionId);
+            } else {
+                // 设置默认日期为今天
+                const today = new Date().toISOString().split('T')[0];
+                document.querySelector('#transaction-date').value = today;
+            }
+            
+            // 模拟加载交易数据的函数
+            function loadTransactionData(transactionId) {
+                // 模拟数据 - 在实际应用中这里会从API获取
+                const mockTransaction = {
+                    "1": {
+                        date: "2024-01-15",
+                        type: "expense",
+                        amount: "45.00",
+                        account: "cmb-savings",
+                        category: "food",
+                        description: "星巴克咖啡",
+                        note: "和同事开会"
+                    },
+                    "2": {
+                        date: "2024-01-15",
+                        type: "income", 
+                        amount: "15680.00",
+                        account: "icbc-savings",
+                        category: "salary",
+                        description: "工资收入",
+                        note: "1月份工资"
+                    }
+                };
+                
+                const transaction = mockTransaction[transactionId];
+                if (transaction) {
+                    document.querySelector('#transaction-date').value = transaction.date;
+                    document.querySelector(`input[name="transaction-type"][value="${transaction.type}"]`).checked = true;
+                    document.querySelector('#transaction-amount').value = transaction.amount;
+                    document.querySelector('#transaction-account').value = transaction.account;
+                    document.querySelector('#transaction-category').value = transaction.category;
+                    document.querySelector('#transaction-description').value = transaction.description;
+                    document.querySelector('#transaction-note').value = transaction.note || '';
+                    
+                    // 更新单选按钮样式
+                    updateRadioStyles();
+                }
+            }
+            
+            // 更新单选按钮样式
+            function updateRadioStyles() {
+                const selectedType = document.querySelector('input[name="transaction-type"]:checked').value;
+                document.querySelectorAll('.radio-label').forEach(label => {
+                    label.classList.remove('bg-primary', 'text-white', 'border-primary');
+                    label.classList.add('border-border-light');
+                });
+                
+                const selectedLabel = document.querySelector(`input[name="transaction-type"][value="${selectedType}"] + label`);
+                selectedLabel.classList.add('bg-primary', 'text-white', 'border-primary');
+                selectedLabel.classList.remove('border-border-light');
+            }
+            
+            // 初始化单选按钮样式
+            updateRadioStyles();
+            
+            // 单选按钮变化事件
+            document.querySelectorAll('input[name="transaction-type"]').forEach(radio => {
+                radio.addEventListener('change', updateRadioStyles);
+            });
+            
+            // 关闭弹窗事件
+            function closeModal() {
+                window.location.href = 'P-ACCOUNTING.html';
+            }
+            
+            // 关闭按钮事件
+            document.querySelector('#close-modal-btn').addEventListener('click', closeModal);
+            
+            // 取消按钮事件
+            document.querySelector('#cancel-btn').addEventListener('click', closeModal);
+            
+            // 点击遮罩关闭弹窗
+            document.querySelector('#modal-overlay').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+            
+            // ESC键关闭弹窗
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+            
+            // 表单提交事件
+            document.querySelector('#transaction-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 获取表单数据
+                const formData = new FormData(this);
+                const transactionData = {
+                    date: formData.get('transaction-date'),
+                    type: formData.get('transaction-type'),
+                    amount: formData.get('transaction-amount'),
+                    account: formData.get('transaction-account'),
+                    category: formData.get('transaction-category'),
+                    description: formData.get('transaction-description'),
+                    note: formData.get('transaction-note')
+                };
+                
+                // 表单验证
+                if (!validateForm(transactionData)) {
+                    return;
+                }
+                
+                // 模拟保存操作
+                saveTransaction(transactionData, isEditMode);
+            });
+            
+            // 表单验证
+            function validateForm(data) {
+                if (!data.date) {
+                    alert('请选择交易日期');
+                    return false;
+                }
+                
+                if (!data.amount || parseFloat(data.amount) <= 0) {
+                    alert('请输入有效的交易金额');
+                    return false;
+                }
+                
+                if (!data.account) {
+                    alert('请选择交易账户');
+                    return false;
+                }
+                
+                if (!data.category) {
+                    alert('请选择交易分类');
+                    return false;
+                }
+                
+                if (!data.description.trim()) {
+                    alert('请输入交易描述');
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            // 模拟保存交易
+            function saveTransaction(data, isEdit) {
+                // 在实际应用中，这里会调用API保存数据
+                console.log('保存交易数据:', data);
+                
+                // 显示成功提示
+                const message = isEdit ? '交易修改成功！' : '交易添加成功！';
+                alert(message);
+                
+                // 跳转回记账页面
+                window.location.href = 'P-ACCOUNTING.html';
+            }
+            
+            // 键盘事件处理
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    const activeElement = document.activeElement;
+                    if (activeElement.tagName !== 'TEXTAREA') {
+                        e.preventDefault();
+                        
+                        // 查找下一个输入框
+                        const inputs = Array.from(document.querySelectorAll('input[required], select[required]'));
+                        const currentIndex = inputs.indexOf(activeElement);
+                        
+                        if (currentIndex < inputs.length - 1) {
+                            inputs[currentIndex + 1].focus();
+                        } else {
+                            // 最后一个输入框，提交表单
+                            document.querySelector('#transaction-form').dispatchEvent(new Event('submit'));
+                        }
+                    }
+                }
+            });
+            
+            // 输入框焦点效果
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('ring-2', 'ring-primary', 'ring-opacity-20');
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('ring-2', 'ring-primary', 'ring-opacity-20');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

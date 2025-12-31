@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Env & local secrets
+.env
+.env.*
+!.env.example
+.env.smoke
+
+# Backend runtime data (SQLite) & backups
+server/data/
+server/backups/
+*.sqlite
+*.sqlite-journal
+*.db
+*.db-journal
+
+# Backend logs / PM2 logs
+server/logs/
+
+# Smoke assets (binary)
+scripts/smoke/assets/*
+!scripts/smoke/assets/README.md
+
+# OS
+Thumbs.db

@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 理财产品</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sidebar-item:hover {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .product-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
+        }
+        
+        .risk-low {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+        
+        .risk-medium {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        }
+        
+        .risk-high {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        }
+        
+        .filter-button {
+            transition: all 0.3s ease;
+        }
+        
+        .filter-button.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .pagination-button {
+            transition: all 0.3s ease;
+        }
+        
+        .pagination-button.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header id="top-navbar" class="fixed top-0 left-0 right-0 bg-white border-b border-border-light z-50 h-16">
+        <div class="flex items-center justify-between h-full px-6">
+            <!-- Logo和品牌 -->
+            <div id="brand-section" class="flex items-center space-x-3">
+                <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold gradient-text">金智通</h1>
+            </div>
+            
+            <!-- 主导航 -->
+            <nav id="main-nav" class="hidden md:flex items-center space-x-8">
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">首页</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">记账</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">分析</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">规划</a>
+                <a href="#" class="text-primary font-medium border-b-2 border-primary py-1">产品</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">客服</a>
+            </nav>
+            
+            <!-- 用户操作区 -->
+            <div id="user-actions" class="flex items-center space-x-4">
+                <button id="search-btn" class="p-2 text-text-secondary hover:text-primary transition-colors">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button id="notification-btn" class="p-2 text-text-secondary hover:text-primary transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-danger rounded-full"></span>
+                </button>
+                <div id="user-profile" class="flex items-center space-x-2 cursor-pointer">
+                    <img src="https://s.coze.cn/image/hSSmEQvxMgM/" 
+                         alt="用户头像" class="w-8 h-8 rounded-full" data-category="人物">
+                    <span class="text-text-primary font-medium">张先生</span>
+                    <i class="fas fa-chevron-down text-text-secondary text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主布局容器 -->
+    <div id="main-layout" class="flex pt-16">
+        <!-- 左侧菜单 -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-border-light min-h-screen">
+            <nav id="sidebar-nav" class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="nav-home" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-home text-lg"></i>
+                            <span class="font-medium">首页</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-accounting" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-calculator text-lg"></i>
+                            <span class="font-medium">智能记账</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-analysis" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-chart-bar text-lg"></i>
+                            <span class="font-medium">消费分析</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-planning" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-target text-lg"></i>
+                            <span class="font-medium">财务规划</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-products" class="sidebar-item active flex items-center space-x-3 px-4 py-3 rounded-lg transition-all">
+                            <i class="fas fa-coins text-lg"></i>
+                            <span class="font-medium">理财产品</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-service" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-comments text-lg"></i>
+                            <span class="font-medium">智能客服</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-settings" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-cog text-lg"></i>
+                            <span class="font-medium">个人中心</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main id="main-content" class="flex-1 p-6">
+            <!-- 页面头部 -->
+            <div id="page-header" class="mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-text-primary mb-1">理财产品</h2>
+                        <nav id="breadcrumb" class="text-sm text-text-secondary">
+                            <span>理财产品</span>
+                        </nav>
+                    </div>
+                    <button id="risk-assessment-btn" class="gradient-bg text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all">
+                        <i class="fas fa-clipboard-check mr-2"></i>
+                        风险测评
+                    </button>
+                </div>
+            </div>
+
+            <!-- 工具栏区域 -->
+            <section id="toolbar" class="mb-6">
+                <div class="gradient-card rounded-xl p-4 shadow-card">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                        <!-- 搜索框 -->
+                        <div id="search-section" class="flex-1 lg:max-w-md">
+                            <div class="relative">
+                                <input type="text" id="product-search" 
+                                       placeholder="搜索理财产品..." 
+                                       class="w-full pl-10 pr-4 py-2 border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- 筛选器 -->
+                        <div id="filters-section" class="flex flex-wrap items-center space-x-4">
+                            <!-- 产品类型筛选 -->
+                            <div id="product-type-filter" class="flex items-center space-x-2">
+                                <span class="text-sm font-medium text-text-secondary">产品类型:</span>
+                                <div class="flex space-x-1">
+                                    <button class="filter-button active px-3 py-1 text-sm rounded-lg border border-border-light" data-filter="type" data-value="all">全部</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="type" data-value="fund">基金</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="type" data-value="insurance">保险</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="type" data-value="deposit">存款</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="type" data-value="bond">债券</button>
+                                </div>
+                            </div>
+                            
+                            <!-- 风险等级筛选 -->
+                            <div id="risk-level-filter" class="flex items-center space-x-2">
+                                <span class="text-sm font-medium text-text-secondary">风险等级:</span>
+                                <div class="flex space-x-1">
+                                    <button class="filter-button active px-3 py-1 text-sm rounded-lg border border-border-light" data-filter="risk" data-value="all">全部</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="risk" data-value="low">低风险</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="risk" data-value="medium">中风险</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="risk" data-value="high">高风险</button>
+                                </div>
+                            </div>
+                            
+                            <!-- 预期收益筛选 -->
+                            <div id="return-filter" class="flex items-center space-x-2">
+                                <span class="text-sm font-medium text-text-secondary">预期收益:</span>
+                                <div class="flex space-x-1">
+                                    <button class="filter-button active px-3 py-1 text-sm rounded-lg border border-border-light" data-filter="return" data-value="all">全部</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="return" data-value="low">3%以下</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="return" data-value="medium">3%-6%</button>
+                                    <button class="filter-button px-3 py-1 text-sm rounded-lg border border-border-light text-text-secondary" data-filter="return" data-value="high">6%以上</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 理财产品列表 -->
+            <section id="products-list" class="mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- 理财产品卡片 1 -->
+                    <div id="product-card-1" class="product-card rounded-xl p-6 cursor-pointer" data-product-id="prod001">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-text-primary mb-1">稳健理财计划A</h3>
+                                <p class="text-sm text-text-secondary">低风险 · 货币基金</p>
+                            </div>
+                            <div class="risk-low text-white text-xs px-2 py-1 rounded-full font-medium">低风险</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-baseline space-x-1 mb-1">
+                                <span class="text-2xl font-bold text-text-primary">3.2</span>
+                                <span class="text-sm text-text-secondary">%</span>
+                            </div>
+                            <p class="text-sm text-text-secondary">近7日年化收益率</p>
+                        </div>
+                        
+                        <div class="border-t border-border-light pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-text-secondary">起购金额</span>
+                                <span class="text-sm font-medium text-text-primary">¥1,000</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-text-secondary">产品期限</span>
+                                <span class="text-sm font-medium text-text-primary">灵活申赎</span>
+                            </div>
+                            <button class="view-product-detail w-full gradient-bg text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all" data-product-id="prod001">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 理财产品卡片 2 -->
+                    <div id="product-card-2" class="product-card rounded-xl p-6 cursor-pointer" data-product-id="prod002">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-text-primary mb-1">智选股票基金</h3>
+                                <p class="text-sm text-text-secondary">中风险 · 混合型基金</p>
+                            </div>
+                            <div class="risk-medium text-white text-xs px-2 py-1 rounded-full font-medium">中风险</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-baseline space-x-1 mb-1">
+                                <span class="text-2xl font-bold text-text-primary">5.8</span>
+                                <span class="text-sm text-text-secondary">%</span>
+                            </div>
+                            <p class="text-sm text-text-secondary">近1年年化收益率</p>
+                        </div>
+                        
+                        <div class="border-t border-border-light pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-text-secondary">起购金额</span>
+                                <span class="text-sm font-medium text-text-primary">¥10,000</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-text-secondary">产品期限</span>
+                                <span class="text-sm font-medium text-text-primary">365天</span>
+                            </div>
+                            <button class="view-product-detail w-full gradient-bg text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all" data-product-id="prod002">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 理财产品卡片 3 -->
+                    <div id="product-card-3" class="product-card rounded-xl p-6 cursor-pointer" data-product-id="prod003">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-text-primary mb-1">高收益债券基金</h3>
+                                <p class="text-sm text-text-secondary">中风险 · 债券型基金</p>
+                            </div>
+                            <div class="risk-medium text-white text-xs px-2 py-1 rounded-full font-medium">中风险</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-baseline space-x-1 mb-1">
+                                <span class="text-2xl font-bold text-text-primary">4.5</span>
+                                <span class="text-sm text-text-secondary">%</span>
+                            </div>
+                            <p class="text-sm text-text-secondary">近1年年化收益率</p>
+                        </div>
+                        
+                        <div class="border-t border-border-light pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-text-secondary">起购金额</span>
+                                <span class="text-sm font-medium text-text-primary">¥5,000</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-text-secondary">产品期限</span>
+                                <span class="text-sm font-medium text-text-primary">180天</span>
+                            </div>
+                            <button class="view-product-detail w-full gradient-bg text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all" data-product-id="prod003">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 理财产品卡片 4 -->
+                    <div id="product-card-4" class="product-card rounded-xl p-6 cursor-pointer" data-product-id="prod004">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-text-primary mb-1">进取型股票基金</h3>
+                                <p class="text-sm text-text-secondary">高风险 · 股票型基金</p>
+                            </div>
+                            <div class="risk-high text-white text-xs px-2 py-1 rounded-full font-medium">高风险</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-baseline space-x-1 mb-1">
+                                <span class="text-2xl font-bold text-text-primary">8.2</span>
+                                <span class="text-sm text-text-secondary">%</span>
+                            </div>
+                            <p class="text-sm text-text-secondary">近1年年化收益率</p>
+                        </div>
+                        
+                        <div class="border-t border-border-light pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-text-secondary">起购金额</span>
+                                <span class="text-sm font-medium text-text-primary">¥20,000</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-text-secondary">产品期限</span>
+                                <span class="text-sm font-medium text-text-primary">730天</span>
+                            </div>
+                            <button class="view-product-detail w-full gradient-bg text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all" data-product-id="prod004">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 理财产品卡片 5 -->
+                    <div id="product-card-5" class="product-card rounded-xl p-6 cursor-pointer" data-product-id="prod005">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-text-primary mb-1">定期存款计划</h3>
+                                <p class="text-sm text-text-secondary">低风险 · 银行存款</p>
+                            </div>
+                            <div class="risk-low text-white text-xs px-2 py-1 rounded-full font-medium">低风险</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-baseline space-x-1 mb-1">
+                                <span class="text-2xl font-bold text-text-primary">2.8</span>
+                                <span class="text-sm text-text-secondary">%</span>
+                            </div>
+                            <p class="text-sm text-text-secondary">年化利率</p>
+                        </div>
+                        
+                        <div class="border-t border-border-light pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-text-secondary">起购金额</span>
+                                <span class="text-sm font-medium text-text-primary">¥50,000</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-text-secondary">产品期限</span>
+                                <span class="text-sm font-medium text-text-primary">365天</span>
+                            </div>
+                            <button class="view-product-detail w-full gradient-bg text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all" data-product-id="prod005">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 理财产品卡片 6 -->
+                    <div id="product-card-6" class="product-card rounded-xl p-6 cursor-pointer" data-product-id="prod006">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-text-primary mb-1">万能保险理财</h3>
+                                <p class="text-sm text-text-secondary">中风险 · 保险理财</p>
+                            </div>
+                            <div class="risk-medium text-white text-xs px-2 py-1 rounded-full font-medium">中风险</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-baseline space-x-1 mb-1">
+                                <span class="text-2xl font-bold text-text-primary">4.2</span>
+                                <span class="text-sm text-text-secondary">%</span>
+                            </div>
+                            <p class="text-sm text-text-secondary">保证年化利率</p>
+                        </div>
+                        
+                        <div class="border-t border-border-light pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-text-secondary">起购金额</span>
+                                <span class="text-sm font-medium text-text-primary">¥100,000</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-text-secondary">产品期限</span>
+                                <span class="text-sm font-medium text-text-primary">1095天</span>
+                            </div>
+                            <button class="view-product-detail w-full gradient-bg text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all" data-product-id="prod006">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 理财产品卡片 7 -->
+                    <div id="product-card-7" class="product-card rounded-xl p-6 cursor-pointer" data-product-id="prod007">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-text-primary mb-1">货币增强基金</h3>
+                                <p class="text-sm text-text-secondary">低风险 · 货币基金</p>
+                            </div>
+                            <div class="risk-low text-white text-xs px-2 py-1 rounded-full font-medium">低风险</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-baseline space-x-1 mb-1">
+                                <span class="text-2xl font-bold text-text-primary">3.5</span>
+                                <span class="text-sm text-text-secondary">%</span>
+                            </div>
+                            <p class="text-sm text-text-secondary">近7日年化收益率</p>
+                        </div>
+                        
+                        <div class="border-t border-border-light pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-text-secondary">起购金额</span>
+                                <span class="text-sm font-medium text-text-primary">¥100</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-text-secondary">产品期限</span>
+                                <span class="text-sm font-medium text-text-primary">灵活申赎</span>
+                            </div>
+                            <button class="view-product-detail w-full gradient-bg text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all" data-product-id="prod007">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 理财产品卡片 8 -->
+                    <div id="product-card-8" class="product-card rounded-xl p-6 cursor-pointer" data-product-id="prod008">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-semibold text-text-primary mb-1">创新科技基金</h3>
+                                <p class="text-sm text-text-secondary">高风险 · 股票型基金</p>
+                            </div>
+                            <div class="risk-high text-white text-xs px-2 py-1 rounded-full font-medium">高风险</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-baseline space-x-1 mb-1">
+                                <span class="text-2xl font-bold text-text-primary">12.6</span>
+                                <span class="text-sm text-text-secondary">%</span>
+                            </div>
+                            <p class="text-sm text-text-secondary">近1年年化收益率</p>
+                        </div>
+                        
+                        <div class="border-t border-border-light pt-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-sm text-text-secondary">起购金额</span>
+                                <span class="text-sm font-medium text-text-primary">¥50,000</span>
+                            </div>
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="text-sm text-text-secondary">产品期限</span>
+                                <span class="text-sm font-medium text-text-primary">1095天</span>
+                            </div>
+                            <button class="view-product-detail w-full gradient-bg text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all" data-product-id="prod008">
+                                查看详情
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分页区域 -->
+            <section id="pagination" class="mb-8">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-text-secondary">
+                        显示第 <span class="font-medium">1</span> - <span class="font-medium">8</span> 条，共 <span class="font-medium">24</span> 条记录
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button id="prev-page" class="pagination-button px-3 py-1 text-sm border border-border-light rounded-lg text-text-secondary" disabled>
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="pagination-button active px-3 py-1 text-sm border border-border-light rounded-lg">1</button>
+                        <button class="pagination-button px-3 py-1 text-sm border border-border-light rounded-lg text-text-secondary">2</button>
+                        <button class="pagination-button px-3 py-1 text-sm border border-border-light rounded-lg text-text-secondary">3</button>
+                        <span class="px-2 text-text-secondary">...</span>
+                        <button class="pagination-button px-3 py-1 text-sm border border-border-light rounded-lg text-text-secondary">5</button>
+                        <button id="next-page" class="pagination-button px-3 py-1 text-sm border border-border-light rounded-lg text-text-secondary">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏导航点击事件
+            document.querySelector('#nav-home').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-HOME.html';
+            });
+
+            document.querySelector('#nav-accounting').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-ACCOUNTING.html';
+            });
+
+            document.querySelector('#nav-analysis').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CONSUMPTION_ANALYSIS.html';
+            });
+
+            document.querySelector('#nav-planning').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PLANNING.html';
+            });
+
+            document.querySelector('#nav-service').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CUSTOMER_SERVICE.html';
+            });
+
+            document.querySelector('#nav-settings').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-USER_SETTINGS.html';
+            });
+
+            // 风险测评按钮点击事件
+            document.querySelector('#risk-assessment-btn').addEventListener('click', function() {
+                window.location.href = 'P-RISK_ASSESSMENT.html';
+            });
+
+            // 筛选器交互
+            document.querySelectorAll('.filter-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const filterType = this.dataset.filter;
+                    const filterValue = this.dataset.value;
+                    
+                    // 移除同组其他按钮的active状态
+                    document.querySelectorAll(`[data-filter="${filterType}"]`).forEach(btn => {
+                        btn.classList.remove('active');
+                        btn.classList.add('text-text-secondary');
+                    });
+                    
+                    // 设置当前按钮为active状态
+                    this.classList.add('active');
+                    this.classList.remove('text-text-secondary');
+                    
+                    // 执行筛选逻辑
+                    filterProducts(filterType, filterValue);
+                });
+            });
+
+            // 搜索功能
+            document.querySelector('#product-search').addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                searchProducts(searchTerm);
+            });
+
+            // 产品卡片点击事件
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // 如果点击的是按钮，不触发卡片点击
+                    if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                        return;
+                    }
+                    const productId = this.dataset.productId;
+                    window.location.href = `P-PRODUCT_DETAIL.html?productId=${productId}`;
+                });
+            });
+
+            // 查看详情按钮点击事件
+            document.querySelectorAll('.view-product-detail').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.stopPropagation(); // 阻止事件冒泡
+                    const productId = this.dataset.productId;
+                    window.location.href = `P-PRODUCT_DETAIL.html?productId=${productId}`;
+                });
+            });
+
+            // 分页按钮点击事件
+            document.querySelectorAll('.pagination-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (this.id === 'prev-page' && this.disabled) return;
+                    if (this.id === 'next-page') {
+                        console.log('跳转到下一页');
+                    } else if (this.id === 'prev-page') {
+                        console.log('跳转到上一页');
+                    } else {
+                        const pageNum = this.textContent;
+                        console.log(`跳转到第${pageNum}页`);
+                        
+                        // 更新分页按钮状态
+                        document.querySelectorAll('.pagination-button').forEach(btn => {
+                            if (!btn.id) { // 数字按钮
+                                btn.classList.remove('active');
+                                btn.classList.add('text-text-secondary');
+                            }
+                        });
+                        this.classList.add('active');
+                        this.classList.remove('text-text-secondary');
+                    }
+                });
+            });
+
+            // 筛选产品函数
+            function filterProducts(filterType, filterValue) {
+                console.log(`筛选类型: ${filterType}, 筛选值: ${filterValue}`);
+                // 这里实现筛选逻辑
+                // 实际应用中会调用API获取筛选后的数据
+            }
+
+            // 搜索产品函数
+            function searchProducts(searchTerm) {
+                console.log(`搜索关键词: ${searchTerm}`);
+                // 这里实现搜索逻辑
+                // 实际应用中会调用API获取搜索结果
+            }
+        });
+    </script>
+</body>
+</html>

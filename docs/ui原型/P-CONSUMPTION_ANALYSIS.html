@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 消费分析</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script src="https://unpkg.byted-static.com/chart.js/4.5.0/dist/chart.umd.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sidebar-item:hover {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .chart-container-sm {
+            position: relative;
+            height: 200px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
+        }
+        
+        .insight-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-left: 4px solid #969FFF;
+            transition: all 0.3s ease;
+        }
+        
+        .insight-card:hover {
+            box-shadow: 0 4px 12px rgba(150, 159, 255, 0.15);
+        }
+        
+        .user-tag {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .user-tag:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(150, 159, 255, 0.3);
+        }
+        
+        .emotion-positive {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+        
+        .emotion-neutral {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        }
+        
+        .emotion-negative {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header id="top-navbar" class="fixed top-0 left-0 right-0 bg-white border-b border-border-light z-50 h-16">
+        <div class="flex items-center justify-between h-full px-6">
+            <!-- Logo和品牌 -->
+            <div id="brand-section" class="flex items-center space-x-3">
+                <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold gradient-text">金智通</h1>
+            </div>
+            
+            <!-- 主导航 -->
+            <nav id="main-nav" class="hidden md:flex items-center space-x-8">
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">首页</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">记账</a>
+                <a href="#" class="text-primary font-medium border-b-2 border-primary py-1">分析</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">规划</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">产品</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">客服</a>
+            </nav>
+            
+            <!-- 用户操作区 -->
+            <div id="user-actions" class="flex items-center space-x-4">
+                <button id="search-btn" class="p-2 text-text-secondary hover:text-primary transition-colors">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button id="notification-btn" class="p-2 text-text-secondary hover:text-primary transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-danger rounded-full"></span>
+                </button>
+                <div id="user-profile" class="flex items-center space-x-2 cursor-pointer">
+                    <img src="https://s.coze.cn/image/cEI5aShoTEI/" 
+                         alt="用户头像" class="w-8 h-8 rounded-full" data-category="人物">
+                    <span class="text-text-primary font-medium">张先生</span>
+                    <i class="fas fa-chevron-down text-text-secondary text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主布局容器 -->
+    <div id="main-layout" class="flex pt-16">
+        <!-- 左侧菜单 -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-border-light min-h-screen">
+            <nav id="sidebar-nav" class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="nav-home" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-home text-lg"></i>
+                            <span class="font-medium">首页</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-accounting" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-calculator text-lg"></i>
+                            <span class="font-medium">智能记账</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-analysis" class="sidebar-item active flex items-center space-x-3 px-4 py-3 rounded-lg transition-all">
+                            <i class="fas fa-chart-bar text-lg"></i>
+                            <span class="font-medium">消费分析</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-planning" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-target text-lg"></i>
+                            <span class="font-medium">财务规划</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-products" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-coins text-lg"></i>
+                            <span class="font-medium">理财产品</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-service" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-comments text-lg"></i>
+                            <span class="font-medium">智能客服</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-settings" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-cog text-lg"></i>
+                            <span class="font-medium">个人中心</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main id="main-content" class="flex-1 p-6">
+            <!-- 页面头部 -->
+            <div id="page-header" class="mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-text-primary mb-1">消费分析</h2>
+                        <nav id="breadcrumb" class="text-sm text-text-secondary">
+                            <span>首页</span>
+                            <i class="fas fa-chevron-right mx-2"></i>
+                            <span>消费分析</span>
+                        </nav>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex space-x-2">
+                            <button id="time-range-7d" class="px-3 py-1 text-sm bg-primary text-white rounded-lg">近7天</button>
+                            <button id="time-range-30d" class="px-3 py-1 text-sm text-text-secondary hover:text-primary rounded-lg">近30天</button>
+                            <button id="time-range-3m" class="px-3 py-1 text-sm text-text-secondary hover:text-primary rounded-lg">近3月</button>
+                            <button id="time-range-1y" class="px-3 py-1 text-sm text-text-secondary hover:text-primary rounded-lg">近1年</button>
+                        </div>
+                        <button id="export-report-btn" class="px-4 py-2 bg-white border border-border-light text-text-primary rounded-lg hover:shadow-lg transition-all">
+                            <i class="fas fa-download mr-2"></i>
+                            导出报告
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 消费趋势图表区 -->
+            <section id="spending-trends" class="mb-8">
+                <div class="gradient-card rounded-xl p-6 shadow-card">
+                    <h3 class="text-lg font-semibold text-text-primary mb-6">消费趋势</h3>
+                    <div class="chart-container">
+                        <canvas id="spending-trend-chart"></canvas>
+                    </div>
+                    <div class="grid grid-cols-3 gap-6 mt-6">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-danger mb-1">¥1,280</div>
+                            <div class="text-sm text-text-secondary">总支出</div>
+                            <div class="text-xs text-danger mt-1">较上期 +12.5%</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-success mb-1">¥15,680</div>
+                            <div class="text-sm text-text-secondary">总收入</div>
+                            <div class="text-xs text-success mt-1">较上期 +3.5%</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-primary mb-1">¥14,400</div>
+                            <div class="text-sm text-text-secondary">净收入</div>
+                            <div class="text-xs text-success mt-1">较上期 +2.1%</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 内容区域 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- 消费品类偏好区 -->
+                <section id="category-preferences">
+                    <div class="gradient-card rounded-xl p-6 shadow-card">
+                        <h3 class="text-lg font-semibold text-text-primary mb-6">消费品类偏好</h3>
+                        <div class="chart-container-sm">
+                            <canvas id="category-chart"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-warning rounded-full"></div>
+                                    <span class="text-sm text-text-primary">餐饮</span>
+                                </div>
+                                <span class="text-sm font-medium text-text-primary">35.2%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-info rounded-full"></div>
+                                    <span class="text-sm text-text-primary">购物</span>
+                                </div>
+                                <span class="text-sm font-medium text-text-primary">28.1%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-accent rounded-full"></div>
+                                    <span class="text-sm text-text-primary">交通</span>
+                                </div>
+                                <span class="text-sm font-medium text-text-primary">15.7%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-secondary rounded-full"></div>
+                                    <span class="text-sm text-text-primary">娱乐</span>
+                                </div>
+                                <span class="text-sm font-medium text-text-primary">12.3%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-success rounded-full"></div>
+                                    <span class="text-sm text-text-primary">其他</span>
+                                </div>
+                                <span class="text-sm font-medium text-text-primary">8.7%</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 消费频次分析区 -->
+                <section id="frequency-analysis">
+                    <div class="gradient-card rounded-xl p-6 shadow-card">
+                        <h3 class="text-lg font-semibold text-text-primary mb-6">消费频次分析</h3>
+                        <div class="chart-container-sm">
+                            <canvas id="frequency-chart"></canvas>
+                        </div>
+                        <div class="mt-4 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-text-primary">餐饮消费</span>
+                                <span class="text-sm font-medium text-text-primary">15次/周</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-text-primary">购物消费</span>
+                                <span class="text-sm font-medium text-text-primary">8次/周</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-text-primary">交通出行</span>
+                                <span class="text-sm font-medium text-text-primary">12次/周</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-text-primary">娱乐活动</span>
+                                <span class="text-sm font-medium text-text-primary">3次/周</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- 情感倾向分析区 -->
+            <section id="sentiment-analysis" class="mb-8">
+                <div class="gradient-card rounded-xl p-6 shadow-card">
+                    <h3 class="text-lg font-semibold text-text-primary mb-6">情感倾向分析</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <div class="w-16 h-16 emotion-positive rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-smile text-white text-2xl"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-text-primary mb-1">正面</h4>
+                            <p class="text-2xl font-bold text-success mb-1">78%</p>
+                            <p class="text-sm text-text-secondary">对餐饮、购物满意度高</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 emotion-neutral rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-meh text-white text-2xl"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-text-primary mb-1">中性</h4>
+                            <p class="text-2xl font-bold text-warning mb-1">18%</p>
+                            <p class="text-sm text-text-secondary">交通出行体验一般</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 emotion-negative rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-frown text-white text-2xl"></i>
+                            </div>
+                            <h4 class="text-lg font-bold text-text-primary mb-1">负面</h4>
+                            <p class="text-2xl font-bold text-danger mb-1">4%</p>
+                            <p class="text-sm text-text-secondary">个别服务体验不佳</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 space-y-3">
+                        <div class="insight-card p-4 rounded-lg">
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-lightbulb text-warning text-lg mt-1"></i>
+                                <div>
+                                    <h4 class="font-medium text-text-primary mb-1">消费洞察</h4>
+                                    <p class="text-sm text-text-secondary">您在餐饮方面的消费满意度最高，特别是对连锁餐厅品牌有明显偏好。建议可以尝试更多特色餐厅，丰富饮食体验。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 用户画像概览区 -->
+            <section id="user-profile-overview" class="mb-8">
+                <div class="gradient-card rounded-xl p-6 shadow-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-text-primary">用户画像概览</h3>
+                        <button id="view-full-profile-btn" class="text-primary text-sm font-medium hover:underline">
+                            查看完整画像 <i class="fas fa-arrow-right ml-1"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="text-center">
+                            <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-user text-white text-2xl"></i>
+                            </div>
+                            <h4 class="font-medium text-text-primary mb-1">消费能力</h4>
+                            <p class="text-lg font-bold text-primary">中等偏上</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-success bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-shield-alt text-success text-2xl"></i>
+                            </div>
+                            <h4 class="font-medium text-text-primary mb-1">风险偏好</h4>
+                            <p class="text-lg font-bold text-success">稳健型</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-warning bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-clock text-warning text-2xl"></i>
+                            </div>
+                            <h4 class="font-medium text-text-primary mb-1">消费习惯</h4>
+                            <p class="text-lg font-bold text-warning">规律理性</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-info bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-chart-line text-info text-2xl"></i>
+                            </div>
+                            <h4 class="font-medium text-text-primary mb-1">储蓄倾向</h4>
+                            <p class="text-lg font-bold text-info">较高</p>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="font-medium text-text-primary mb-3">核心标签</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="user-tag px-3 py-1 text-sm rounded-full cursor-pointer">白领阶层</span>
+                            <span class="user-tag px-3 py-1 text-sm rounded-full cursor-pointer">品质生活追求者</span>
+                            <span class="user-tag px-3 py-1 text-sm rounded-full cursor-pointer">理性消费者</span>
+                            <span class="user-tag px-3 py-1 text-sm rounded-full cursor-pointer">稳健投资者</span>
+                            <span class="user-tag px-3 py-1 text-sm rounded-full cursor-pointer">健康生活方式</span>
+                            <span class="user-tag px-3 py-1 text-sm rounded-full cursor-pointer">科技产品爱好者</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化图表
+            initializeCharts();
+            
+            // 侧边栏导航交互
+            setupSidebarNavigation();
+            
+            // 时间范围选择器
+            setupTimeRangeSelector();
+            
+            // 导出报告按钮
+            setupExportReport();
+            
+            // 查看完整画像按钮
+            setupViewFullProfile();
+            
+            // 用户标签点击事件
+            setupUserTags();
+        });
+
+        function initializeCharts() {
+            // 消费趋势图表
+            const trendCtx = document.querySelector('#spending-trend-chart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['1/9', '1/10', '1/11', '1/12', '1/13', '1/14', '1/15'],
+                    datasets: [{
+                        label: '支出',
+                        data: [120, 190, 300, 250, 220, 350, 180],
+                        borderColor: '#EF4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#EF4444',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 3,
+                        pointRadius: 6
+                    }, {
+                        label: '收入',
+                        data: [0, 0, 15680, 0, 0, 0, 0],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#10B981',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 3,
+                        pointRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            hoverRadius: 8
+                        }
+                    }
+                }
+            });
+
+            // 消费品类偏好饼图
+            const categoryCtx = document.querySelector('#category-chart').getContext('2d');
+            new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['餐饮', '购物', '交通', '娱乐', '其他'],
+                    datasets: [{
+                        data: [35.2, 28.1, 15.7, 12.3, 8.7],
+                        backgroundColor: [
+                            '#F59E0B',
+                            '#3B82F6',
+                            '#3E3987',
+                            '#5147FF',
+                            '#10B981'
+                        ],
+                        borderWidth: 0,
+                        cutout: '60%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // 消费频次柱状图
+            const frequencyCtx = document.querySelector('#frequency-chart').getContext('2d');
+            new Chart(frequencyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['餐饮', '购物', '交通', '娱乐'],
+                    datasets: [{
+                        label: '每周频次',
+                        data: [15, 8, 12, 3],
+                        backgroundColor: '#969FFF',
+                        borderRadius: 4,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function setupSidebarNavigation() {
+            document.querySelector('#nav-home').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-HOME.html';
+            });
+
+            document.querySelector('#nav-accounting').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-ACCOUNTING.html';
+            });
+
+            document.querySelector('#nav-analysis').addEventListener('click', function(e) {
+                e.preventDefault();
+                // 已在当前页面，无需操作
+            });
+
+            document.querySelector('#nav-planning').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PLANNING.html';
+            });
+
+            document.querySelector('#nav-products').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PRODUCTS.html';
+            });
+
+            document.querySelector('#nav-service').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CUSTOMER_SERVICE.html';
+            });
+
+            document.querySelector('#nav-settings').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-USER_SETTINGS.html';
+            });
+        }
+
+        function setupTimeRangeSelector() {
+            const timeRangeButtons = document.querySelectorAll('[id^="time-range-"]');
+            
+            timeRangeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // 重置所有按钮样式
+                    timeRangeButtons.forEach(btn => {
+                        btn.classList.remove('bg-primary', 'text-white');
+                        btn.classList.add('text-text-secondary');
+                    });
+                    
+                    // 设置当前按钮为激活状态
+                    this.classList.remove('text-text-secondary');
+                    this.classList.add('bg-primary', 'text-white');
+                    
+                    // 这里可以添加重新加载图表数据的逻辑
+                    console.log('切换时间范围:', this.textContent);
+                });
+            });
+        }
+
+        function setupExportReport() {
+            document.querySelector('#export-report-btn').addEventListener('click', function() {
+                console.log('导出消费分析报告');
+                // 这里可以实现报告导出功能
+                alert('报告正在生成中，请稍候...');
+            });
+        }
+
+        function setupViewFullProfile() {
+            document.querySelector('#view-full-profile-btn').addEventListener('click', function() {
+                window.location.href = 'P-USER_SETTINGS.html';
+            });
+        }
+
+        function setupUserTags() {
+            document.querySelectorAll('.user-tag').forEach(tag => {
+                tag.addEventListener('click', function() {
+                    console.log('点击用户标签:', this.textContent);
+                    // 可以跳转到用户画像详情页面或显示更多相关信息
+                    window.location.href = 'P-USER_SETTINGS.html';
+                });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+
+
+.pageWrapper {
+  background-color: #F9FAFB;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.gradientBg {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+}
+
+.gradientText {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.loginContainer {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  backdrop-filter: blur(10px);
+}
+
+.formInputFocus:focus {
+  outline: none;
+  border-color: #969FFF;
+  box-shadow: 0 0 0 3px rgba(150, 159, 255, 0.1);
+}
+
+.loginButton {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+  transition: all 0.3s ease;
+}
+
+.loginButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(150, 159, 255, 0.3);
+}
+
+.loginButton:active {
+  transform: translateY(0);
+}
+
+.linkHover:hover {
+  color: #969FFF;
+  text-decoration: underline;
+}
+
+.errorMessage {
+  color: #EF4444;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: none;
+}
+
+.errorMessage.show {
+  display: block;
+}
+

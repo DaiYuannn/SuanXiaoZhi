@@ -1,0 +1,57 @@
+
+
+.pageWrapper {
+  background-color: #F9FAFB;
+  min-height: 100vh;
+}
+
+.gradientBg {
+  background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+}
+
+.gradientCard {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+}
+
+.modalOverlay {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.formInputFocus:focus {
+  outline: none;
+  border-color: #969FFF;
+  box-shadow: 0 0 0 3px rgba(150, 159, 255, 0.1);
+}
+
+.radioCustom:checked + .radioLabel {
+  background-color: #969FFF;
+  color: white;
+  border-color: #969FFF;
+}
+
+.radioLabel {
+  transition: all 0.3s ease;
+  border: 2px solid #E5E7EB;
+}
+
+.radioLabel:hover {
+  border-color: #969FFF;
+  background-color: rgba(150, 159, 255, 0.05);
+}
+
+.modalEnter {
+  animation: modalEnter 0.3s ease-out;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+

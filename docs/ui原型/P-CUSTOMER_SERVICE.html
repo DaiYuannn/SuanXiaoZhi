@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 智能客服</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sidebar-item:hover {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .chat-bubble-user {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+            margin-left: auto;
+            margin-right: 0;
+        }
+        
+        .chat-bubble-bot {
+            background: #ffffff;
+            color: #1F2937;
+            border: 1px solid #E5E7EB;
+            border-radius: 18px 18px 18px 4px;
+            margin-left: 0;
+            margin-right: auto;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #969FFF;
+            box-shadow: 0 0 0 3px rgba(150, 159, 255, 0.1);
+        }
+        
+        .quick-question:hover {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .chat-container {
+            height: calc(100vh - 240px);
+            overflow-y: auto;
+        }
+        
+        .typing-indicator {
+            display: none;
+        }
+        
+        .typing-indicator.active {
+            display: flex;
+        }
+        
+        .typing-dot {
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        .chat-link {
+            color: #969FFF;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        
+        .chat-link:hover {
+            color: #5147FF;
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header id="top-navbar" class="fixed top-0 left-0 right-0 bg-white border-b border-border-light z-50 h-16">
+        <div class="flex items-center justify-between h-full px-6">
+            <!-- Logo和品牌 -->
+            <div id="brand-section" class="flex items-center space-x-3">
+                <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold gradient-text">金智通</h1>
+            </div>
+            
+            <!-- 主导航 -->
+            <nav id="main-nav" class="hidden md:flex items-center space-x-8">
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">首页</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">记账</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">分析</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">规划</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">产品</a>
+                <a href="#" class="text-primary font-medium border-b-2 border-primary py-1">客服</a>
+            </nav>
+            
+            <!-- 用户操作区 -->
+            <div id="user-actions" class="flex items-center space-x-4">
+                <button id="search-btn" class="p-2 text-text-secondary hover:text-primary transition-colors">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button id="notification-btn" class="p-2 text-text-secondary hover:text-primary transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-danger rounded-full"></span>
+                </button>
+                <div id="user-profile" class="flex items-center space-x-2 cursor-pointer">
+                    <img src="https://s.coze.cn/image/6C-wUSdwu3w/" 
+                         alt="用户头像" class="w-8 h-8 rounded-full" data-category="人物">
+                    <span class="text-text-primary font-medium">张先生</span>
+                    <i class="fas fa-chevron-down text-text-secondary text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主布局容器 -->
+    <div id="main-layout" class="flex pt-16">
+        <!-- 左侧菜单 -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-border-light min-h-screen">
+            <nav id="sidebar-nav" class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="nav-home" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-home text-lg"></i>
+                            <span class="font-medium">首页</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-accounting" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-calculator text-lg"></i>
+                            <span class="font-medium">智能记账</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-analysis" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-chart-bar text-lg"></i>
+                            <span class="font-medium">消费分析</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-planning" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-target text-lg"></i>
+                            <span class="font-medium">财务规划</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-products" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-coins text-lg"></i>
+                            <span class="font-medium">理财产品</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-service" class="sidebar-item active flex items-center space-x-3 px-4 py-3 rounded-lg transition-all">
+                            <i class="fas fa-comments text-lg"></i>
+                            <span class="font-medium">智能客服</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-settings" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-cog text-lg"></i>
+                            <span class="font-medium">个人中心</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main id="main-content" class="flex-1 p-6">
+            <!-- 页面头部 -->
+            <div id="page-header" class="mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-text-primary mb-1">智能客服</h2>
+                        <nav id="breadcrumb" class="text-sm text-text-secondary">
+                            <span>智能客服</span>
+                        </nav>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-success rounded-full mr-2"></div>
+                        <span class="text-sm text-success font-medium">在线</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 智能客服主容器 -->
+            <div id="chat-container" class="gradient-card rounded-xl shadow-card overflow-hidden">
+                <!-- 对话区域 -->
+                <div id="chat-messages" class="chat-container p-6 space-y-4">
+                    <!-- 欢迎消息 -->
+                    <div id="welcome-message" class="flex items-start space-x-3">
+                        <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div class="chat-bubble-bot max-w-md p-4 shadow-sm">
+                            <p class="text-sm text-text-primary">您好！我是金智通智能客服，很高兴为您服务。我可以帮您解答记账、理财、规划等方面的问题。请问有什么可以帮助您的吗？</p>
+                        </div>
+                    </div>
+
+                    <!-- 正在输入指示器 -->
+                    <div id="typing-indicator" class="typing-indicator items-start space-x-3">
+                        <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <div class="bg-white border border-border-light rounded-lg p-4 shadow-sm">
+                            <div class="flex space-x-1">
+                                <div class="w-2 h-2 bg-text-secondary rounded-full typing-dot"></div>
+                                <div class="w-2 h-2 bg-text-secondary rounded-full typing-dot"></div>
+                                <div class="w-2 h-2 bg-text-secondary rounded-full typing-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 输入区域 -->
+                <div id="chat-input-area" class="border-t border-border-light p-6">
+                    <div class="flex items-end space-x-3">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <textarea 
+                                    id="chat-input" 
+                                    class="chat-input w-full px-4 py-3 border border-border-light rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                    rows="1"
+                                    placeholder="请输入您的问题..."
+                                    maxlength="500"
+                                ></textarea>
+                                <button id="send-btn" class="absolute right-2 bottom-2 w-8 h-8 gradient-bg rounded-lg flex items-center justify-center text-white hover:shadow-lg transition-all">
+                                    <i class="fas fa-paper-plane text-sm"></i>
+                                </button>
+                            </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <div class="flex space-x-2">
+                                    <button id="quick-question-1" class="quick-question px-3 py-1 text-xs bg-bg-light text-text-secondary rounded-full transition-all">如何添加交易？</button>
+                                    <button id="quick-question-2" class="quick-question px-3 py-1 text-xs bg-bg-light text-text-secondary rounded-full transition-all">什么是财务规划？</button>
+                                    <button id="quick-question-3" class="quick-question px-3 py-1 text-xs bg-bg-light text-text-secondary rounded-full transition-all">如何选择理财产品？</button>
+                                </div>
+                                <span id="char-count" class="text-xs text-text-secondary">0/500</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 常见问题/热门话题区 -->
+            <div id="faq-section" class="mt-6">
+                <div class="gradient-card rounded-xl p-6 shadow-card">
+                    <h3 class="text-lg font-semibold text-text-primary mb-4">常见问题</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div id="faq-item-1" class="p-4 bg-bg-light rounded-lg hover:bg-primary hover:text-white transition-all cursor-pointer">
+                            <h4 class="font-medium mb-2">如何添加银行账户？</h4>
+                            <p class="text-sm text-text-secondary">了解如何安全地添加和管理您的银行账户</p>
+                        </div>
+                        <div id="faq-item-2" class="p-4 bg-bg-light rounded-lg hover:bg-primary hover:text-white transition-all cursor-pointer">
+                            <h4 class="font-medium mb-2">智能记账的工作原理？</h4>
+                            <p class="text-sm text-text-secondary">了解我们的AI如何自动分类和记录您的交易</p>
+                        </div>
+                        <div id="faq-item-3" class="p-4 bg-bg-light rounded-lg hover:bg-primary hover:text-white transition-all cursor-pointer">
+                            <h4 class="font-medium mb-2">风险测评有什么用？</h4>
+                            <p class="text-sm text-text-secondary">了解风险测评如何帮助您选择合适的理财产品</p>
+                        </div>
+                        <div id="faq-item-4" class="p-4 bg-bg-light rounded-lg hover:bg-primary hover:text-white transition-all cursor-pointer">
+                            <h4 class="font-medium mb-2">如何查看消费分析报告？</h4>
+                            <p class="text-sm text-text-secondary">学习如何生成和解读您的个人消费分析报告</p>
+                        </div>
+                        <div id="faq-item-5" class="p-4 bg-bg-light rounded-lg hover:bg-primary hover:text-white transition-all cursor-pointer">
+                            <h4 class="font-medium mb-2">理财产品赎回规则？</h4>
+                            <p class="text-sm text-text-secondary">了解不同理财产品的赎回条件和费用</p>
+                        </div>
+                        <div id="faq-item-6" class="p-4 bg-bg-light rounded-lg hover:bg-primary hover:text-white transition-all cursor-pointer">
+                            <h4 class="font-medium mb-2">数据安全与隐私保护？</h4>
+                            <p class="text-sm text-text-secondary">了解我们如何保护您的财务数据安全</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 侧边栏导航交互
+            document.querySelector('#nav-home').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-HOME.html';
+            });
+
+            document.querySelector('#nav-accounting').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-ACCOUNTING.html';
+            });
+
+            document.querySelector('#nav-analysis').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CONSUMPTION_ANALYSIS.html';
+            });
+
+            document.querySelector('#nav-planning').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PLANNING.html';
+            });
+
+            document.querySelector('#nav-products').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PRODUCTS.html';
+            });
+
+            document.querySelector('#nav-service').addEventListener('click', function(e) {
+                e.preventDefault();
+                // 已在智能客服页面，无需操作
+            });
+
+            document.querySelector('#nav-settings').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-USER_SETTINGS.html';
+            });
+
+            // 聊天输入框自动调整高度
+            const chatInput = document.querySelector('#chat-input');
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+                
+                // 更新字符计数
+                const charCount = document.querySelector('#char-count');
+                charCount.textContent = `${this.value.length}/500`;
+            });
+
+            // 发送消息功能
+            function sendMessage(message) {
+                if (!message.trim()) return;
+
+                const chatMessages = document.querySelector('#chat-messages');
+                const typingIndicator = document.querySelector('#typing-indicator');
+                
+                // 隐藏正在输入指示器
+                typingIndicator.classList.remove('active');
+                
+                // 添加用户消息
+                const userMessage = document.createElement('div');
+                userMessage.className = 'flex items-start justify-end space-x-3';
+                userMessage.innerHTML = `
+                    <div class="chat-bubble-user max-w-md p-4 shadow-sm">
+                        <p class="text-sm">${message}</p>
+                    </div>
+                    <img src="https://s.coze.cn/image/naBkmaCk7jI/" 
+                         alt="用户头像" class="w-8 h-8 rounded-full flex-shrink-0" data-category="人物">
+                `;
+                chatMessages.appendChild(userMessage);
+                
+                // 清空输入框
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                document.querySelector('#char-count').textContent = '0/500';
+                
+                // 显示正在输入指示器
+                setTimeout(() => {
+                    typingIndicator.classList.add('active');
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 500);
+                
+                // 模拟AI回复
+                setTimeout(() => {
+                    typingIndicator.classList.remove('active');
+                    generateAIResponse(message);
+                }, 2000);
+                
+                // 滚动到底部
+                setTimeout(() => {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 100);
+            }
+
+            // 生成AI回复
+            function generateAIResponse(userMessage) {
+                const chatMessages = document.querySelector('#chat-messages');
+                let aiResponse = '';
+                
+                // 简单的关键词匹配来生成回复
+                if (userMessage.includes('添加交易') || userMessage.includes('记账')) {
+                    aiResponse = `
+                        <p class="text-sm text-text-primary mb-3">添加交易很简单，您可以：</p>
+                        <ul class="text-sm text-text-primary space-y-1 mb-3">
+                            <li>• 点击首页的"添加交易"按钮</li>
+                            <li>• 或者在智能记账页面点击"添加新交易"</li>
+                            <li>• 支持手动录入或导入银行流水</li>
+                        </ul>
+                        <p class="text-sm text-text-primary">需要我为您<a href="#" class="chat-link" data-action="navigate" data-target="P-ACCOUNTING">跳转到智能记账页面</a>吗？</p>
+                    `;
+                } else if (userMessage.includes('财务规划') || userMessage.includes('规划')) {
+                    aiResponse = `
+                        <p class="text-sm text-text-primary mb-3">财务规划是根据您的财务状况和目标制定的个性化方案，包括：</p>
+                        <ul class="text-sm text-text-primary space-y-1 mb-3">
+                            <li>• 预算管理和储蓄计划</li>
+                            <li>• 债务优化和信用管理</li>
+                            <li>• 投资策略和风险控制</li>
+                        </ul>
+                        <p class="text-sm text-text-primary">您可以<a href="#" class="chat-link" data-action="navigate" data-target="P-FINANCIAL_PLANNING">查看您的财务规划</a>或创建新的规划方案。</p>
+                    `;
+                } else if (userMessage.includes('理财产品') || userMessage.includes('理财') || userMessage.includes('投资')) {
+                    aiResponse = `
+                        <p class="text-sm text-text-primary mb-3">选择理财产品需要考虑您的风险承受能力和投资目标。建议您：</p>
+                        <ul class="text-sm text-text-primary space-y-1 mb-3">
+                            <li>• 先完成<a href="#" class="chat-link" data-action="risk-assessment">风险测评</a>了解自己的风险偏好</li>
+                            <li>• 查看我们为您推荐的<a href="#" class="chat-link" data-action="navigate" data-target="P-FINANCIAL_PRODUCTS">理财产品</a></li>
+                            <li>• 关注产品的风险等级和预期收益</li>
+                        </ul>
+                        <p class="text-sm text-text-primary">需要我为您推荐合适的理财产品吗？</p>
+                    `;
+                } else if (userMessage.includes('消费分析') || userMessage.includes('分析')) {
+                    aiResponse = `
+                        <p class="text-sm text-text-primary mb-3">消费分析可以帮助您：</p>
+                        <ul class="text-sm text-text-primary space-y-1 mb-3">
+                            <li>• 了解消费趋势和习惯</li>
+                            <li>• 发现消费优化空间</li>
+                            <li>• 制定更合理的预算计划</li>
+                        </ul>
+                        <p class="text-sm text-text-primary">您可以<a href="#" class="chat-link" data-action="navigate" data-target="P-CONSUMPTION_ANALYSIS">查看详细的消费分析报告</a>。</p>
+                    `;
+                } else if (userMessage.includes('账户') || userMessage.includes('银行')) {
+                    aiResponse = `
+                        <p class="text-sm text-text-primary mb-3">管理银行账户的方法：</p>
+                        <ul class="text-sm text-text-primary space-y-1 mb-3">
+                            <li>• 在个人中心可以添加或解绑银行账户</li>
+                            <li>• 支持多家银行的储蓄卡和信用卡</li>
+                            <li>• 所有数据传输都经过加密保护</li>
+                        </ul>
+                        <p class="text-sm text-text-primary">需要我为您<a href="#" class="chat-link" data-action="navigate" data-target="P-USER_SETTINGS">跳转到账户管理页面</a>吗？</p>
+                    `;
+                } else {
+                    aiResponse = `
+                        <p class="text-sm text-text-primary mb-3">感谢您的咨询！我理解您的问题。</p>
+                        <p class="text-sm text-text-primary mb-3">如果您有以下方面的问题，我可以为您提供更详细的解答：</p>
+                        <ul class="text-sm text-text-primary space-y-1 mb-3">
+                            <li>• 智能记账和交易管理</li>
+                            <li>• 消费分析和财务报告</li>
+                            <li>• 个性化财务规划</li>
+                            <li>• 理财产品推荐和投资建议</li>
+                            <li>• 账户安全和隐私保护</li>
+                        </ul>
+                        <p class="text-sm text-text-primary">您可以具体说明您想了解的方面，我会为您提供专业的帮助。</p>
+                    `;
+                }
+                
+                // 添加AI回复
+                const aiMessage = document.createElement('div');
+                aiMessage.className = 'flex items-start space-x-3';
+                aiMessage.innerHTML = `
+                    <div class="w-8 h-8 gradient-bg rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot text-white text-sm"></i>
+                    </div>
+                    <div class="chat-bubble-bot max-w-md p-4 shadow-sm">
+                        ${aiResponse}
+                    </div>
+                `;
+                chatMessages.appendChild(aiMessage);
+                
+                // 为回复中的链接添加事件监听
+                setTimeout(() => {
+                    attachChatLinkListeners();
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 100);
+            }
+
+            // 为聊天中的链接添加事件监听
+            function attachChatLinkListeners() {
+                document.querySelectorAll('.chat-link').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        const action = this.dataset.action;
+                        const target = this.dataset.target;
+                        
+                        if (action === 'navigate' && target) {
+                            // 跳转到指定页面
+                            window.location.href = `${target}.html`;
+                        } else if (action === 'risk-assessment') {
+                            // 打开风险测评弹窗
+                            console.log('打开风险测评弹窗');
+                            // 这里可以打开风险测评弹窗
+                        } else if (action === 'product-detail') {
+                            // 打开产品详情
+                            const productId = this.dataset.productId;
+                            console.log('打开产品详情:', productId);
+                            // 这里可以打开产品详情抽屉
+                        }
+                    });
+                });
+            }
+
+            // 发送按钮点击事件
+            document.querySelector('#send-btn').addEventListener('click', function() {
+                const message = chatInput.value.trim();
+                sendMessage(message);
+            });
+
+            // 输入框回车发送消息（Shift+Enter换行）
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const message = this.value.trim();
+                    sendMessage(message);
+                }
+            });
+
+            // 快捷问题点击事件
+            document.querySelector('#quick-question-1').addEventListener('click', function() {
+                sendMessage('如何添加交易？');
+            });
+
+            document.querySelector('#quick-question-2').addEventListener('click', function() {
+                sendMessage('什么是财务规划？');
+            });
+
+            document.querySelector('#quick-question-3').addEventListener('click', function() {
+                sendMessage('如何选择理财产品？');
+            });
+
+            // 常见问题点击事件
+            document.querySelectorAll('[id^="faq-item-"]').forEach(item => {
+                item.addEventListener('click', function() {
+                    const question = this.querySelector('h4').textContent;
+                    sendMessage(question);
+                });
+            });
+
+            // 初始化滚动到底部
+            setTimeout(() => {
+                const chatMessages = document.querySelector('#chat-messages');
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金智通 - 智能记账</title>
+    <script src="https://unpkg.byted-static.com/coze/space_ppt_lib/1.0.3-alpha.12/lib/tailwindcss.js"></script>
+    <script src="https://unpkg.byted-static.com/fortawesome/fontawesome-free/6.7.2/js/all.min.js" data-auto-replace-svg="nest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#969FFF',
+                        secondary: '#5147FF', 
+                        accent: '#3E3987',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        'text-primary': '#1F2937',
+                        'text-secondary': '#6B7280',
+                        'bg-light': '#F9FAFB',
+                        'border-light': '#E5E7EB'
+                    },
+                    boxShadow: {
+                        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+        }
+        
+        .gradient-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .sidebar-item:hover {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .sidebar-item.active {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .transaction-row:hover {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+        
+        .table-checkbox:checked + .transaction-row {
+            background: linear-gradient(135deg, #969FFF 0%, #5147FF 100%);
+            color: white;
+        }
+        
+        .table-checkbox:checked + .transaction-row .text-text-secondary {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .filter-dropdown {
+            display: none;
+        }
+        
+        .filter-dropdown.show {
+            display: block;
+        }
+        
+        .sort-icon {
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+        
+        .sort-asc .sort-icon {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+        
+        .sort-desc .sort-icon {
+            opacity: 1;
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-bg-light min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header id="top-navbar" class="fixed top-0 left-0 right-0 bg-white border-b border-border-light z-50 h-16">
+        <div class="flex items-center justify-between h-full px-6">
+            <!-- Logo和品牌 -->
+            <div id="brand-section" class="flex items-center space-x-3">
+                <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold gradient-text">金智通</h1>
+            </div>
+            
+            <!-- 主导航 -->
+            <nav id="main-nav" class="hidden md:flex items-center space-x-8">
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">首页</a>
+                <a href="#" class="text-primary font-medium border-b-2 border-primary py-1">记账</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">分析</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">规划</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">产品</a>
+                <a href="#" class="text-text-secondary hover:text-primary py-1 transition-colors">客服</a>
+            </nav>
+            
+            <!-- 用户操作区 -->
+            <div id="user-actions" class="flex items-center space-x-4">
+                <button id="search-btn" class="p-2 text-text-secondary hover:text-primary transition-colors">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button id="notification-btn" class="p-2 text-text-secondary hover:text-primary transition-colors relative">
+                    <i class="fas fa-bell"></i>
+                    <span class="absolute -top-1 -right-1 w-3 h-3 bg-danger rounded-full"></span>
+                </button>
+                <div id="user-profile" class="flex items-center space-x-2 cursor-pointer">
+                    <img src="https://s.coze.cn/image/7XpnQ81VF7w/" 
+                         alt="用户头像" class="w-8 h-8 rounded-full" data-category="人物">
+                    <span class="text-text-primary font-medium">张先生</span>
+                    <i class="fas fa-chevron-down text-text-secondary text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主布局容器 -->
+    <div id="main-layout" class="flex pt-16">
+        <!-- 左侧菜单 -->
+        <aside id="sidebar" class="w-64 bg-white border-r border-border-light min-h-screen">
+            <nav id="sidebar-nav" class="p-4">
+                <ul class="space-y-2">
+                    <li>
+                        <a href="#" id="nav-home" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-home text-lg"></i>
+                            <span class="font-medium">首页</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-accounting" class="sidebar-item active flex items-center space-x-3 px-4 py-3 rounded-lg transition-all">
+                            <i class="fas fa-calculator text-lg"></i>
+                            <span class="font-medium">智能记账</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-analysis" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-chart-bar text-lg"></i>
+                            <span class="font-medium">消费分析</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-planning" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-target text-lg"></i>
+                            <span class="font-medium">财务规划</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-products" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-coins text-lg"></i>
+                            <span class="font-medium">理财产品</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-service" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-comments text-lg"></i>
+                            <span class="font-medium">智能客服</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="nav-settings" class="sidebar-item flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-text-secondary">
+                            <i class="fas fa-cog text-lg"></i>
+                            <span class="font-medium">个人中心</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main id="main-content" class="flex-1 p-6">
+            <!-- 页面头部 -->
+            <div id="page-header" class="mb-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-text-primary mb-1">智能记账</h2>
+                        <nav id="breadcrumb" class="text-sm text-text-secondary">
+                            <span>首页</span>
+                            <span class="mx-2">/</span>
+                            <span>智能记账</span>
+                        </nav>
+                    </div>
+                    <button id="add-transaction-btn" class="gradient-bg text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all">
+                        <i class="fas fa-plus mr-2"></i>
+                        添加新交易
+                    </button>
+                </div>
+            </div>
+
+            <!-- 工具栏区域 -->
+            <div id="toolbar" class="gradient-card rounded-xl p-4 shadow-card mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                    <!-- 搜索和筛选 -->
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 flex-1">
+                        <!-- 搜索框 -->
+                        <div class="relative flex-1 max-w-md">
+                            <input type="text" id="search-input" placeholder="搜索交易描述、分类..." 
+                                   class="w-full pl-10 pr-4 py-2 border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary"></i>
+                        </div>
+                        
+                        <!-- 分类筛选 -->
+                        <div class="relative">
+                            <button id="category-filter-btn" class="flex items-center space-x-2 px-4 py-2 border border-border-light rounded-lg hover:border-primary transition-colors">
+                                <span>分类</span>
+                                <i class="fas fa-chevron-down text-text-secondary"></i>
+                            </button>
+                            <div id="category-dropdown" class="filter-dropdown absolute top-full left-0 mt-1 w-48 bg-white border border-border-light rounded-lg shadow-lg z-10">
+                                <div class="p-2">
+                                    <label class="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox" class="category-checkbox" value="all" checked>
+                                        <span>全部</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox" class="category-checkbox" value="餐饮">
+                                        <span>餐饮</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox" class="category-checkbox" value="购物">
+                                        <span>购物</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox" class="category-checkbox" value="交通">
+                                        <span>交通</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox" class="category-checkbox" value="工资">
+                                        <span>工资</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                        <input type="checkbox" class="category-checkbox" value="投资">
+                                        <span>投资</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 时间范围选择 -->
+                        <div class="relative">
+                            <button id="time-filter-btn" class="flex items-center space-x-2 px-4 py-2 border border-border-light rounded-lg hover:border-primary transition-colors">
+                                <span>最近7天</span>
+                                <i class="fas fa-chevron-down text-text-secondary"></i>
+                            </button>
+                            <div id="time-dropdown" class="filter-dropdown absolute top-full left-0 mt-1 w-48 bg-white border border-border-light rounded-lg shadow-lg z-10">
+                                <div class="p-2">
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer time-option" data-value="7">最近7天</div>
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer time-option" data-value="30">最近30天</div>
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer time-option" data-value="90">最近3个月</div>
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer time-option" data-value="365">最近1年</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 账户切换 -->
+                        <div class="relative">
+                            <button id="account-filter-btn" class="flex items-center space-x-2 px-4 py-2 border border-border-light rounded-lg hover:border-primary transition-colors">
+                                <span>全部账户</span>
+                                <i class="fas fa-chevron-down text-text-secondary"></i>
+                            </button>
+                            <div id="account-dropdown" class="filter-dropdown absolute top-full left-0 mt-1 w-48 bg-white border border-border-light rounded-lg shadow-lg z-10">
+                                <div class="p-2">
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer account-option" data-value="all">全部账户</div>
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer account-option" data-value="招商银行储蓄卡">招商银行储蓄卡</div>
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer account-option" data-value="工商银行储蓄卡">工商银行储蓄卡</div>
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer account-option" data-value="支付宝">支付宝</div>
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer account-option" data-value="建设银行储蓄卡">建设银行储蓄卡</div>
+                                    <div class="p-2 hover:bg-gray-50 rounded cursor-pointer account-option" data-value="交通卡">交通卡</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 批量操作 -->
+                    <div id="batch-operations" class="flex items-center space-x-3 opacity-50 pointer-events-none transition-all">
+                        <button id="batch-edit-btn" class="px-4 py-2 border border-border-light rounded-lg hover:border-primary transition-colors">
+                            <i class="fas fa-edit mr-2"></i>批量编辑
+                        </button>
+                        <button id="batch-delete-btn" class="px-4 py-2 border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
+                            <i class="fas fa-trash mr-2"></i>批量删除
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 交易记录列表 -->
+            <section id="transaction-list" class="mb-6">
+                <div class="gradient-card rounded-xl shadow-card overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table id="transactions-table" class="w-full">
+                            <thead class="bg-gray-50 border-b border-border-light">
+                                <tr>
+                                    <th class="text-left py-3 px-4 w-10">
+                                        <input type="checkbox" id="select-all-checkbox" class="rounded border-border-light">
+                                    </th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary cursor-pointer hover:text-primary transition-colors sortable-header" data-sort="time">
+                                        交易时间
+                                        <i class="fas fa-sort ml-1 sort-icon"></i>
+                                    </th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">交易描述</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary cursor-pointer hover:text-primary transition-colors sortable-header" data-sort="category">
+                                        分类
+                                        <i class="fas fa-sort ml-1 sort-icon"></i>
+                                    </th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary cursor-pointer hover:text-primary transition-colors sortable-header" data-sort="amount">
+                                        金额
+                                        <i class="fas fa-sort ml-1 sort-icon"></i>
+                                    </th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary cursor-pointer hover:text-primary transition-colors sortable-header" data-sort="account">
+                                        账户
+                                        <i class="fas fa-sort ml-1 sort-icon"></i>
+                                    </th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">备注</th>
+                                    <th class="text-left py-3 px-4 text-sm font-medium text-text-secondary">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-tbody">
+                                <!-- 交易记录将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 空状态 -->
+                    <div id="empty-state" class="hidden text-center py-16">
+                        <div class="w-24 h-24 mx-auto mb-4 gradient-bg rounded-full flex items-center justify-center">
+                            <i class="fas fa-calculator text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-text-primary mb-2">暂无交易记录</h3>
+                        <p class="text-text-secondary mb-6">开始记录您的第一笔交易吧</p>
+                        <button id="empty-add-transaction-btn" class="gradient-bg text-white px-6 py-2 rounded-lg font-medium">
+                            <i class="fas fa-plus mr-2"></i>添加交易
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分页区域 -->
+            <div id="pagination" class="flex items-center justify-between">
+                <div class="text-sm text-text-secondary">
+                    共 <span id="total-count">0</span> 条记录，每页显示 
+                    <select id="page-size-select" class="border border-border-light rounded px-2 py-1 text-sm">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                    </select> 条
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="prev-page-btn" class="px-3 py-1 border border-border-light rounded hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div id="page-numbers" class="flex items-center space-x-1">
+                        <!-- 页码按钮将通过JavaScript动态生成 -->
+                    </div>
+                    <button id="next-page-btn" class="px-3 py-1 border border-border-light rounded hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 模拟交易数据
+        const mockTransactions = [
+            {
+                id: 'tx001',
+                time: '2024-01-15 14:30',
+                description: '星巴克咖啡',
+                category: '餐饮',
+                amount: -45.00,
+                account: '招商银行储蓄卡',
+                note: '下午茶'
+            },
+            {
+                id: 'tx002',
+                time: '2024-01-15 10:15',
+                description: '工资收入',
+                category: '工资',
+                amount: 15680.00,
+                account: '工商银行储蓄卡',
+                note: '月度工资'
+            },
+            {
+                id: 'tx003',
+                time: '2024-01-14 19:45',
+                description: '超市购物',
+                category: '购物',
+                amount: -236.80,
+                account: '支付宝',
+                note: '生活用品'
+            },
+            {
+                id: 'tx004',
+                time: '2024-01-14 16:20',
+                description: '理财产品申购',
+                category: '投资',
+                amount: -10000.00,
+                account: '建设银行储蓄卡',
+                note: '稳健理财'
+            },
+            {
+                id: 'tx005',
+                time: '2024-01-14 09:30',
+                description: '地铁出行',
+                category: '交通',
+                amount: -6.00,
+                account: '交通卡',
+                note: '上班通勤'
+            },
+            {
+                id: 'tx006',
+                time: '2024-01-13 20:15',
+                description: '餐厅晚餐',
+                category: '餐饮',
+                amount: -158.50,
+                account: '招商银行储蓄卡',
+                note: '朋友聚餐'
+            },
+            {
+                id: 'tx007',
+                time: '2024-01-13 15:30',
+                description: '网购衣服',
+                category: '购物',
+                amount: -299.00,
+                account: '支付宝',
+                note: '冬季外套'
+            },
+            {
+                id: 'tx008',
+                time: '2024-01-12 11:20',
+                description: '打车',
+                category: '交通',
+                amount: -35.00,
+                account: '支付宝',
+                note: '机场接送'
+            },
+            {
+                id: 'tx009',
+                time: '2024-01-12 08:45',
+                description: '早餐',
+                category: '餐饮',
+                amount: -12.50,
+                account: '交通卡',
+                note: '包子铺'
+            },
+            {
+                id: 'tx010',
+                time: '2024-01-11 16:00',
+                description: '理财产品赎回',
+                category: '投资',
+                amount: 50500.00,
+                account: '建设银行储蓄卡',
+                note: '到期赎回'
+            }
+        ];
+
+        // 全局变量
+        let currentPage = 1;
+        let pageSize = 20;
+        let totalCount = mockTransactions.length;
+        let filteredTransactions = [...mockTransactions];
+        let selectedTransactions = new Set();
+        let sortField = '';
+        let sortDirection = 'asc';
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            bindEvents();
+            renderTransactions();
+            updatePagination();
+        });
+
+        function initializePage() {
+            // 初始化页面状态
+            totalCount = mockTransactions.length;
+        }
+
+        function bindEvents() {
+            // 侧边栏导航
+            document.querySelector('#nav-home').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-HOME.html';
+            });
+
+            document.querySelector('#nav-analysis').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CONSUMPTION_ANALYSIS.html';
+            });
+
+            document.querySelector('#nav-planning').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PLANNING.html';
+            });
+
+            document.querySelector('#nav-products').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-FINANCIAL_PRODUCTS.html';
+            });
+
+            document.querySelector('#nav-service').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-CUSTOMER_SERVICE.html';
+            });
+
+            document.querySelector('#nav-settings').addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = 'P-USER_SETTINGS.html';
+            });
+
+            // 添加交易按钮
+            document.querySelector('#add-transaction-btn').addEventListener('click', function() {
+                console.log('打开添加交易弹窗');
+                // 实际项目中这里会打开P-ADD_TRANSACTION弹窗
+            });
+
+            document.querySelector('#empty-add-transaction-btn').addEventListener('click', function() {
+                console.log('打开添加交易弹窗');
+                // 实际项目中这里会打开P-ADD_TRANSACTION弹窗
+            });
+
+            // 搜索功能
+            document.querySelector('#search-input').addEventListener('input', function() {
+                applyFilters();
+            });
+
+            // 分类筛选
+            document.querySelector('#category-filter-btn').addEventListener('click', function() {
+                const dropdown = document.querySelector('#category-dropdown');
+                dropdown.classList.toggle('show');
+            });
+
+            // 时间筛选
+            document.querySelector('#time-filter-btn').addEventListener('click', function() {
+                const dropdown = document.querySelector('#time-dropdown');
+                dropdown.classList.toggle('show');
+            });
+
+            // 账户筛选
+            document.querySelector('#account-filter-btn').addEventListener('click', function() {
+                const dropdown = document.querySelector('#account-dropdown');
+                dropdown.classList.toggle('show');
+            });
+
+            // 分类选择
+            document.querySelectorAll('.category-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    if (this.value === 'all') {
+                        // 全选/取消全选
+                        const isChecked = this.checked;
+                        document.querySelectorAll('.category-checkbox:not([value="all"])').forEach(cb => {
+                            cb.checked = isChecked;
+                        });
+                    } else {
+                        // 更新全选状态
+                        const allCheckboxes = document.querySelectorAll('.category-checkbox:not([value="all"])');
+                        const checkedCheckboxes = document.querySelectorAll('.category-checkbox:not([value="all"]):checked');
+                        document.querySelector('.category-checkbox[value="all"]').checked = 
+                            allCheckboxes.length === checkedCheckboxes.length;
+                    }
+                    applyFilters();
+                });
+            });
+
+            // 时间选择
+            document.querySelectorAll('.time-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const value = this.dataset.value;
+                    const text = this.textContent;
+                    document.querySelector('#time-filter-btn span').textContent = text;
+                    document.querySelector('#time-dropdown').classList.remove('show');
+                    applyFilters();
+                });
+            });
+
+            // 账户选择
+            document.querySelectorAll('.account-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const value = this.dataset.value;
+                    const text = this.textContent;
+                    document.querySelector('#account-filter-btn span').textContent = text;
+                    document.querySelector('#account-dropdown').classList.remove('show');
+                    applyFilters();
+                });
+            });
+
+            // 全选复选框
+            document.querySelector('#select-all-checkbox').addEventListener('change', function() {
+                const isChecked = this.checked;
+                const currentPageTransactions = getCurrentPageTransactions();
+                
+                currentPageTransactions.forEach(tx => {
+                    if (isChecked) {
+                        selectedTransactions.add(tx.id);
+                    } else {
+                        selectedTransactions.delete(tx.id);
+                    }
+                });
+                
+                updateBatchOperations();
+                renderTransactions();
+            });
+
+            // 批量操作
+            document.querySelector('#batch-edit-btn').addEventListener('click', function() {
+                if (selectedTransactions.size > 0) {
+                    console.log('批量编辑选中的交易:', Array.from(selectedTransactions));
+                    // 实际项目中这里会打开批量编辑功能
+                }
+            });
+
+            document.querySelector('#batch-delete-btn').addEventListener('click', function() {
+                if (selectedTransactions.size > 0) {
+                    if (confirm(`确定要删除选中的 ${selectedTransactions.size} 笔交易吗？`)) {
+                        console.log('批量删除选中的交易:', Array.from(selectedTransactions));
+                        // 实际项目中这里会执行删除操作
+                        selectedTransactions.clear();
+                        updateBatchOperations();
+                        renderTransactions();
+                    }
+                }
+            });
+
+            // 表格排序
+            document.querySelectorAll('.sortable-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const field = this.dataset.sort;
+                    if (sortField === field) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortField = field;
+                        sortDirection = 'asc';
+                    }
+                    applySorting();
+                    renderTransactions();
+                    updateSortIcons();
+                });
+            });
+
+            // 分页
+            document.querySelector('#page-size-select').addEventListener('change', function() {
+                pageSize = parseInt(this.value);
+                currentPage = 1;
+                renderTransactions();
+                updatePagination();
+            });
+
+            document.querySelector('#prev-page-btn').addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTransactions();
+                    updatePagination();
+                }
+            });
+
+            document.querySelector('#next-page-btn').addEventListener('click', function() {
+                const totalPages = Math.ceil(filteredTransactions.length / pageSize);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTransactions();
+                    updatePagination();
+                }
+            });
+
+            // 点击其他地方关闭下拉菜单
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#category-filter-btn') && !e.target.closest('#category-dropdown')) {
+                    document.querySelector('#category-dropdown').classList.remove('show');
+                }
+                if (!e.target.closest('#time-filter-btn') && !e.target.closest('#time-dropdown')) {
+                    document.querySelector('#time-dropdown').classList.remove('show');
+                }
+                if (!e.target.closest('#account-filter-btn') && !e.target.closest('#account-dropdown')) {
+                    document.querySelector('#account-dropdown').classList.remove('show');
+                }
+            });
+        }
+
+        function applyFilters() {
+            const searchTerm = document.querySelector('#search-input').value.toLowerCase();
+            const selectedCategories = Array.from(document.querySelectorAll('.category-checkbox:checked:not([value="all"])'))
+                .map(cb => cb.value);
+            const selectedAccount = document.querySelector('.account-option.selected')?.dataset.value || 'all';
+            
+            filteredTransactions = mockTransactions.filter(tx => {
+                // 搜索过滤
+                const matchesSearch = !searchTerm || 
+                    tx.description.toLowerCase().includes(searchTerm) ||
+                    tx.category.toLowerCase().includes(searchTerm) ||
+                    tx.account.toLowerCase().includes(searchTerm);
+                
+                // 分类过滤
+                const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(tx.category);
+                
+                // 账户过滤
+                const matchesAccount = selectedAccount === 'all' || tx.account === selectedAccount;
+                
+                return matchesSearch && matchesCategory && matchesAccount;
+            });
+            
+            applySorting();
+            currentPage = 1;
+            renderTransactions();
+            updatePagination();
+        }
+
+        function applySorting() {
+            if (!sortField) return;
+            
+            filteredTransactions.sort((a, b) => {
+                let aValue = a[sortField];
+                let bValue = b[sortField];
+                
+                if (sortField === 'time') {
+                    aValue = new Date(aValue);
+                    bValue = new Date(bValue);
+                } else if (sortField === 'amount') {
+                    aValue = parseFloat(aValue);
+                    bValue = parseFloat(bValue);
+                }
+                
+                if (sortDirection === 'asc') {
+                    return aValue > bValue ? 1 : -1;
+                } else {
+                    return aValue < bValue ? 1 : -1;
+                }
+            });
+        }
+
+        function updateSortIcons() {
+            document.querySelectorAll('.sortable-header').forEach(header => {
+                header.classList.remove('sort-asc', 'sort-desc');
+                if (header.dataset.sort === sortField) {
+                    header.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+
+        function getCurrentPageTransactions() {
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            return filteredTransactions.slice(startIndex, endIndex);
+        }
+
+        function renderTransactions() {
+            const tbody = document.querySelector('#transactions-tbody');
+            const emptyState = document.querySelector('#empty-state');
+            const currentPageTransactions = getCurrentPageTransactions();
+            
+            if (currentPageTransactions.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            tbody.innerHTML = currentPageTransactions.map(tx => `
+                <tr class="transaction-row border-b border-border-light transition-all ${selectedTransactions.has(tx.id) ? 'bg-primary text-white' : ''}">
+                    <td class="py-3 px-4">
+                        <input type="checkbox" class="transaction-checkbox rounded border-border-light" data-id="${tx.id}" ${selectedTransactions.has(tx.id) ? 'checked' : ''}>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-text-primary">${tx.time}</td>
+                    <td class="py-3 px-4 text-sm text-text-primary">${tx.description}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 ${getCategoryColor(tx.category)} text-xs rounded-full">${tx.category}</span>
+                    </td>
+                    <td class="py-3 px-4 text-sm font-medium ${tx.amount >= 0 ? 'text-success' : 'text-danger'}">
+                        ${tx.amount >= 0 ? '+' : ''}¥${tx.amount.toFixed(2)}
+                    </td>
+                    <td class="py-3 px-4 text-sm text-text-secondary">${tx.account}</td>
+                    <td class="py-3 px-4 text-sm text-text-secondary">${tx.note}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex space-x-2">
+                            <button class="view-transaction-btn text-primary text-sm hover:underline" data-id="${tx.id}">详情</button>
+                            <button class="edit-transaction-btn text-text-secondary text-sm hover:text-primary" data-id="${tx.id}">编辑</button>
+                            <button class="delete-transaction-btn text-danger text-sm hover:underline" data-id="${tx.id}">删除</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // 绑定行内操作按钮事件
+            tbody.querySelectorAll('.view-transaction-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const txId = this.dataset.id;
+                    console.log('查看交易详情:', txId);
+                    // 实际项目中这里会打开P-TRANSACTION_DETAIL弹窗
+                });
+            });
+            
+            tbody.querySelectorAll('.edit-transaction-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const txId = this.dataset.id;
+                    console.log('编辑交易:', txId);
+                    // 实际项目中这里会打开P-ADD_TRANSACTION弹窗进行编辑
+                });
+            });
+            
+            tbody.querySelectorAll('.delete-transaction-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const txId = this.dataset.id;
+                    if (confirm('确定要删除这笔交易吗？')) {
+                        console.log('删除交易:', txId);
+                        // 实际项目中这里会执行删除操作
+                    }
+                });
+            });
+            
+            // 绑定行复选框事件
+            tbody.querySelectorAll('.transaction-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const txId = this.dataset.id;
+                    if (this.checked) {
+                        selectedTransactions.add(txId);
+                    } else {
+                        selectedTransactions.delete(txId);
+                    }
+                    updateBatchOperations();
+                    renderTransactions();
+                });
+            });
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                '餐饮': 'bg-warning bg-opacity-20 text-warning',
+                '购物': 'bg-info bg-opacity-20 text-info',
+                '交通': 'bg-accent bg-opacity-20 text-accent',
+                '工资': 'bg-success bg-opacity-20 text-success',
+                '投资': 'bg-secondary bg-opacity-20 text-secondary'
+            };
+            return colors[category] || 'bg-gray-100 text-gray-600';
+        }
+
+        function updateBatchOperations() {
+            const batchOperations = document.querySelector('#batch-operations');
+            if (selectedTransactions.size > 0) {
+                batchOperations.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                batchOperations.classList.add('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredTransactions.length / pageSize);
+            const pageNumbers = document.querySelector('#page-numbers');
+            
+            // 更新总数显示
+            document.querySelector('#total-count').textContent = filteredTransactions.length;
+            
+            // 更新按钮状态
+            document.querySelector('#prev-page-btn').disabled = currentPage === 1;
+            document.querySelector('#next-page-btn').disabled = currentPage === totalPages || totalPages === 0;
+            
+            // 生成页码按钮
+            let pageNumbersHTML = '';
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                pageNumbersHTML += `
+                    <button class="page-number-btn px-3 py-1 border rounded ${i === currentPage ? 'bg-primary text-white border-primary' : 'border-border-light hover:border-primary'} transition-colors" data-page="${i}">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            pageNumbers.innerHTML = pageNumbersHTML;
+            
+            // 绑定页码按钮事件
+            pageNumbers.querySelectorAll('.page-number-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentPage = parseInt(this.dataset.page);
+                    renderTransactions();
+                    updatePagination();
+                });
+            });
+        }
+    </script>
+</body>
+</html>

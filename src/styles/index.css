@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+	font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+	background:
+		radial-gradient(circle at 12% 15%, rgba(109, 197, 143, 0.12), transparent 34%),
+		radial-gradient(circle at 86% 5%, rgba(47, 143, 91, 0.1), transparent 28%),
+		linear-gradient(180deg, #f2f7f2 0%, #f8fbf8 35%, #ffffff 100%);
+	color: #1f2937;
+}
+
+#root {
+	animation: page-in 0.45s ease-out;
+}
+
+@keyframes page-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* 移动端底部 TabBar 预留空间，避免被遮挡 */
+@media (max-width: 768px) {
+	body { padding-bottom: 3.5rem; }
+}
+
+/* 提升触摸区域可用性 */
+button, a { -webkit-tap-highlight-color: transparent; }

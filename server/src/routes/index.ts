@@ -1,0 +1,51 @@
+import { Router } from "express";
+import mobileAiRouter from "./v1/mobile/ai.js";
+import mobileAnalysisRouter from "./v1/mobile/analysis.js";
+import mobileAuthRouter from "./v1/mobile/auth.js";
+import mobileAuditRouter from "./v1/mobile/audit.js";
+import mobileFamilyRouter from "./v1/mobile/family.js";
+import mobileIncentivesRouter from "./v1/mobile/incentives.js";
+import mobileIntentRouter from "./v1/mobile/nlp.js";
+import mobileOcrRouter from "./v1/mobile/ocr.js";
+import mobilePlanRouter from "./v1/mobile/plan.js";
+import mobilePlansRouter from "./v1/mobile/plans.js";
+import mobilePersonaRouter from "./v1/mobile/persona.js";
+import mobileProductsRouter from "./v1/mobile/products.js";
+import mobileRemindersRouter from "./v1/mobile/reminders.js";
+import mobileTransactionsRouter from "./v1/mobile/transactions.js";
+import mobileAccountsRouter from "./v1/mobile/accounts.js";
+import mobileFlowsRouter from "./v1/mobile/flows.js";
+import adminProductsRouter from "./v1/admin/products.js";
+import adminReportsRouter from "./v1/admin/reports.js";
+import adminRiskRouter from "./v1/admin/risk.js";
+import adminSystemRouter from "./v1/admin/system.js";
+import adminTransactionsRouter from "./v1/admin/transactions.js";
+import adminUsersRouter from "./v1/admin/users.js";
+
+const router = Router();
+
+router.use("/api/v1/mobile/auth", mobileAuthRouter);
+router.use("/api/v1/mobile/transactions", mobileTransactionsRouter);
+router.use("/api/v1/mobile/analysis", mobileAnalysisRouter);
+router.use("/api/v1/mobile/family", mobileFamilyRouter);
+router.use("/api/v1/mobile/ai", mobileAiRouter);
+router.use("/api/v1/mobile/ocr", mobileOcrRouter);
+router.use("/api/v1/mobile/incentives", mobileIncentivesRouter);
+router.use("/api/v1/mobile/reminders", mobileRemindersRouter);
+router.use("/api/v1/mobile/products", mobileProductsRouter);
+router.use("/api/v1/mobile/audit", mobileAuditRouter);
+router.use("/api/v1/mobile/accounts", mobileAccountsRouter);
+router.use("/api/v1/mobile/plan", mobilePlanRouter);
+router.use("/api/v1/mobile/plans", mobilePlansRouter);
+router.use("/api/v1/mobile/user", mobilePersonaRouter);
+router.use("/api/v1/mobile/intent", mobileIntentRouter);
+router.use("/api/v1/mobile/flows", mobileFlowsRouter);
+
+router.use("/api/v1/admin/users", adminUsersRouter);
+router.use("/api/v1/admin/transactions", adminTransactionsRouter);
+router.use("/api/v1/admin/products", adminProductsRouter);
+router.use("/api/v1/admin/reports", adminReportsRouter);
+router.use("/api/v1/admin/system", adminSystemRouter);
+router.use("/api/v1/admin/risk", adminRiskRouter);
+
+export default router;

@@ -34,8 +34,17 @@ export const mountApp = async (): Promise<void> => {
 
   const React = await import("react");
   const { createRoot } = await import("react-dom/client");
-  const routerModulePath = "./router/index.js";
-  const { AppRouterProvider } = (await import(/* @vite-ignore */ routerModulePath)) as {
+  const routerLoaders = (
+    import.meta as ImportMeta & {
+      glob: (pattern: string) => Record<string, () => Promise<unknown>>;
+    }
+  ).glob("./router/index.tsx");
+  const loadRouterModule = routerLoaders["./router/index.tsx"];
+  if (!loadRouterModule) {
+    throw new Error("router-entry-not-found");
+  }
+
+  const { AppRouterProvider } = (await loadRouterModule()) as {
     AppRouterProvider: () => React.JSX.Element;
   };
 

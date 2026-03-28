@@ -76,18 +76,32 @@ pnpm start
 	- 应用首页：`http://localhost:3000`
 	- 健康检查：`http://localhost:3000/health`
 
-### 6. 部署到 GitHub Pages（前端静态）
-- 已内置自动部署工作流：推送 `main` 分支后会自动发布前端静态站点。
-- 访问地址：`https://daiyuannn.github.io/SuanXiaoZhi/`
-- Pages 使用 `HashRouter` 兼容子路径与刷新。
+### 6. 公网部署（当前生产方案：同一台服务器）
 
-可选环境变量（Repository -> Settings -> Secrets and variables -> Actions -> Variables）：
-- `VITE_API_BASE`：你的线上后端 API 地址（例如 `https://api.example.com`）。
+当前已部署地址：
+- 前端：`http://121.4.109.119:6130`
+- 后端健康检查：`http://121.4.109.119:3000/health`
 
-注意：
-- GitHub Pages 仅托管前端静态资源，不运行 Express/Prisma。
-- 若未配置可访问的线上后端，部分需要后端接口的功能会使用降级/占位行为。
-- 若页面显示 `There isn't a GitHub Pages site here`，请到仓库 `Settings -> Pages` 将 `Build and deployment` 设置为 `GitHub Actions`，然后在 `Actions` 页面重新运行 `Deploy To GitHub Pages` 工作流。
+服务目录与端口：
+- 部署目录：`/opt/SuanXiaoZhi`
+- 前端端口：`6130`
+- 后端端口：`3000`
+
+进程管理：
+- 使用 `pm2` 运行两个服务：
+	- `suanxiaozhi-frontend`：`serve -s dist -l 6130`
+	- `suanxiaozhi-backend`：`pnpm start`
+
+常用运维命令（服务器执行）：
+```bash
+cd /opt/SuanXiaoZhi
+pm2 ls
+pm2 logs suanxiaozhi-backend --lines 100
+pm2 logs suanxiaozhi-frontend --lines 100
+pm2 restart suanxiaozhi-backend
+pm2 restart suanxiaozhi-frontend
+curl http://127.0.0.1:3000/health
+```
 
 ## 不同身份组登录账号（本地演示）
 

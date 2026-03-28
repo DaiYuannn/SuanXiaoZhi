@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  font-family: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-family: 'Sora', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
@@ -143,4 +143,27 @@ button, a {
 
 .text-info {
   color: var(--color-info);
+}
+
+.surface-card-mobile {
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 252, 255, 0.98) 100%);
+  box-shadow: var(--shadow-mobile-surface);
+  border-radius: var(--radius-xl);
+}
+
+.surface-card-admin {
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: var(--shadow-admin-surface);
+  border-radius: var(--radius-xl);
+}
+
+.surface-card-interactive {
+  transition: transform var(--transition-fast) var(--ease-out), box-shadow var(--transition-fast) var(--ease-out);
+}
+
+.surface-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }

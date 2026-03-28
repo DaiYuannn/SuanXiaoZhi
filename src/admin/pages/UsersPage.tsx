@@ -1,4 +1,5 @@
 import React from "react";
+import SurfaceCard from "../../shared/components/ui/SurfaceCard";
 
 const UsersPage: React.FC = () => {
   const rows = [
@@ -10,7 +11,7 @@ const UsersPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] border border-slate-200">
+      <SurfaceCard className="p-5" tone="admin">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">用户管理</h1>
@@ -21,9 +22,9 @@ const UsersPage: React.FC = () => {
             新建账号
           </button>
         </div>
-      </section>
+      </SurfaceCard>
 
-      <section className="rounded-2xl bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] border border-slate-200">
+      <SurfaceCard className="p-5" tone="admin">
         <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-4">
           <input placeholder="搜索用户名 / 手机号" className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400 md:col-span-2" />
           <select className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400">
@@ -73,7 +74,7 @@ const UsersPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </section>
+      </SurfaceCard>
     </div>
   );
 };

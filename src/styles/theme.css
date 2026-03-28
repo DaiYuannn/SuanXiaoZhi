@@ -28,6 +28,10 @@
   --color-text-secondary: #8B929A;
   --color-text-tertiary: #9CA3AF;
   --color-border: #F1F2F4;
+  --color-brand-c-mobile: #1b8258;
+  --color-brand-c-mobile-soft: #33b47a;
+  --color-brand-b-admin: #0f172a;
+  --color-brand-b-admin-soft: #152640;
   --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
   --gradient-success: linear-gradient(135deg, #10B981 0%, #34D399 100%);
   --gradient-warning: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
@@ -49,7 +53,9 @@
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
-  --radius-2xl: 24px;\n  --radius-3xl: 32px;\n  --radius-4xl: 40px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+  --radius-4xl: 40px;
   --radius-full: 9999px;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -57,6 +63,9 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   --shadow-card: var(--shadow-md);
   --shadow-modal: var(--shadow-xl);
+  --shadow-mobile-shell: 0 26px 80px rgba(16, 42, 67, 0.24);
+  --shadow-mobile-surface: 0 8px 22px rgba(34, 62, 95, 0.08);
+  --shadow-admin-surface: 0 8px 24px rgba(15, 23, 42, 0.06);
   --ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
   --ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
   --transition-fast: 150ms;

@@ -191,7 +191,7 @@ const HomePage: React.FC = () => {
       <div className="p-5 md:p-6">
         {/* 页面头部 */}
         <div className="mb-6">
-          <div className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_10px_28px_rgba(26,57,90,0.1)] backdrop-blur-sm flex items-center justify-between">
+          <div className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_10px_28px_rgba(26,57,90,0.1)] backdrop-blur-sm flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-2xl font-bold text-text-primary mb-1">
                 {loadingProfile ? '加载中…' : profile?.userId ? `欢迎回来，${profile.userId}` : '欢迎'}
@@ -209,7 +209,7 @@ const HomePage: React.FC = () => {
                 <span>首页</span>
               </nav>
             </div>
-            <button onClick={handleAddTransaction} className={`${styles.gradientBg} text-white px-5 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all`}>
+            <button onClick={handleAddTransaction} className={`${styles.gradientBg} text-white px-5 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all w-full sm:w-auto`}>
               <i className="fas fa-plus mr-2"></i>
               添加交易
             </button>
@@ -248,7 +248,7 @@ const HomePage: React.FC = () => {
         {/* 账户总览区 */}
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">账户总览</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-4">
             <div className={`${styles.statCard} rounded-xl p-6`}>
               <div className="flex items-center justify-between mb-4">
                 <div className={`w-12 h-12 ${styles.gradientBg} rounded-lg flex items-center justify-center`}>
@@ -296,9 +296,9 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* 内容区域 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-6 mb-8">
           {/* 消费趋势图表区 */}
-          <section className="lg:col-span-2">
+          <section>
             <div className={`${styles.gradientCard} rounded-xl p-6 shadow-card`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-text-primary">消费趋势</h3>
@@ -342,7 +342,7 @@ const HomePage: React.FC = () => {
           </section>
 
           {/* 待办事项/提醒区 & 规划进度 */}
-          <section className="lg:col-span-1">
+          <section>
             <div className={`${styles.gradientCard} rounded-xl p-6 shadow-card`}>
               <h3 className="text-lg font-semibold text-text-primary mb-4">待办提醒</h3>
               <div className="space-y-4">
@@ -443,7 +443,7 @@ const HomePage: React.FC = () => {
         {/* 快捷功能入口区 */}
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">今日洞察</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className={`${styles.gradientCard} rounded-xl p-4 shadow-card`}>
               <div className="flex items-start justify-between mb-2">
                 <h4 className="font-semibold text-text-primary">消费节奏提醒</h4>
@@ -470,7 +470,7 @@ const HomePage: React.FC = () => {
 
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">快捷功能</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-3 gap-3">
             <div onClick={() => handleQuickActionClick('add-transaction')} className={`${styles.gradientCard} rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer`}>
               <div className={`w-12 h-12 ${styles.gradientBg} rounded-lg flex items-center justify-center mx-auto mb-3`}>
                 <i className="fas fa-plus text-white text-xl"></i>

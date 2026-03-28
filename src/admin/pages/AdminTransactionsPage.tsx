@@ -1,4 +1,5 @@
 import React from "react";
+import SurfaceCard from "../../shared/components/ui/SurfaceCard";
 
 const AdminTransactionsPage: React.FC = () => {
   const queue = [
@@ -9,30 +10,30 @@ const AdminTransactionsPage: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] border border-slate-200">
+      <SurfaceCard className="p-5" tone="admin">
         <h1 className="text-2xl font-bold text-slate-800">交易审计</h1>
         <p className="mt-1 text-sm text-slate-500">支持异常交易标记、审核和运营备注。</p>
-      </section>
+      </SurfaceCard>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+        <SurfaceCard className="p-4" tone="admin" interactive>
           <p className="text-sm text-slate-500">待审核交易</p>
           <p className="mt-1 text-3xl font-bold text-slate-800">32</p>
           <p className="mt-1 text-xs text-rose-600">+6 较昨日</p>
-        </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+        </SurfaceCard>
+        <SurfaceCard className="p-4" tone="admin" interactive>
           <p className="text-sm text-slate-500">自动通过率</p>
           <p className="mt-1 text-3xl font-bold text-slate-800">81%</p>
           <p className="mt-1 text-xs text-emerald-600">+2.3% 较昨日</p>
-        </article>
-        <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+        </SurfaceCard>
+        <SurfaceCard className="p-4" tone="admin" interactive>
           <p className="text-sm text-slate-500">平均处置时长</p>
           <p className="mt-1 text-3xl font-bold text-slate-800">4.8m</p>
           <p className="mt-1 text-xs text-amber-600">仍可优化</p>
-        </article>
+        </SurfaceCard>
       </section>
 
-      <section className="rounded-2xl bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] border border-slate-200">
+      <SurfaceCard className="p-5" tone="admin">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-800">异常队列</h2>
           <button className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50">批量处理</button>
@@ -77,7 +78,7 @@ const AdminTransactionsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </section>
+      </SurfaceCard>
     </div>
   );
 };

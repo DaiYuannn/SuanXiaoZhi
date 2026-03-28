@@ -33,7 +33,7 @@ const AdminLayout: React.FC = () => {
   return (
     <div className="flex min-h-screen bg-[#edf2f7]">
       {/* 侧边深色导航 */}
-      <aside className="w-72 bg-gradient-to-b from-[#0f172a] via-[#111c33] to-[#152640] text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
+      <aside className="w-72 shrink-0 bg-gradient-to-b from-[#0f172a] via-[#111c33] to-[#152640] text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
         <div className="p-6 flex items-center justify-center border-b border-white/10">
           <i className="fas fa-cube text-[#5eead4] text-2xl mr-3"></i>
           <h1 className="text-xl font-bold tracking-wider">智算中心 B端</h1>
@@ -97,7 +97,7 @@ const AdminLayout: React.FC = () => {
         </header>
 
         {/* 页面路由挂载点 */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto p-8 bg-gradient-to-b from-[#edf2f7] to-[#f8fbfd]">
+        <main className="flex-1 overflow-x-auto overflow-y-auto p-8 bg-gradient-to-b from-[#edf2f7] to-[#f8fbfd]">
           <Outlet />
         </main>
       </div>

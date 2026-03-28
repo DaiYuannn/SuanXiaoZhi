@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Outlet, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import MobileTabBar from "../MobileTabBar";
 import { UserRole } from "../../types/permission.js";
 
@@ -22,17 +22,20 @@ const MobileLayout: React.FC = () => {
   const isShowTab = showTabPaths.includes(location.pathname);
 
   return (
-    <div className="min-h-screen bg-[#EEF2F6] flex justify-center w-full">
+    <div className="relative min-h-screen w-full overflow-hidden bg-[#e6eef3] flex justify-center">
+      <div className="pointer-events-none absolute -top-20 -left-20 h-72 w-72 rounded-full bg-[#98f5cc]/30 blur-3xl" />
+      <div className="pointer-events-none absolute top-1/3 -right-20 h-80 w-80 rounded-full bg-[#79a8ff]/25 blur-3xl" />
+
       {/* 桌面端外围居中限制，模拟手机壳形态 */}
-      <div className="w-full max-w-[480px] bg-white min-h-screen relative shadow-[0_0_40px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden">
+      <div className="relative w-full max-w-[480px] bg-white/96 min-h-screen md:min-h-[96vh] md:my-4 md:rounded-[34px] md:border md:border-white/60 md:shadow-[0_26px_80px_rgba(16,42,67,0.24)] flex flex-col overflow-hidden backdrop-blur-sm">
         {/* 主要内容区 */}
-        <main className={`flex-1 overflow-y-auto overflow-x-hidden ${isShowTab ? "pb-[80px]" : "pb-safe"}`}>
+        <main className={`flex-1 overflow-y-auto overflow-x-hidden ${isShowTab ? "pb-[92px]" : "pb-safe"}`}>
           <Outlet />
         </main>
 
         {/* 悬浮级底部导航 */}
         {isShowTab && (
-          <div className="absolute bottom-0 left-0 w-full z-50">
+          <div className="absolute bottom-0 left-0 w-full z-50 px-3 pb-3 md:px-4 md:pb-4">
             <MobileTabBar />
           </div>
         )}

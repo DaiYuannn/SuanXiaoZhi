@@ -188,10 +188,10 @@ const HomePage: React.FC = () => {
   return (
     <div className={styles.pageWrapper}>
       {/* 主内容区 */}
-      <div className="p-6">
+      <div className="p-5 md:p-6">
         {/* 页面头部 */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_10px_28px_rgba(26,57,90,0.1)] backdrop-blur-sm flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-text-primary mb-1">
                 {loadingProfile ? '加载中…' : profile?.userId ? `欢迎回来，${profile.userId}` : '欢迎'}
@@ -209,7 +209,7 @@ const HomePage: React.FC = () => {
                 <span>首页</span>
               </nav>
             </div>
-            <button onClick={handleAddTransaction} className={`${styles.gradientBg} text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all`}>
+            <button onClick={handleAddTransaction} className={`${styles.gradientBg} text-white px-5 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all`}>
               <i className="fas fa-plus mr-2"></i>
               添加交易
             </button>

@@ -1,16 +1,21 @@
 ﻿
 
 .pageWrapper {
-  background-color: #F9FAFB;
+  background:
+    radial-gradient(1200px 320px at 90% -80px, rgba(109, 197, 143, 0.24) 0%, rgba(109, 197, 143, 0) 60%),
+    radial-gradient(900px 260px at -10% 10%, rgba(114, 162, 255, 0.2) 0%, rgba(114, 162, 255, 0) 58%),
+    #f5f8fb;
   min-height: 100vh;
 }
 
 .gradientBg {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
+  background: linear-gradient(125deg, #33b47a 0%, #1b8258 56%, #0f5f45 100%);
 }
 
 .gradientCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: linear-gradient(130deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 252, 255, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 22px rgba(34, 62, 95, 0.08);
 }
 
 .gradientText {
@@ -36,18 +41,30 @@
 }
 
 .statCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 253, 255, 1) 100%);
+  border: 1px solid rgba(217, 229, 241, 0.9);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .statCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(26, 57, 90, 0.14);
 }
 
 .transactionRow:hover {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+@media (max-width: 640px) {
+  .pageWrapper {
+    background:
+      radial-gradient(700px 220px at 110% -20px, rgba(109, 197, 143, 0.2) 0%, rgba(109, 197, 143, 0) 58%),
+      #f5f8fb;
+  }
+
+  .chartContainer {
+    height: 240px;
+  }
 }
 
 

@@ -70,6 +70,24 @@ const getAuthToken = (): string | undefined => {
   }
 };
 
+const handleUnauthenticated = (): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem("sx-role");
+    localStorage.removeItem("sx-user-id");
+  } catch {
+    // ignore storage errors
+  }
+
+  if (!window.location.pathname.startsWith("/login")) {
+    window.location.replace("/login?reason=session_expired");
+  }
+};
+
 export const http = async <T = unknown>(path: string, opts: HttpOptions = {}): Promise<T> => {
   const method = opts.method ?? "GET";
   const retries = opts.retries ?? DEFAULT_RETRIES;
@@ -126,6 +144,11 @@ export const http = async <T = unknown>(path: string, opts: HttpOptions = {}): P
         const err = new Error(`HTTP ${response.status} for ${method} ${path}`) as HttpError;
         err.status = response.status;
         err.responseBody = body;
+
+        if (response.status === 401) {
+          handleUnauthenticated();
+        }
+
         if (response.status >= 500 && attempt < retries) {
           attempt += 1;
           await sleep(retryDelayMs);

@@ -13,15 +13,37 @@ router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res,
     const from = new Date(`${date}T00:00:00.000Z`);
     const to = new Date(`${date}T23:59:59.999Z`);
 
-    const rows = await prisma.transaction.findMany({
+    let rows = await prisma.transaction.findMany({
       where: { userId: user.id, ts: { gte: from, lte: to } },
       orderBy: { ts: "desc" }
     });
+
+    let sourceDate = date;
+
+    // If the requested day has no records, fallback to latest day with transactions.
+    if (rows.length === 0) {
+      const latest = await prisma.transaction.findFirst({
+        where: { userId: user.id },
+        orderBy: { ts: "desc" },
+        select: { ts: true }
+      });
+
+      if (latest?.ts) {
+        sourceDate = latest.ts.toISOString().slice(0, 10);
+        const latestFrom = new Date(`${sourceDate}T00:00:00.000Z`);
+        const latestTo = new Date(`${sourceDate}T23:59:59.999Z`);
+        rows = await prisma.transaction.findMany({
+          where: { userId: user.id, ts: { gte: latestFrom, lte: latestTo } },
+          orderBy: { ts: "desc" }
+        });
+      }
+    }
 
     res.json({
       ok: true,
       code: 0,
       message: "ok",
+      meta: { requestedDate: date, sourceDate },
       data: rows.map((row) => ({
         id: row.id,
         amount: row.amountCent >= 0 ? -Math.abs(row.amountCent) : Math.abs(row.amountCent),

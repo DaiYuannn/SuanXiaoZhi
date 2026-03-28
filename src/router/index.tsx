@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import MainLayout from "../shared/components/MainLayout";
+import AdminLayout from "../shared/components/layouts/AdminLayout";
+import MobileLayout from "../shared/components/layouts/MobileLayout";
 import { ErrorBoundary } from "../shared/components/ErrorBoundary";
 import { adminRoutes, AppRoute, mobileRoutes } from "./routes.js";
 import { canAccessRoute } from "./permission-guard.js";
@@ -104,10 +105,13 @@ export const AppRouterProvider: React.FC = () => {
           <Route key={route.name} path={route.path} element={renderRouteElement(route)} />
         ))}
 
-        <Route element={<MainLayout />}>
+        <Route element={<MobileLayout />}>
           {appRoutes.map((route) => (
             <Route key={route.name} path={route.path} element={renderRouteElement(route)} />
           ))}
+        </Route>
+
+        <Route element={<AdminLayout />}>
           {adminRoutes.map((route) => (
             <Route key={route.name} path={route.path} element={renderRouteElement(route)} />
           ))}

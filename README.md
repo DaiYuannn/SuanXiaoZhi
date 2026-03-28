@@ -76,6 +76,18 @@ pnpm start
 	- 应用首页：`http://localhost:3000`
 	- 健康检查：`http://localhost:3000/health`
 
+### 6. 部署到 GitHub Pages（前端静态）
+- 已内置自动部署工作流：推送 `main` 分支后会自动发布前端静态站点。
+- 访问地址：`https://daiyuannn.github.io/SuanXiaoZhi/`
+- Pages 使用 `HashRouter` 兼容子路径与刷新。
+
+可选环境变量（Repository -> Settings -> Secrets and variables -> Actions -> Variables）：
+- `VITE_API_BASE`：你的线上后端 API 地址（例如 `https://api.example.com`）。
+
+注意：
+- GitHub Pages 仅托管前端静态资源，不运行 Express/Prisma。
+- 若未配置可访问的线上后端，部分需要后端接口的功能会使用降级/占位行为。
+
 ## 不同身份组登录账号（本地演示）
 
 以下账号已写入当前本地数据库，可直接用于登录验证：

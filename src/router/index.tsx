@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, HashRouter, Navigate, Route, Routes } from "react-router-dom";
 import AdminLayout from "../shared/components/layouts/AdminLayout";
 import MobileLayout from "../shared/components/layouts/MobileLayout";
 import { ErrorBoundary } from "../shared/components/ErrorBoundary";
@@ -142,9 +142,11 @@ const resolveFallbackPath = (): string => {
 export const AppRouterProvider: React.FC = () => {
   const authRoutes = mobileRoutes.filter((route) => authPaths.has(route.path));
   const appRoutes = mobileRoutes.filter((route) => !authPaths.has(route.path));
+  const useHashRouter = typeof window !== "undefined" && window.location.hostname.endsWith("github.io");
+  const RouterComponent = useHashRouter ? HashRouter : BrowserRouter;
 
   return (
-    <BrowserRouter>
+    <RouterComponent>
       <Routes>
         {authRoutes.map((route) => (
           <Route
@@ -170,6 +172,6 @@ export const AppRouterProvider: React.FC = () => {
 
         <Route path="*" element={<Navigate to={resolveFallbackPath()} replace />} />
       </Routes>
-    </BrowserRouter>
+    </RouterComponent>
   );
 };

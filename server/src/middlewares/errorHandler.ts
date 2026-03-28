@@ -7,6 +7,16 @@ export const errorHandler = (
   _next: NextFunction
 ): void => {
   if (error instanceof Error) {
+    if (error.message === "unauthenticated") {
+      res.status(401).json({ ok: false, error: "unauthenticated" });
+      return;
+    }
+
+    if (error.message === "user-not-found") {
+      res.status(404).json({ ok: false, error: "user-not-found" });
+      return;
+    }
+
     res.status(500).json({ ok: false, error: error.message });
     return;
   }

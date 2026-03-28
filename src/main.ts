@@ -35,7 +35,7 @@ export const mountApp = async (): Promise<void> => {
   const React = await import("react");
   const { createRoot } = await import("react-dom/client");
   const routerModulePath = "./router/index.js";
-  const { AppRouterProvider } = (await import(routerModulePath)) as {
+  const { AppRouterProvider } = (await import(/* @vite-ignore */ routerModulePath)) as {
     AppRouterProvider: () => React.JSX.Element;
   };
 

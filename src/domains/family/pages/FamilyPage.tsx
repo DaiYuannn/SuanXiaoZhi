@@ -3,6 +3,8 @@ import { fetchFamilyMembers, createFamily, inviteFamilyMember, fetchFamilyLedger
 import type { FamilyMember, LedgerInfo, TransactionItem } from '../../../shared/types/api';
 
 const FamilyPage: React.FC = () => {
+  const currentRole = localStorage.getItem('sx-role');
+  const isOwner = currentRole === 'owner';
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [ledgers, setLedgers] = useState<LedgerInfo[]>([]);
   const [transactions, setTransactions] = useState<TransactionItem[]>([]);
@@ -57,8 +59,34 @@ const FamilyPage: React.FC = () => {
     }
   };
 
+  const maskName = (value: string): string => {
+    if (value.length <= 2) {
+      return `${value[0] ?? '*'}*`;
+    }
+    return `${value.slice(0, 1)}***${value.slice(-1)}`;
+  };
+
+  const amountRange = (value: number): string => {
+    const absValue = Math.abs(value / 100);
+    if (absValue < 50) {
+      return '¥0-50';
+    }
+    if (absValue < 200) {
+      return '¥50-200';
+    }
+    if (absValue < 1000) {
+      return '¥200-1000';
+    }
+    return '¥1000+';
+  };
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto w-full">
+      <div className="mb-4 rounded-xl border border-primary/20 bg-primary/10 p-3 text-xs text-text-secondary">
+        {isOwner
+          ? '当前为户主视角：可查看家庭成员全量昵称与账本金额详情。'
+          : '当前为家庭成员视角：为保护隐私，仅展示家庭成员部分信息与账本金额区间。'}
+      </div>
       {members.length === 0 && !loading ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm">
           <h2 className="text-lg font-medium mb-4">您还没有加入任何家庭</h2>
@@ -91,12 +119,14 @@ const FamilyPage: React.FC = () => {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-bold">成员列表</h2>
-              <button 
-                onClick={handleInvite}
-                className="text-primary border border-primary px-4 py-1.5 rounded-lg hover:bg-primary-light transition-colors"
-              >
-                邀请成员
-              </button>
+              {isOwner && (
+                <button
+                  onClick={handleInvite}
+                  className="text-primary border border-primary px-4 py-1.5 rounded-lg hover:bg-primary-light transition-colors"
+                >
+                  邀请成员
+                </button>
+              )}
             </div>
             
             {inviteCode && (
@@ -114,8 +144,8 @@ const FamilyPage: React.FC = () => {
                       <i className="fas fa-user"></i>
                     </div>
                     <div>
-                      <div className="font-medium">{m.username}</div>
-                      <div className="text-xs text-text-secondary">{m.role === 'admin' ? '户主' : '成员'}</div>
+                      <div className="font-medium">{isOwner ? m.username : maskName(m.username)}</div>
+                      <div className="text-xs text-text-secondary">{m.role === 'owner' ? '户主' : '成员'}</div>
                     </div>
                   </div>
                 </div>
@@ -141,10 +171,10 @@ const FamilyPage: React.FC = () => {
                     <div key={t.transactionId} className="flex items-center justify-between p-4 border-b border-border-light last:border-0">
                       <div>
                         <div className="font-medium">{t.category || '未分类'}</div>
-                        <div className="text-xs text-text-secondary">{t.time.split('T')[0]} {t.description}</div>
+                        <div className="text-xs text-text-secondary">{t.time.split('T')[0]} {isOwner ? t.description : '家庭账本动态（已脱敏）'}</div>
                       </div>
                       <div className={`font-bold ${t.type === 'EXPENSE' ? 'text-green-600' : 'text-red-600'}`}>
-                        {t.type === 'EXPENSE' ? '-' : '+'}{(t.amount / 100).toFixed(2)}
+                        {isOwner ? `${t.type === 'EXPENSE' ? '-' : '+'}${(t.amount / 100).toFixed(2)}` : amountRange(t.amount)}
                       </div>
                     </div>
                   ))}

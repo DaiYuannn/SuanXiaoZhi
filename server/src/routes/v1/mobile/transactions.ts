@@ -24,6 +24,7 @@ router.get("/anomaly-scan", requirePermission(Permission.TRANSACTION_READ), asyn
 
 router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res, next) => {
   try {
+    const user = await resolveRequestUser(req);
     const page = Number(req.query.page ?? 1);
     const size = Number(req.query.size ?? 20);
     const from = req.query.from ? new Date(String(req.query.from)) : undefined;
@@ -31,11 +32,26 @@ router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res,
     const categoryName = req.query.categoryName ? String(req.query.categoryName) : undefined;
     const ledgerId = req.query.ledgerId ? String(req.query.ledgerId) : undefined;
 
+    const userDetail = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        family: {
+          include: {
+            ledgers: {
+              select: { id: true }
+            }
+          }
+        }
+      }
+    });
+
+    const familyLedgerIds = userDetail?.family?.ledgers.map((item) => item.id) ?? [];
+    const accessibleLedgerIds = Array.from(new Set(familyLedgerIds));
+
     const where: {
       ts?: { gte?: Date; lte?: Date };
       categoryName?: string;
-      ledgerId?: string;
-      OR?: any[];
+      AND?: any[];
     } = {};
 
     if (from || to) {
@@ -44,10 +60,21 @@ router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res,
     if (categoryName) {
       where.categoryName = categoryName;
     }
-    if (ledgerId) {
-      where.OR = [
-        { ledgerId: ledgerId },
-        { targetLedgerId: ledgerId }
+    if (ledgerId && accessibleLedgerIds.includes(ledgerId)) {
+      where.AND = [
+        {
+          OR: [{ ledgerId }, { targetLedgerId: ledgerId }, { userId: user.id }]
+        }
+      ];
+    } else {
+      where.AND = [
+        {
+          OR: [
+            { userId: user.id },
+            { ledgerId: { in: accessibleLedgerIds } },
+            { targetLedgerId: { in: accessibleLedgerIds } }
+          ]
+        }
       ];
     }
 

@@ -5,8 +5,8 @@ import { useAuditReminder } from '../../../shared/hooks/useAuditReminder';
 import { useNavigate } from 'react-router-dom';
 import styles from './styles.module.css';
 import { useUserAndProgress } from '../../../shared/hooks/useUserAndProgress';
-import { fetchDailyFlows } from '../../../shared/constants/endpoints';
-import type { TransactionFlow } from '../../../shared/types/api';
+import { fetchDailyFlows, fetchTransactions } from '../../../shared/constants/endpoints';
+import type { TransactionFlow, TransactionItem } from '../../../shared/types/api';
 import { auditUI, auditError } from '../../../shared/audit/audit-service';
 import DynamicAlert, { DynamicAlertItem } from '../../../shared/components/DynamicAlert';
 import { Chart, registerables } from 'chart.js';
@@ -17,6 +17,7 @@ const HomePage: React.FC = () => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
   const [activeTrendPeriod, setActiveTrendPeriod] = useState<'7d' | '30d' | '3m'>('7d');
+  const [trendLoading, setTrendLoading] = useState(false);
 
   useEffect(() => {
     const originalTitle = document.title;
@@ -34,6 +35,66 @@ const HomePage: React.FC = () => {
     };
   }, []);
 
+  useEffect(() => {
+    loadTrendData(activeTrendPeriod);
+  }, [activeTrendPeriod]);
+
+  const formatLabel = (date: Date): string => `${date.getMonth() + 1}/${date.getDate()}`;
+
+  const loadTrendData = async (period: '7d' | '30d' | '3m') => {
+    const dayCount = period === '7d' ? 7 : period === '30d' ? 30 : 90;
+    const endDate = new Date();
+    const startDate = new Date(endDate.getTime() - (dayCount - 1) * 86400000);
+
+    setTrendLoading(true);
+    try {
+      const res = await fetchTransactions({
+        page: 1,
+        size: 500,
+        from: startDate.toISOString(),
+        to: endDate.toISOString()
+      });
+
+      const rows = (res.data?.list ?? []) as TransactionItem[];
+      const indexMap = new Map<string, { expense: number; income: number }>();
+      const labels: string[] = [];
+
+      for (let i = 0; i < dayCount; i += 1) {
+        const day = new Date(startDate.getTime() + i * 86400000);
+        const key = day.toISOString().slice(0, 10);
+        labels.push(formatLabel(day));
+        indexMap.set(key, { expense: 0, income: 0 });
+      }
+
+      rows.forEach((tx) => {
+        const key = new Date(tx.time).toISOString().slice(0, 10);
+        const bucket = indexMap.get(key);
+        if (!bucket) {
+          return;
+        }
+        if (tx.type === 'INCOME') {
+          bucket.income += Math.abs(tx.amount) / 100;
+        } else {
+          bucket.expense += Math.abs(tx.amount) / 100;
+        }
+      });
+
+      const expense = Array.from(indexMap.values()).map((item) => Number(item.expense.toFixed(2)));
+      const income = Array.from(indexMap.values()).map((item) => Number(item.income.toFixed(2)));
+
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.data.labels = labels;
+        chartInstanceRef.current.data.datasets[0].data = expense;
+        chartInstanceRef.current.data.datasets[1].data = income;
+        chartInstanceRef.current.update();
+      }
+    } catch (error) {
+      auditError('home_trend_error', error);
+    } finally {
+      setTrendLoading(false);
+    }
+  };
+
   const initializeChart = () => {
     if (!chartRef.current || chartInstanceRef.current) return;
 
@@ -43,10 +104,10 @@ const HomePage: React.FC = () => {
     chartInstanceRef.current = new Chart(ctx, {
       type: 'line',
       data: {
-        labels: ['1/9', '1/10', '1/11', '1/12', '1/13', '1/14', '1/15'],
+        labels: [],
         datasets: [{
           label: '支出',
-          data: [120, 190, 300, 250, 220, 350, 180],
+          data: [],
           borderColor: '#2F8F5B',
           backgroundColor: 'rgba(47, 143, 91, 0.12)',
           borderWidth: 3,
@@ -58,7 +119,7 @@ const HomePage: React.FC = () => {
           pointRadius: 6
         }, {
           label: '收入',
-          data: [0, 0, 15680, 0, 0, 0, 0],
+          data: [],
           borderColor: '#10B981',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
           borderWidth: 3,
@@ -121,7 +182,6 @@ const HomePage: React.FC = () => {
 
   const handleTrendPeriodChange = (period: '7d' | '30d' | '3m') => {
     setActiveTrendPeriod(period);
-    // 这里可以更新图表数据
   };
 
   const handleQuickActionClick = (action: string) => {
@@ -188,7 +248,7 @@ const HomePage: React.FC = () => {
   return (
     <div className={styles.pageWrapper}>
       {/* 主内容区 */}
-      <div className="p-5 md:p-6">
+      <div className="p-5 md:p-6 lg:p-8">
         {/* 页面头部 */}
         <div className="mb-6">
           <div className="rounded-3xl border border-white/70 bg-white/85 p-4 shadow-[0_10px_28px_rgba(26,57,90,0.1)] backdrop-blur-sm flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -248,7 +308,7 @@ const HomePage: React.FC = () => {
         {/* 账户总览区 */}
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">账户总览</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <div className={`${styles.statCard} rounded-xl p-6`}>
               <div className="flex items-center justify-between mb-4">
                 <div className={`w-12 h-12 ${styles.gradientBg} rounded-lg flex items-center justify-center`}>
@@ -296,12 +356,15 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* 内容区域 */}
-        <div className="grid grid-cols-1 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-6 mb-8 xl:grid-cols-3">
           {/* 消费趋势图表区 */}
-          <section>
+          <section className="xl:col-span-2">
             <div className={`${styles.gradientCard} rounded-xl p-6 shadow-card`}>
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-text-primary">消费趋势</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-text-primary">消费趋势</h3>
+                  {trendLoading && <span className="text-xs text-text-secondary">更新中...</span>}
+                </div>
                 <div className="flex space-x-2">
                   <button 
                     onClick={() => handleTrendPeriodChange('7d')}
@@ -342,7 +405,7 @@ const HomePage: React.FC = () => {
           </section>
 
           {/* 待办事项/提醒区 & 规划进度 */}
-          <section>
+          <section className="xl:col-span-1">
             <div className={`${styles.gradientCard} rounded-xl p-6 shadow-card`}>
               <h3 className="text-lg font-semibold text-text-primary mb-4">待办提醒</h3>
               <div className="space-y-4">
@@ -427,7 +490,7 @@ const HomePage: React.FC = () => {
                           <td className="py-3 px-4 text-sm text-text-primary">{new Date(f.time).toLocaleString()}</td>
                           <td className="py-3 px-4 text-sm text-text-secondary">{f.channel}</td>
                           <td className="py-3 px-4">
-                            <span className="px-2 py-1 bg-info bg-opacity-20 text-info text-xs rounded-full">{f.category || '未知'}</span>
+                            <span className="px-2 py-1 bg-info bg-opacity-20 text-info text-xs rounded-full">{f.category || f.categoryName || '未分类'}</span>
                           </td>
                           <td className={`py-3 px-4 text-sm font-medium ${f.amount >= 0 ? 'text-success' : 'text-danger'}`}>{f.amount >= 0 ? '+' : ''}¥{f.amount.toFixed(2)}</td>
                         </tr>
@@ -443,7 +506,7 @@ const HomePage: React.FC = () => {
         {/* 快捷功能入口区 */}
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">今日洞察</h3>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className={`${styles.gradientCard} rounded-xl p-4 shadow-card`}>
               <div className="flex items-start justify-between mb-2">
                 <h4 className="font-semibold text-text-primary">消费节奏提醒</h4>
@@ -470,7 +533,7 @@ const HomePage: React.FC = () => {
 
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">快捷功能</h3>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-6">
             <div onClick={() => handleQuickActionClick('add-transaction')} className={`${styles.gradientCard} rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer`}>
               <div className={`w-12 h-12 ${styles.gradientBg} rounded-lg flex items-center justify-center mx-auto mb-3`}>
                 <i className="fas fa-plus text-white text-xl"></i>

@@ -1,30 +1,47 @@
 import React, { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { UserRole } from "../../types/permission.js";
+import { Permission, SessionUser, UserRole } from "../../types/permission.js";
+import { hasPermission } from "../../utils/permission-map.js";
+import { AUTH_TOKEN_KEY } from "../../config/env.js";
+
+const parseRole = (value: string | null): UserRole | null => {
+  if (value === UserRole.OWNER || value === UserRole.FAMILY_MEMBER || value === UserRole.SUPER_ADMIN || value === UserRole.OPERATOR || value === UserRole.VIEWER) {
+    return value;
+  }
+  return null;
+};
 
 const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const role = localStorage.getItem("sx-role") as UserRole;
-    if (role !== UserRole.SUPER_ADMIN && role !== UserRole.OPERATOR) {
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
+    const role = parseRole(localStorage.getItem("sx-role"));
+    if (!token || (role !== UserRole.SUPER_ADMIN && role !== UserRole.OPERATOR && role !== UserRole.VIEWER)) {
       if (location.pathname.startsWith("/admin")) {
-        navigate("/", { replace: true });
+        navigate("/login", { replace: true });
       }
     }
   }, [location.pathname, navigate]);
 
-  const menuItems = [
-    { name: "系统仪表盘", path: "/admin", icon: "fa-chart-line" },
-    { name: "用户管理", path: "/admin/users", icon: "fa-users" },
-    { name: "交易审计", path: "/admin/transactions", icon: "fa-file-invoice-dollar" },
-    { name: "产品配置", path: "/admin/products", icon: "fa-box-open" },
-    { name: "系统设置", path: "/admin/system", icon: "fa-cog" }
+  const menuItems: Array<{ name: string; path: string; icon: string; permission: Permission }> = [
+    { name: "系统仪表盘", path: "/admin", icon: "fa-chart-line", permission: Permission.REPORT_READ },
+    { name: "用户管理", path: "/admin/users", icon: "fa-users", permission: Permission.USER_MANAGE },
+    { name: "交易审计", path: "/admin/transactions", icon: "fa-file-invoice-dollar", permission: Permission.TRANSACTION_MANAGE },
+    { name: "产品配置", path: "/admin/products", icon: "fa-box-open", permission: Permission.PRODUCT_MANAGE },
+    { name: "系统设置", path: "/admin/system", icon: "fa-cog", permission: Permission.SYSTEM_MANAGE }
   ];
 
+  const currentRole = parseRole(localStorage.getItem("sx-role")) ?? UserRole.VIEWER;
+  const sessionUser: SessionUser = {
+    id: localStorage.getItem("sx-user-id") || "",
+    role: currentRole
+  };
+  const visibleMenuItems = menuItems.filter((item) => hasPermission(sessionUser.role, item.permission));
+
   const handleLogout = () => {
-    localStorage.removeItem("sx-token");
+    localStorage.removeItem(AUTH_TOKEN_KEY);
     localStorage.removeItem("sx-role");
     localStorage.removeItem("sx-user-id");
     navigate("/login", { replace: true });
@@ -32,6 +49,16 @@ const AdminLayout: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-[#edf2f7]">
+      <div className="md:hidden fixed inset-0 z-50 bg-slate-950/90 text-white flex items-center justify-center p-6 text-center">
+        <div>
+          <i className="fas fa-desktop text-3xl mb-3 text-emerald-300"></i>
+          <h2 className="text-lg font-semibold">B端仅支持桌面端</h2>
+          <p className="text-sm text-slate-300 mt-2">请在电脑浏览器访问管理后台，手机端请使用 C 端页面。</p>
+          <button onClick={handleLogout} className="mt-4 rounded-lg border border-white/30 px-3 py-2 text-sm hover:bg-white/10">
+            退出登录
+          </button>
+        </div>
+      </div>
       {/* 侧边深色导航 */}
       <aside className="w-72 shrink-0 bg-gradient-to-b from-[#0f172a] via-[#111c33] to-[#152640] text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
         <div className="p-6 flex items-center justify-center border-b border-white/10">
@@ -39,7 +66,7 @@ const AdminLayout: React.FC = () => {
           <h1 className="text-xl font-bold tracking-wider">智算中心 B端</h1>
         </div>
         <nav className="flex-1 px-4 py-6 space-y-2">
-          {menuItems.map((item) => {
+          {visibleMenuItems.map((item) => {
             const isActive = location.pathname === item.path || (item.path !== "/admin" && location.pathname.startsWith(item.path));
             return (
               <button
@@ -69,7 +96,7 @@ const AdminLayout: React.FC = () => {
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Operations Console</p>
             <div className="font-semibold text-slate-700">
-              {menuItems.find(m => m.path === location.pathname)?.name || "管理后台"}
+              {visibleMenuItems.find(m => m.path === location.pathname)?.name || "管理后台"}
             </div>
           </div>
           <div className="flex items-center space-x-6">

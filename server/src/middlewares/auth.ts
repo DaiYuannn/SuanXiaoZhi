@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { UserRole } from "../types/permission.js";
+import { prisma } from "../db.js";
 
 const asRole = (roleHeader: string | undefined): UserRole => {
   switch (roleHeader) {
@@ -18,23 +19,55 @@ const asRole = (roleHeader: string | undefined): UserRole => {
 };
 
 export const mobileAuthMiddleware = (req: Request, _res: Response, next: NextFunction): void => {
-  req.user = {
-    id: req.header("x-user-id") ?? "mobile-user",
-    role: asRole(req.header("x-role") ?? UserRole.OWNER)
-  };
-  next();
+  void (async () => {
+    const authHeader = req.header("authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (!token.startsWith("token-")) {
+      _res.status(401).json({ ok: false, error: "unauthenticated" });
+      return;
+    }
+
+    const userId = token.slice("token-".length);
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      _res.status(401).json({ ok: false, error: "unauthenticated" });
+      return;
+    }
+
+    req.user = {
+      id: user.id,
+      role: asRole(user.role)
+    };
+    next();
+  })().catch((error) => next(error));
 };
 
 export const adminAuthMiddleware = (req: Request, res: Response, next: NextFunction): void => {
-  const role = asRole(req.header("x-role") ?? UserRole.VIEWER);
-  if (![UserRole.SUPER_ADMIN, UserRole.OPERATOR, UserRole.VIEWER].includes(role)) {
-    res.status(403).json({ ok: false, error: "admin-role-required" });
-    return;
-  }
+  void (async () => {
+    const authHeader = req.header("authorization") ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (!token.startsWith("token-")) {
+      res.status(401).json({ ok: false, error: "unauthenticated" });
+      return;
+    }
 
-  req.user = {
-    id: req.header("x-user-id") ?? "admin-user",
-    role
-  };
-  next();
+    const userId = token.slice("token-".length);
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      res.status(401).json({ ok: false, error: "unauthenticated" });
+      return;
+    }
+
+    const role = asRole(user.role);
+    if (![UserRole.SUPER_ADMIN, UserRole.OPERATOR, UserRole.VIEWER].includes(role)) {
+      res.status(403).json({ ok: false, error: "admin-role-required" });
+      return;
+    }
+
+    req.user = {
+      id: user.id,
+      role
+    };
+    next();
+  })().catch((error) => next(error));
 };

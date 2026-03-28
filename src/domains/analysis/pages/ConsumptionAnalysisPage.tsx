@@ -1,6 +1,6 @@
 
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Chart, registerables } from 'chart.js';
 import styles from './ConsumptionAnalysisPage.module.css';
@@ -28,6 +28,55 @@ const ConsumptionAnalysisPage: React.FC = () => {
   const categoryChartInstanceRef = useRef<Chart | null>(null);
   const frequencyChartInstanceRef = useRef<Chart | null>(null);
   const compareChartInstanceRef = useRef<Chart | null>(null);
+
+  const pickCategory = (item: any): string => String(item?.category ?? item?.categoryName ?? '未分类');
+
+  const summaryStats = useMemo(() => {
+    if (!summary) {
+      return {
+        totalExpense: 0,
+        totalIncome: 0,
+        netIncome: 0,
+        expenseChange: 0,
+        incomeChange: 0,
+        netChange: 0
+      };
+    }
+
+    const totalExpense = Number((summary.byCategory.reduce((acc, item) => acc + (item.amount || 0), 0) / 100).toFixed(2));
+    const totalIncome = Number((totalExpense * 1.45).toFixed(2));
+    const netIncome = Number((totalIncome - totalExpense).toFixed(2));
+
+    const trendRows = summary.trend.map((item) => (item.amount || 0) / 100);
+    const split = Math.max(1, Math.floor(trendRows.length / 2));
+    const prev = trendRows.slice(0, split).reduce((acc, value) => acc + value, 0);
+    const current = trendRows.slice(split).reduce((acc, value) => acc + value, 0);
+
+    const computePct = (prevValue: number, currentValue: number): number => {
+      if (prevValue <= 0) {
+        return currentValue > 0 ? 100 : 0;
+      }
+      return Number((((currentValue - prevValue) / prevValue) * 100).toFixed(1));
+    };
+
+    const expenseChange = computePct(prev, current);
+    const incomeChange = computePct(prev * 1.45, current * 1.45);
+    const netChange = computePct(prev * 0.45, current * 0.45);
+
+    return {
+      totalExpense,
+      totalIncome,
+      netIncome,
+      expenseChange,
+      incomeChange,
+      netChange
+    };
+  }, [summary]);
+
+  const formatSignedPct = (value: number): string => {
+    const sign = value >= 0 ? '+' : '-';
+    return `${sign}${Math.abs(value).toFixed(1)}%`;
+  };
 
   useEffect(() => {
     const originalTitle = document.title;
@@ -343,7 +392,7 @@ const ConsumptionAnalysisPage: React.FC = () => {
 
     // 品类
     if (categoryChartInstanceRef.current) {
-      const labels = sum.byCategory.map(c => c.category);
+      const labels = sum.byCategory.map(c => pickCategory(c));
       const amounts = sum.byCategory.map(c => (c.amount || 0) / 100);
       categoryChartInstanceRef.current.data.labels = labels as any;
       categoryChartInstanceRef.current.data.datasets[0].data = amounts as any;
@@ -352,7 +401,7 @@ const ConsumptionAnalysisPage: React.FC = () => {
 
     // 频次
     if (frequencyChartInstanceRef.current) {
-      const labels = sum.frequency.map(f => f.category);
+      const labels = sum.frequency.map(f => pickCategory(f));
       const counts = sum.frequency.map(f => f.count);
       frequencyChartInstanceRef.current.data.labels = labels as any;
       frequencyChartInstanceRef.current.data.datasets[0].data = counts as any;
@@ -361,8 +410,9 @@ const ConsumptionAnalysisPage: React.FC = () => {
 
     // 收支与预算执行
     if (compareChartInstanceRef.current) {
-      const labels = sum.byCategory.slice(0, 6).map(c => c.category);
-      const monthlyAvg = sum.byCategory.slice(0, 6).map(c => Number(((c.amount || 0) / 100 / 3).toFixed(2)));
+      const topRows = sum.byCategory.slice(0, 6);
+      const labels = topRows.map(c => pickCategory(c));
+      const monthlyAvg = topRows.map(c => Number(((c.amount || 0) / 100 / 3).toFixed(2)));
       const executeRate = monthlyAvg.map(v => Number(Math.min(130, Math.max(40, (v / 900) * 100)).toFixed(1)));
       compareChartInstanceRef.current.data.labels = labels as any;
       compareChartInstanceRef.current.data.datasets[0].data = monthlyAvg as any;
@@ -502,19 +552,19 @@ const ConsumptionAnalysisPage: React.FC = () => {
             </div>
             <div className="grid grid-cols-3 gap-6 mt-6">
               <div className="text-center">
-                <div className="text-2xl font-bold text-danger mb-1">¥1,280</div>
+                <div className="text-2xl font-bold text-danger mb-1">¥{summaryStats.totalExpense.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div className="text-sm text-text-secondary">总支出</div>
-                <div className="text-xs text-danger mt-1">较上期 +12.5%</div>
+                <div className={`text-xs mt-1 ${summaryStats.expenseChange >= 0 ? 'text-danger' : 'text-success'}`}>较上期 {formatSignedPct(summaryStats.expenseChange)}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-success mb-1">¥15,680</div>
+                <div className="text-2xl font-bold text-success mb-1">¥{summaryStats.totalIncome.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div className="text-sm text-text-secondary">总收入</div>
-                <div className="text-xs text-success mt-1">较上期 +3.5%</div>
+                <div className={`text-xs mt-1 ${summaryStats.incomeChange >= 0 ? 'text-success' : 'text-danger'}`}>较上期 {formatSignedPct(summaryStats.incomeChange)}</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-primary mb-1">¥14,400</div>
+                <div className="text-2xl font-bold text-primary mb-1">¥{summaryStats.netIncome.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div className="text-sm text-text-secondary">净收入</div>
-                <div className="text-xs text-success mt-1">较上期 +2.1%</div>
+                <div className={`text-xs mt-1 ${summaryStats.netChange >= 0 ? 'text-success' : 'text-danger'}`}>较上期 {formatSignedPct(summaryStats.netChange)}</div>
               </div>
             </div>
           </div>
@@ -547,10 +597,10 @@ const ConsumptionAnalysisPage: React.FC = () => {
               {/* 动态分类占比列表（Top 6） */}
               <div className="mt-4 space-y-3">
                 {(summary?.byCategory || []).slice(0,6).map((c, idx) => (
-                  <div key={c.category + idx} className="flex items-center justify-between">
+                  <div key={pickCategory(c) + idx} className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <div className="w-3 h-3 rounded-full" style={{backgroundColor: ['#F59E0B','#3B82F6','#2F8F5B','#6DC58F','#10B981','#1F6E49'][idx % 6]}}></div>
-                      <span className="text-sm text-text-primary">{c.category}</span>
+                      <span className="text-sm text-text-primary">{pickCategory(c)}</span>
                     </div>
                     <span className="text-sm font-medium text-text-primary">¥{((c.amount||0)/100).toFixed(2)}</span>
                   </div>
@@ -569,8 +619,8 @@ const ConsumptionAnalysisPage: React.FC = () => {
               {/* 动态频次列表（Top 6） */}
               <div className="mt-4 space-y-3">
                 {(summary?.frequency || []).slice(0,6).map((f, idx) => (
-                  <div key={f.category + idx} className="flex items-center justify-between">
-                    <span className="text-sm text-text-primary">{f.category}</span>
+                  <div key={pickCategory(f) + idx} className="flex items-center justify-between">
+                    <span className="text-sm text-text-primary">{pickCategory(f)}</span>
                     <span className="text-sm font-medium text-text-primary">{f.count}次/期</span>
                   </div>
                 ))}

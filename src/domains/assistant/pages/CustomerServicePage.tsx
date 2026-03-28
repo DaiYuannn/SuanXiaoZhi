@@ -275,10 +275,10 @@ const CustomerServicePage: React.FC = () => {
         </div>
 
         {/* 输入区域 */}
-        <div className="border-t border-gray-200 p-4 md:p-6">
+        <div className="border-t border-gray-200 p-3 md:p-6 pb-[calc(env(safe-area-inset-bottom)+12px)]">
           <div className="flex items-end space-x-2 md:space-x-3">
-            <div className="flex-1">
-              <div className="relative">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-end gap-2">
                 <textarea 
                   id="chat-input"
                   className={`${styles.chatInput} w-full px-3 md:px-4 py-2.5 md:py-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm`}
@@ -291,13 +291,14 @@ const CustomerServicePage: React.FC = () => {
                 />
                 <button 
                   onClick={handleSendClick}
-                  className={`absolute right-2 bottom-2 w-7 h-7 md:w-8 md:h-8 ${styles.solidBg} rounded-lg flex items-center justify-center text-white hover:shadow-lg transition-all`}
+                  className={`w-9 h-9 md:w-10 md:h-10 ${styles.solidBg} rounded-lg flex items-center justify-center text-white hover:shadow-lg transition-all flex-shrink-0`}
+                  title="发送"
                 >
-                  <i className="fas fa-paper-plane text-xs md:text-sm"></i>
+                  <i className="fas fa-paper-plane text-sm"></i>
                 </button>
               </div>
-              <div className="flex justify-between items-center mt-2">
-                <div className="flex space-x-1 md:space-x-2 overflow-x-auto">
+              <div className="mt-2 space-y-2">
+                <div className="flex space-x-1 md:space-x-2 overflow-x-auto pb-1">
                   <button 
                     onClick={() => handleQuickQuestion('如何添加交易？')}
                     className={`${styles.quickQuestion} px-2 md:px-3 py-1 text-xs whitespace-nowrap`}
@@ -317,7 +318,9 @@ const CustomerServicePage: React.FC = () => {
                     如何选择理财产品？
                   </button>
                 </div>
-                <span className="text-xs text-gray-500 flex-shrink-0 ml-2">{charCount}/500</span>
+                <div className="flex justify-end">
+                  <span className="text-xs text-gray-500 flex-shrink-0">{charCount}/500</span>
+                </div>
               </div>
             </div>
           </div>

@@ -57,6 +57,7 @@ export interface TransactionFlow {
   time: string;  // ISO8601
   channel: 'alipay' | 'wechat' | 'bank' | string;
   category?: string;
+  categoryName?: string;
 }
 
 // 激励中心

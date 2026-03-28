@@ -27,6 +27,7 @@ router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res,
         amount: row.amountCent >= 0 ? -Math.abs(row.amountCent) : Math.abs(row.amountCent),
         time: row.ts.toISOString(),
         channel: row.source,
+        category: row.categoryName ?? "未分类",
         categoryName: row.categoryName
       }))
     });

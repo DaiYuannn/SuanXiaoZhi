@@ -8,6 +8,21 @@ if (!process.env.DATABASE_URL) {
 
 export const prisma = new PrismaClient();
 
+type DemoAccount = {
+  username: string;
+  password: string;
+  role: "owner" | "family" | "super_admin" | "operator" | "viewer";
+};
+
+const demoAccounts: DemoAccount[] = [
+  { username: "demo", password: "demo", role: "owner" },
+  { username: "demo_owner", password: "demo123", role: "owner" },
+  { username: "demo_family", password: "demo123", role: "family" },
+  { username: "demo_admin", password: "demo123", role: "super_admin" },
+  { username: "demo_operator", password: "demo123", role: "operator" },
+  { username: "demo_viewer", password: "demo123", role: "viewer" }
+];
+
 const parseSqlitePath = (url?: string): string | null => {
   if (!url) {
     return null;
@@ -22,17 +37,127 @@ const parseSqlitePath = (url?: string): string | null => {
   return null;
 };
 
-export const ensureDemoUser = async (): Promise<string> => {
-  let user = await prisma.user.findFirst({ where: { username: "demo" } });
-  if (!user) {
-    user = await prisma.user.create({
-      data: { username: "demo", passwordHash: "demo", role: "owner" }
+export const ensureDemoAccounts = async (): Promise<Record<string, string>> => {
+  const roleRows = [
+    { code: "owner", name: "用户本人" },
+    { code: "family", name: "家庭授权人" },
+    { code: "super_admin", name: "超级管理员" },
+    { code: "operator", name: "运营人员" },
+    { code: "viewer", name: "查看人员" }
+  ] as const;
+
+  for (const role of roleRows) {
+    await prisma.role.upsert({
+      where: { code: role.code },
+      update: {},
+      create: role
     });
-  } else if (user.passwordHash !== "demo") {
-    user = await prisma.user.update({ where: { id: user.id }, data: { passwordHash: "demo" } });
   }
 
-  return user.id;
+  const roleMap = new Map<string, string>();
+  const dbRoles = await prisma.role.findMany({});
+  dbRoles.forEach((role) => roleMap.set(role.code, role.id));
+
+  const idMap: Record<string, string> = {};
+
+  for (const account of demoAccounts) {
+    const user = await prisma.user.upsert({
+      where: { username: account.username },
+      update: {
+        passwordHash: account.password,
+        role: account.role,
+        isActive: true
+      },
+      create: {
+        username: account.username,
+        passwordHash: account.password,
+        role: account.role,
+        isActive: true
+      }
+    });
+
+    idMap[account.username] = user.id;
+
+    const roleId = roleMap.get(account.role);
+    if (roleId) {
+      await prisma.userRole.upsert({
+        where: { userId_roleId: { userId: user.id, roleId } },
+        update: {},
+        create: { userId: user.id, roleId }
+      });
+    }
+  }
+
+  const ownerId = idMap.demo_owner;
+  const familyId = idMap.demo_family;
+
+  if (ownerId && familyId) {
+    let family = await prisma.family.findFirst({ where: { name: "演示家庭" } });
+    if (!family) {
+      family = await prisma.family.create({
+        data: {
+          name: "演示家庭",
+          description: "用于 C 端户主与家庭成员联动演示"
+        }
+      });
+    }
+
+    await prisma.user.update({ where: { id: ownerId }, data: { familyId: family.id } });
+    await prisma.user.update({ where: { id: familyId }, data: { familyId: family.id } });
+
+    const ownerLedger = await prisma.ledger.findFirst({
+      where: { ownerId, type: "PERSONAL", name: "户主主账户" }
+    });
+    if (!ownerLedger) {
+      await prisma.ledger.create({
+        data: {
+          name: "户主主账户",
+          type: "PERSONAL",
+          ownerId,
+          currency: "CNY",
+          balanceCent: 12856000
+        }
+      });
+    }
+
+    const familyLedger = await prisma.ledger.findFirst({
+      where: { ownerId: familyId, type: "PERSONAL", name: "家庭成员账户" }
+    });
+    if (!familyLedger) {
+      await prisma.ledger.create({
+        data: {
+          name: "家庭成员账户",
+          type: "PERSONAL",
+          ownerId: familyId,
+          currency: "CNY",
+          balanceCent: 2350000
+        }
+      });
+    }
+
+    const sharedLedger = await prisma.ledger.findFirst({
+      where: { familyId: family.id, type: "FAMILY", name: "演示家庭共享账本" }
+    });
+    if (!sharedLedger) {
+      await prisma.ledger.create({
+        data: {
+          name: "演示家庭共享账本",
+          type: "FAMILY",
+          familyId: family.id,
+          ownerId,
+          currency: "CNY",
+          balanceCent: 3680000
+        }
+      });
+    }
+  }
+
+  return idMap;
+};
+
+export const ensureDemoUser = async (): Promise<string> => {
+  const idMap = await ensureDemoAccounts();
+  return idMap.demo ?? idMap.demo_owner;
 };
 
 export const initDB = async (): Promise<void> => {
@@ -51,7 +176,7 @@ export const initDB = async (): Promise<void> => {
     // Ignore sqlite pragma errors in constrained environments.
   }
 
-  const demoId = await ensureDemoUser();
+  await ensureDemoAccounts();
 
   const tasks = [
     { code: "DAILY_LOGIN", name: "每日登录", description: "每天登录应用", points: 10, type: "DAILY", target: 1 },
@@ -117,28 +242,5 @@ export const initDB = async (): Promise<void> => {
     });
   }
 
-  const roleRows = [
-    { code: "owner", name: "用户本人" },
-    { code: "family", name: "家庭授权人" },
-    { code: "super_admin", name: "超级管理员" },
-    { code: "operator", name: "运营人员" },
-    { code: "viewer", name: "查看人员" }
-  ] as const;
-
-  for (const role of roleRows) {
-    await prisma.role.upsert({
-      where: { code: role.code },
-      update: {},
-      create: role
-    });
-  }
-
-  const ownerRole = await prisma.role.findUnique({ where: { code: "owner" } });
-  if (ownerRole) {
-    await prisma.userRole.upsert({
-      where: { userId_roleId: { userId: demoId, roleId: ownerRole.id } },
-      update: {},
-      create: { userId: demoId, roleId: ownerRole.id }
-    });
-  }
+  await ensureDemoAccounts();
 };

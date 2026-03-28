@@ -2,16 +2,31 @@ import { Router } from "express";
 import { requirePermission } from "../../../middlewares/requirePermission.js";
 import { prisma } from "../../../db.js";
 import { Permission } from "../../../types/permission.js";
+import { resolveRequestUser } from "../../../services/user-context.js";
 
 const router = Router();
 
 router.get("/summary", requirePermission(Permission.TRANSACTION_READ), async (req, res, next) => {
   try {
+    const user = await resolveRequestUser(req);
     const from = req.query.from ? new Date(String(req.query.from)) : new Date(Date.now() - 7 * 86400000);
     const to = req.query.to ? new Date(String(req.query.to)) : new Date();
 
+    const userDetail = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { family: { include: { ledgers: { select: { id: true } } } } }
+    });
+    const familyLedgerIds = userDetail?.family?.ledgers.map((item) => item.id) ?? [];
+
     const rows = await prisma.transaction.findMany({
-      where: { ts: { gte: from, lte: to } },
+      where: {
+        ts: { gte: from, lte: to },
+        OR: [
+          { userId: user.id },
+          { ledgerId: { in: familyLedgerIds } },
+          { targetLedgerId: { in: familyLedgerIds } }
+        ]
+      },
       select: { amountCent: true, categoryName: true, ts: true }
     });
 
@@ -19,18 +34,18 @@ router.get("/summary", requirePermission(Permission.TRANSACTION_READ), async (re
     const trendMap = new Map<string, number>();
 
     for (const row of rows) {
-      const categoryName = (row.categoryName || 'Uncategorized') || "未分类";
+      const categoryName = row.categoryName || "未分类";
       const stat = byCategoryMap.get(categoryName) ?? { amount: 0, count: 0 };
-      stat.amount += row.amountCent;
+      stat.amount += Math.abs(row.amountCent);
       stat.count += 1;
       byCategoryMap.set(categoryName, stat);
 
       const day = row.ts.toISOString().slice(0, 10);
-      trendMap.set(day, (trendMap.get(day) ?? 0) + row.amountCent);
+      trendMap.set(day, (trendMap.get(day) ?? 0) + Math.abs(row.amountCent));
     }
 
-    const byCategory = Array.from(byCategoryMap.entries()).map(([categoryName, value]) => ({
-      categoryName,
+    const byCategory = Array.from(byCategoryMap.entries()).map(([category, value]) => ({
+      category,
       amount: value.amount,
       count: value.count
     }));
@@ -39,7 +54,7 @@ router.get("/summary", requirePermission(Permission.TRANSACTION_READ), async (re
       .map(([date, amount]) => ({ date, amount }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    const frequency = byCategory.map((item) => ({ categoryName: item.categoryName, count: item.count }));
+    const frequency = byCategory.map((item) => ({ category: item.category, count: item.count }));
 
     res.json({ ok: true, code: 0, message: "ok", data: { byCategory, trend, frequency } });
   } catch (error) {
@@ -49,14 +64,25 @@ router.get("/summary", requirePermission(Permission.TRANSACTION_READ), async (re
 
 router.get("/insights", requirePermission(Permission.TRANSACTION_READ), async (req, res, next) => {
   try {
+    const user = await resolveRequestUser(req);
     const from = req.query.from ? new Date(String(req.query.from)) : undefined;
     const to = req.query.to ? new Date(String(req.query.to)) : undefined;
-    const where = from || to ? { ts: { gte: from, lte: to } } : undefined;
+    const userDetail = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { family: { include: { ledgers: { select: { id: true } } } } }
+    });
+    const familyLedgerIds = userDetail?.family?.ledgers.map((item) => item.id) ?? [];
+
+    const where = {
+      ...(from || to ? { ts: { gte: from, lte: to } } : {}),
+      OR: [{ userId: user.id }, { ledgerId: { in: familyLedgerIds } }, { targetLedgerId: { in: familyLedgerIds } }]
+    };
     const rows = await prisma.transaction.findMany({ where });
 
     const byCategory = new Map<string, number>();
     for (const row of rows) {
-      byCategory.set((row.categoryName || 'Uncategorized'), (byCategory.get((row.categoryName || 'Uncategorized')) ?? 0) + Math.abs(row.amountCent));
+      const category = row.categoryName || '未分类';
+      byCategory.set(category, (byCategory.get(category) ?? 0) + Math.abs(row.amountCent));
     }
 
     const top = Array.from(byCategory.entries()).sort((a, b) => b[1] - a[1])[0];

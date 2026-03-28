@@ -1,10 +1,12 @@
 
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './UserSettingsPage.module.css';
 import { loadAuditReminderSettings, saveAuditReminderSettings, AuditReminderFrequency } from '../../../shared/hooks/useAuditReminder';
 import { fetchReminders, createReminder, updateReminder, updateReminderStatus } from '../api/auth-api';
 import type { ReminderItem } from '../../../shared/types/api';
+import { AUTH_TOKEN_KEY } from '../../../shared/config/env.js';
 
 interface ProfileFormData {
   username: string;
@@ -35,6 +37,7 @@ interface NotificationSettings {
 type SettingsTab = 'profile' | 'accounts' | 'security' | 'notifications' | 'risk';
 
 const UserSettingsPage: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   
   const [profileFormData, setProfileFormData] = useState<ProfileFormData>({
@@ -264,6 +267,13 @@ const UserSettingsPage: React.FC = () => {
     alert('即将跳转到风险测评页面...');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem('sx-role');
+    localStorage.removeItem('sx-user-id');
+    navigate('/login', { replace: true });
+  };
+
   const handleViewRiskDetail = (date: string) => {
     console.log('查看测评详情', date);
     alert('查看测评详情功能开发中...');
@@ -334,6 +344,14 @@ const UserSettingsPage: React.FC = () => {
               >
                 <i className="fas fa-chart-pie text-lg"></i>
                 <span className="font-medium">风险测评</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="w-full mt-3 flex items-center space-x-3 px-4 py-3 rounded-lg transition-all text-left text-danger hover:bg-red-50"
+              >
+                <i className="fas fa-sign-out-alt text-lg"></i>
+                <span className="font-medium">退出登录</span>
               </button>
             </nav>
           </div>

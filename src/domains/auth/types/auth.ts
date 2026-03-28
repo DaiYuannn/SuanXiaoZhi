@@ -4,7 +4,8 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  ok: true;
+  ok: boolean;
   token: string;
   role: string;
+  message?: string;
 }

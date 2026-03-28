@@ -97,7 +97,8 @@ export const http = async <T = unknown>(path: string, opts: HttpOptions = {}): P
           : opts.body !== undefined
             ? JSON.stringify(opts.body)
             : undefined,
-    credentials: "include"
+    // Token auth is header-based; avoid cross-origin credential mode that triggers stricter CORS checks.
+    credentials: "same-origin"
   };
 
   const controller = new AbortController();

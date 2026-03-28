@@ -5,7 +5,7 @@ import { useAuditReminder } from '../../../shared/hooks/useAuditReminder';
 import { useNavigate } from 'react-router-dom';
 import styles from './styles.module.css';
 import { useUserAndProgress } from '../../../shared/hooks/useUserAndProgress';
-import { fetchDailyFlows } from '../api/home-api';
+import { fetchDailyFlows } from '../../../shared/constants/endpoints';
 import type { TransactionFlow } from '../../../shared/types/api';
 import { auditUI, auditError } from '../../../shared/audit/audit-service';
 import DynamicAlert, { DynamicAlertItem } from '../../../shared/components/DynamicAlert';
@@ -533,12 +533,5 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-
-
-
-
-
-
-
 
 

@@ -8,6 +8,8 @@ import { SessionUser, UserRole } from "../shared/types/permission.js";
 
 import HomePage from "../domains/home/pages/HomePage";
 import AccountingPage from "../domains/ledger/pages/AccountingPage";
+import TransferPage from "../domains/ledger/pages/TransferPage";
+import TransferSuccessPage from "../domains/ledger/pages/TransferSuccessPage";
 import AddTransactionPage from "../domains/ledger/pages/AddTransactionPage";
 import TransactionDetailPage from "../domains/ledger/pages/TransactionDetailPage";
 import BillUploadPage from "../domains/ledger/pages/BillUploadPage";
@@ -31,6 +33,8 @@ import SystemPage from "../admin/pages/SystemPage";
 const componentRegistry: Record<string, React.ComponentType> = {
   HomePage,
   AccountingPage,
+  TransferPage,
+  TransferSuccessPage,
   AddTransactionPage,
   TransactionDetailPage,
   BillUploadPage,

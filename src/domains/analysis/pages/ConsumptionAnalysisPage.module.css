@@ -1,33 +1,25 @@
-﻿
-
 .pageWrapper {
-  background-color: #F9FAFB;
+  background: #F9FAFB;
   min-height: 100vh;
 }
 
-.gradientBg {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
+.solidBg {
+  background: #3B82F6;
 }
 
-.gradientCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+.solidBg:hover {
+  background: #2563EB;
 }
 
-.gradientText {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.solidCard {
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 150ms ease;
 }
 
-.sidebarItem:hover {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
-  color: white;
-}
-
-.sidebarItemActive {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
-  color: white;
+.solidCard:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .chartContainer {
@@ -40,48 +32,95 @@
   height: 200px;
 }
 
-.statCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.statCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(150, 159, 255, 0.15);
-}
-
-.insightCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border-left: 4px solid #6DC58F;
-  transition: all 0.3s ease;
-}
-
-.insightCard:hover {
-  box-shadow: 0 4px 12px rgba(150, 159, 255, 0.15);
-}
-
 .userTag {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
-  color: white;
-  transition: all 0.3s ease;
+  background: #F3F4F6;
+  color: #374151;
+  border: 1px solid #E5E7EB;
+  transition: all 150ms ease;
 }
 
 .userTag:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(150, 159, 255, 0.3);
+  background: #3B82F6;
+  color: white;
+  border-color: #3B82F6;
 }
 
-.emotionPositive {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+/* 用户画像图标样式 */
+.profileIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 12px;
 }
 
-.emotionNeutral {
-  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+.profileIconBlue {
+  background: #DBEAFE;
+  color: #3B82F6;
 }
 
-.emotionNegative {
-  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+.profileIconGreen {
+  background: #D1FAE5;
+  color: #10B981;
 }
 
+.profileIconOrange {
+  background: #FEF3C7;
+  color: #F59E0B;
+}
 
+.profileIconPurple {
+  background: #EDE9FE;
+  color: #8B5CF6;
+}
+
+@media (max-width: 768px) {
+  .pageWrapper {
+    padding-bottom: 80px;
+  }
+  
+  .chartContainer {
+    height: 220px;
+  }
+  
+  .chartContainerSm {
+    height: 160px;
+  }
+  
+  /* 移动端用户画像优化 */
+  .profileGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .profileItem {
+    text-align: center;
+    padding: 12px;
+    background: #F9FAFB;
+    border-radius: 12px;
+  }
+  
+  .profileIcon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+  }
+  
+  .profileIcon i {
+    font-size: 20px;
+  }
+  
+  .profileTitle {
+    font-size: 13px;
+    color: #6B7280;
+    margin-bottom: 4px;
+  }
+  
+  .profileValue {
+    font-size: 15px;
+    font-weight: 600;
+  }
+}

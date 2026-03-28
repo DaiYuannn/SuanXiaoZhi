@@ -9,8 +9,8 @@ router.get("/", requirePermission(Permission.TRANSACTION_MANAGE), async (req, re
   try {
     const page = Number(req.query.page ?? 1);
     const size = Number(req.query.size ?? 20);
-    const category = req.query.category ? String(req.query.category) : undefined;
-    const where = category ? { category } : undefined;
+    const categoryName = req.query.categoryName ? String(req.query.categoryName) : undefined;
+    const where = categoryName ? { categoryName } : undefined;
 
     const [total, items] = await Promise.all([
       prisma.transaction.count({ where }),
@@ -28,7 +28,7 @@ router.patch("/:id", requirePermission(Permission.TRANSACTION_MANAGE), async (re
     const row = await prisma.transaction.update({
       where: { id: req.params.id },
       data: {
-        ...(req.body?.category ? { category: String(req.body.category) } : {}),
+        ...(req.body?.categoryName ? { categoryName: String(req.body.categoryName) } : {}),
         ...(req.body?.note !== undefined ? { note: req.body.note ? String(req.body.note) : null } : {}),
         ...(typeof req.body?.isAnomaly === "boolean" ? { isAnomaly: req.body.isAnomaly } : {})
       }

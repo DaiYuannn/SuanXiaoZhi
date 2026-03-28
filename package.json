@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -n server,web -c green,blue \"pnpm dev:server\" \"pnpm dev:web\"",
+    "dev:web": "vite",
     "dev:server": "tsx server/src/index.ts",
-    "dev:full": "concurrently -n server,web -c green,blue \"pnpm dev:server\" \"pnpm dev\"",
+    "dev:full": "concurrently -n server,web -c green,blue \"pnpm dev:server\" \"pnpm dev:web\"",
     "build": "tsc -p tsconfig.json && vite build",
     "start": "tsx server/src/index.ts",
     "postinstall": "prisma generate --schema server/prisma/schema.prisma",

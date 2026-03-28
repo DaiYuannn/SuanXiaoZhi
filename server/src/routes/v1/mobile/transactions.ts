@@ -28,23 +28,27 @@ router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res,
     const size = Number(req.query.size ?? 20);
     const from = req.query.from ? new Date(String(req.query.from)) : undefined;
     const to = req.query.to ? new Date(String(req.query.to)) : undefined;
-    const category = req.query.category ? String(req.query.category) : undefined;
+    const categoryName = req.query.categoryName ? String(req.query.categoryName) : undefined;
     const ledgerId = req.query.ledgerId ? String(req.query.ledgerId) : undefined;
 
     const where: {
       ts?: { gte?: Date; lte?: Date };
-      category?: string;
+      categoryName?: string;
       ledgerId?: string;
+      OR?: any[];
     } = {};
 
     if (from || to) {
       where.ts = { gte: from, lte: to };
     }
-    if (category) {
-      where.category = category;
+    if (categoryName) {
+      where.categoryName = categoryName;
     }
     if (ledgerId) {
-      where.ledgerId = ledgerId;
+      where.OR = [
+        { ledgerId: ledgerId },
+        { targetLedgerId: ledgerId }
+      ];
     }
 
     const total = await prisma.transaction.count({ where });
@@ -66,10 +70,12 @@ router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res,
         list: rows.map((row) => ({
           transactionId: row.id,
           accountId: row.ledgerId ?? "default",
+          targetAccountId: row.targetLedgerId,
           time: row.ts.toISOString(),
-          type: row.amountCent >= 0 ? "EXPENSE" : "INCOME",
+          type: row.type || (row.amountCent >= 0 ? "EXPENSE" : "INCOME"),
           amount: Math.abs(row.amountCent),
-          category: row.category,
+          fee: row.feeCent,
+          categoryName: row.categoryName,
           description: row.note ?? undefined,
           remark: row.note ?? undefined,
           isAnomaly: row.isAnomaly,
@@ -92,7 +98,8 @@ router.post("/", requirePermission(Permission.TRANSACTION_WRITE), async (req, re
     const row = await prisma.transaction.create({
       data: {
         amountCent,
-        category: String(body.category ?? "未分类"),
+        type: body.type ?? (amountCent >= 0 ? "EXPENSE" : "INCOME"),
+        categoryName: String(body.categoryName ?? "未分类"),
         note: note ? String(note) : null,
         ts: body.ts || body.time ? new Date(body.ts ?? body.time) : new Date(),
         source: String(body.source ?? "manual"),
@@ -135,7 +142,7 @@ router.post("/", requirePermission(Permission.TRANSACTION_WRITE), async (req, re
         transactionId: row.id,
         time: row.ts.toISOString(),
         amount: Math.abs(row.amountCent),
-        category: row.category,
+        categoryName: row.categoryName,
         remark: row.note ?? undefined,
         isAnomaly: row.isAnomaly,
         source: row.source
@@ -155,7 +162,7 @@ router.patch("/:id", requirePermission(Permission.TRANSACTION_WRITE), async (req
       where: { id },
       data: {
         amountCent: body.amountCent ?? body.amount,
-        category: body.category,
+        categoryName: body.categoryName,
         note: body.note ?? body.remark ?? body.description,
         ts: body.ts || body.time ? new Date(body.ts ?? body.time) : undefined,
         source: body.source,
@@ -171,7 +178,7 @@ router.patch("/:id", requirePermission(Permission.TRANSACTION_WRITE), async (req
         transactionId: row.id,
         time: row.ts.toISOString(),
         amount: Math.abs(row.amountCent),
-        category: row.category,
+        categoryName: row.categoryName,
         remark: row.note ?? undefined,
         isAnomaly: row.isAnomaly
       }

@@ -1,5 +1,3 @@
-﻿
-
 import React, { useState, useEffect } from 'react';
 import styles from './AccountingPage.module.css';
 import { classifyAccounting, fetchTransactions, scanTransactionAnomalies } from '../api/ledger-api';
@@ -250,7 +248,7 @@ const AccountingPage: React.FC = () => {
 
   // 将后端返回的 TransactionItem 映射为本页使用的 Transaction
   const mapFromApi = (item: TransactionItem): Transaction => {
-    const amountYuan = (item.amount ?? 0) / 100; // 假设后端最小单位为“分”
+    const amountYuan = (item.amount ?? 0) / 100; // 假设后端最小单位为"分"
     return {
       id: item.transactionId || `${item.accountId}-${item.time}`,
       time: new Date(item.time).toLocaleString(),
@@ -654,11 +652,11 @@ const AccountingPage: React.FC = () => {
 
   const getCategoryColor = (category: string): string => {
     const colors: { [key: string]: string } = {
-      '餐饮': 'bg-warning bg-opacity-20 text-warning',
-      '购物': 'bg-info bg-opacity-20 text-info',
-      '交通': 'bg-accent bg-opacity-20 text-accent',
-      '工资': 'bg-success bg-opacity-20 text-success',
-      '投资': 'bg-secondary bg-opacity-20 text-secondary'
+      '餐饮': 'bg-orange-100 text-orange-700',
+      '购物': 'bg-blue-100 text-blue-700',
+      '交通': 'bg-green-100 text-green-700',
+      '工资': 'bg-emerald-100 text-emerald-700',
+      '投资': 'bg-purple-100 text-purple-700'
     };
     return colors[category] || 'bg-gray-100 text-gray-600';
   };
@@ -699,30 +697,28 @@ const AccountingPage: React.FC = () => {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className="p-6">
-        {/* 页面头部 */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
+      <div className="p-4 md:p-6">
+        {/* 页面头部 - 移动端优化 */}
+        <div className="mb-4 md:mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-bold text-text-primary mb-1">智能记账</h2>
-              <nav className="text-sm text-text-secondary">
-                <span>首页</span>
-                <span className="mx-2">/</span>
-                <span>智能记账</span>
-              </nav>
+              <h2 className="text-2xl font-bold text-text-primary">智能记账</h2>
             </div>
-            <div className="flex gap-3">
-              <button onClick={handleAddTransaction} className={`${styles.gradientBg} text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all`}>
-                <i className="fas fa-plus mr-2"></i>
-                添加新交易
+            <div className="flex flex-wrap gap-2">
+              <button onClick={handleAddTransaction} className={`${styles.solidBg} text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center`}>
+                <i className="fas fa-plus mr-1"></i>
+                <span className="hidden sm:inline">添加新交易</span>
+                <span className="sm:hidden">添加</span>
               </button>
-              <button onClick={() => window.location.assign('/bill-upload')} className="bg-secondary text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all">
-                <i className="fas fa-file-upload mr-2"></i>
-                票据上传
+              <button onClick={() => window.location.assign('/bill-upload')} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center">
+                <i className="fas fa-file-upload mr-1"></i>
+                <span className="hidden sm:inline">票据上传</span>
+                <span className="sm:hidden">上传</span>
               </button>
-              <button onClick={handleAnomalyScan} disabled={scanLoading} className="border border-warning text-warning px-6 py-2 rounded-lg font-medium hover:bg-warning hover:text-white transition-all disabled:opacity-50">
-                <i className="fas fa-exclamation-triangle mr-2"></i>
-                {scanLoading ? '检测中…' : '异常检测'}
+              <button onClick={handleAnomalyScan} disabled={scanLoading} className="border border-orange-500 text-orange-600 px-4 py-2 rounded-lg font-medium text-sm flex items-center hover:bg-orange-50">
+                <i className="fas fa-exclamation-triangle mr-1"></i>
+                <span className="hidden sm:inline">{scanLoading ? '检测中' : '异常检测'}</span>
+                <span className="sm:hidden">检测</span>
               </button>
             </div>
           </div>
@@ -735,263 +731,256 @@ const AccountingPage: React.FC = () => {
           </div>
         )}
 
-        {/* 快速分类区域 */}
-        <div className={`${styles.gradientCard} rounded-xl p-4 shadow-card mb-6`}>
+        {/* 快速分类区域 - 移动端优化 */}
+        <div className={`${styles.solidCard} bg-white rounded-xl p-4 shadow-md mb-4 md:mb-6`}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-semibold text-text-primary">快速分类</h3>
-            {quickError && <span className="text-xs text-danger">{quickError}</span>}
+            <h3 className="text-base font-semibold text-gray-900">快速分类</h3>
+            {quickError && <span className="text-xs text-red-500">{quickError}</span>}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-start">
-            <div className="md:col-span-2">
-              <div className="flex items-start gap-2">
-                <textarea
-                  value={quickText}
-                  onChange={(e) => setQuickText(e.target.value)}
-                  rows={2}
-                  placeholder="粘贴账单文字/描述（可选）"
-                  className="w-full px-3 py-2 border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                />
-                <button
-                  type="button"
-                  onClick={handleVoiceInput}
-                  className={`w-10 h-10 rounded-lg border border-border-light flex items-center justify-center transition-colors ${listening ? 'bg-primary text-white' : 'text-text-secondary hover:text-primary hover:border-primary'}`}
-                  title="语音输入"
-                >
-                  <i className="fas fa-microphone"></i>
-                </button>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 mt-2">
-                <label className="inline-flex items-center gap-2 px-3 py-2 border border-border-light rounded-lg text-sm text-text-secondary hover:border-primary hover:text-primary cursor-pointer">
-                  <i className="fas fa-file-image"></i>
-                  <span>上传票据</span>
-                  <input type="file" accept="image/*" multiple onChange={handleQuickFilesChange} className="hidden" />
-                </label>
-                <label className="inline-flex items-center gap-2 px-3 py-2 border border-border-light rounded-lg text-sm text-text-secondary hover:border-primary hover:text-primary cursor-pointer">
-                  <i className="fas fa-camera"></i>
-                  <span>拍照上传</span>
-                  <input type="file" accept="image/*" capture="environment" onChange={handleCameraCapture} className="hidden" />
-                </label>
-                {quickFiles.length > 0 && (
-                  <span className="text-xs text-text-secondary">已选 {quickFiles.length} 张图片</span>
-                )}
-              </div>
-              <div className="mt-3 p-3 rounded-lg border border-primary/20 bg-primary/5 text-sm text-text-secondary space-y-1">
-                <p><i className="fas fa-sun text-warning mr-2"></i>{todayHint}</p>
-                <p><i className="fas fa-seedling text-success mr-2"></i>坚持记账，财富自由指日可待。</p>
-                <p><i className="fas fa-heart text-danger mr-2"></i>换季期间别忘了复盘消费结构，预算会更稳。</p>
-              </div>
+          <div className="space-y-3">
+            <div className="flex items-start gap-2">
+              <textarea
+                value={quickText}
+                onChange={(e) => setQuickText(e.target.value)}
+                rows={2}
+                placeholder="粘贴账单文字/描述（可选）"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              />
+              <button
+                type="button"
+                onClick={handleVoiceInput}
+                className={`w-10 h-10 rounded-lg border border-gray-200 flex items-center justify-center flex-shrink-0 ${listening ? 'bg-blue-500 text-white' : 'text-gray-500 hover:text-blue-500 hover:border-blue-500'}`}
+                title="语音输入"
+              >
+                <i className="fas fa-microphone"></i>
+              </button>
             </div>
-            <div className="flex md:justify-end items-center gap-2">
-              <button onClick={() => { setQuickText(''); setQuickFiles([]); setQuickError(null); setQuickPrefill(null); }} className="px-4 py-2 border border-border-light rounded-lg text-text-secondary hover:bg-gray-50">清空</button>
-              <button onClick={handleQuickClassify} disabled={quickLoading} className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 disabled:opacity-50">
-                {quickLoading ? '分类中…' : '快速分类'}
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-blue-500 hover:text-blue-500 cursor-pointer">
+                <i className="fas fa-file-image text-xs"></i>
+                <span>上传票据</span>
+                <input type="file" accept="image/*" multiple onChange={handleQuickFilesChange} className="hidden" />
+              </label>
+              <label className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-blue-500 hover:text-blue-500 cursor-pointer">
+                <i className="fas fa-camera text-xs"></i>
+                <span>拍照</span>
+                <input type="file" accept="image/*" capture="environment" onChange={handleCameraCapture} className="hidden" />
+              </label>
+              {quickFiles.length > 0 && (
+                <span className="text-xs text-gray-500">已选 {quickFiles.length} 张</span>
+              )}
+            </div>
+            <div className="p-3 rounded-lg border border-blue-100 bg-blue-50 text-sm text-gray-600 space-y-1">
+              <p><i className="fas fa-sun text-orange-500 mr-2 text-xs"></i>{todayHint}</p>
+              <p><i className="fas fa-seedling text-green-500 mr-2 text-xs"></i>坚持记账，财富自由指日可待。</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => { setQuickText(''); setQuickFiles([]); setQuickError(null); setQuickPrefill(null); }} className="px-4 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 text-sm">清空</button>
+              <button onClick={handleQuickClassify} disabled={quickLoading} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-sm">
+                {quickLoading ? '分类中' : '快速分类'}
               </button>
             </div>
           </div>
           {quickPrefill && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-border-light">
-              <div className="text-sm text-text-secondary mb-2">二次确认以下信息，点击“去填写”将自动跳转并预填表单</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                <div><span className="text-text-secondary">日期：</span><span className="text-text-primary">{quickPrefill.date}</span></div>
-                <div><span className="text-text-secondary">类型：</span><span className="text-text-primary">{quickPrefill.type === 'income' ? '收入' : '支出'}</span></div>
-                <div><span className="text-text-secondary">金额：</span><span className="text-text-primary">¥{quickPrefill.amount}</span></div>
-                <div><span className="text-text-secondary">分类：</span><span className="text-text-primary">{toCnCategory(quickPrefill.category)}</span></div>
-                <div className="md:col-span-2 truncate"><span className="text-text-secondary">描述：</span><span className="text-text-primary">{quickPrefill.description}</span></div>
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="text-sm text-gray-600 mb-2">二次确认以下信息，点击"去填写"将自动跳转并预填表单</div>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                <div><span className="text-gray-500">日期：</span><span className="text-gray-900">{quickPrefill.date}</span></div>
+                <div><span className="text-gray-500">类型：</span><span className="text-gray-900">{quickPrefill.type === 'income' ? '收入' : '支出'}</span></div>
+                <div><span className="text-gray-500">金额：</span><span className="text-gray-900">¥{quickPrefill.amount}</span></div>
+                <div><span className="text-gray-500">分类：</span><span className="text-gray-900">{toCnCategory(quickPrefill.category)}</span></div>
+                <div className="col-span-2 truncate"><span className="text-gray-500">描述：</span><span className="text-gray-900">{quickPrefill.description}</span></div>
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <button onClick={() => setQuickPrefill(null)} className="px-3 py-2 border border-border-light rounded-lg text-text-secondary hover:bg-gray-100 text-xs">修改再试</button>
-                <button onClick={handleQuickConfirm} className="px-3 py-2 bg-success text-white rounded-lg hover:opacity-90 text-xs">去填写</button>
+                <button onClick={() => setQuickPrefill(null)} className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 text-xs">修改再试</button>
+                <button onClick={handleQuickConfirm} className="px-3 py-1.5 bg-green-500 text-white rounded-lg hover:bg-green-600 text-xs">去填写</button>
               </div>
             </div>
           )}
         </div>
 
-        {/* 工具栏区域 */}
-        <div className={`${styles.gradientCard} rounded-xl p-4 shadow-card mb-6`}>
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+        {/* 工具栏区域 - 移动端优化 */}
+        <div className={`${styles.solidCard} bg-white rounded-xl p-4 shadow-md mb-4 md:mb-6`}>
+          <div className="flex flex-col gap-3">
             {/* 搜索和筛选 */}
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 flex-1">
+            <div className="flex flex-col sm:flex-row gap-2">
               {/* 搜索框 */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1">
                 <input 
                   type="text" 
                   placeholder="搜索交易描述、分类..." 
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="w-full pl-10 pr-4 py-2 border border-border-light rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 />
-                <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-text-secondary"></i>
+                <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
               </div>
               
-              {/* 分类筛选 */}
-              <div className="relative">
-                <button 
-                  id="category-filter-btn"
-                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className="flex items-center space-x-2 px-4 py-2 border border-border-light rounded-lg hover:border-primary transition-colors"
-                >
-                  <span>分类</span>
-                  <i className="fas fa-chevron-down text-text-secondary"></i>
-                </button>
-                {showCategoryDropdown && (
-                  <div id="category-dropdown" className="absolute top-full left-0 mt-1 w-48 bg-white border border-border-light rounded-lg shadow-lg z-10">
-                    <div className="p-2">
-                      <label className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                        <input 
-                          type="checkbox" 
-                          checked={isAllCategoriesSelected()}
-                          onChange={() => handleCategoryToggle('all')}
-                        />
-                        <span>全部</span>
-                      </label>
-                      {categoryOptions.map((option) => (
-                        <label key={option.value} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+              {/* 筛选按钮组 */}
+              <div className="flex gap-2 flex-wrap">
+                {/* 分类筛选 */}
+                <div className="relative">
+                  <button 
+                    id="category-filter-btn"
+                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                    className="flex items-center gap-1 px-3 py-2 border border-gray-200 rounded-lg hover:border-blue-500 text-sm bg-white"
+                  >
+                    <span>分类</span>
+                    <i className="fas fa-chevron-down text-gray-400 text-xs"></i>
+                  </button>
+                  {showCategoryDropdown && (
+                    <div id="category-dropdown" className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div className="p-2">
+                        <label className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
                           <input 
                             type="checkbox" 
-                            checked={selectedCategories.includes(option.value)}
-                            onChange={() => handleCategoryToggle(option.value)}
+                            checked={isAllCategoriesSelected()}
+                            onChange={() => handleCategoryToggle('all')}
                           />
-                          <span>{option.label}</span>
+                          <span className="text-sm">全部</span>
                         </label>
-                      ))}
+                        {categoryOptions.map((option) => (
+                          <label key={option.value} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={selectedCategories.includes(option.value)}
+                              onChange={() => handleCategoryToggle(option.value)}
+                            />
+                            <span className="text-sm">{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* 时间范围选择 */}
-              <div className="relative">
-                <button 
-                  id="time-filter-btn"
-                  onClick={() => setShowTimeDropdown(!showTimeDropdown)}
-                  className="flex items-center space-x-2 px-4 py-2 border border-border-light rounded-lg hover:border-primary transition-colors"
-                >
-                  <span>{getTimeRangeLabel()}</span>
-                  <i className="fas fa-chevron-down text-text-secondary"></i>
-                </button>
-                {showTimeDropdown && (
-                  <div id="time-dropdown" className="absolute top-full left-0 mt-1 w-48 bg-white border border-border-light rounded-lg shadow-lg z-10">
-                    <div className="p-2">
-                      {timeOptions.map((option) => (
-                        <div 
-                          key={option.value}
-                          onClick={() => handleTimeRangeSelect(option.value)}
-                          className="p-2 hover:bg-gray-50 rounded cursor-pointer"
-                        >
-                          {option.label}
-                        </div>
-                      ))}
+                  )}
+                </div>
+                
+                {/* 时间范围选择 */}
+                <div className="relative">
+                  <button 
+                    id="time-filter-btn"
+                    onClick={() => setShowTimeDropdown(!showTimeDropdown)}
+                    className="flex items-center gap-1 px-3 py-2 border border-gray-200 rounded-lg hover:border-blue-500 text-sm bg-white"
+                  >
+                    <span>{getTimeRangeLabel()}</span>
+                    <i className="fas fa-chevron-down text-gray-400 text-xs"></i>
+                  </button>
+                  {showTimeDropdown && (
+                    <div id="time-dropdown" className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div className="p-2">
+                        {timeOptions.map((option) => (
+                          <div 
+                            key={option.value}
+                            onClick={() => handleTimeRangeSelect(option.value)}
+                            className="p-2 hover:bg-gray-50 rounded cursor-pointer text-sm"
+                          >
+                            {option.label}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* 账户切换 */}
-              <div className="relative">
-                <button 
-                  id="account-filter-btn"
-                  onClick={() => setShowAccountDropdown(!showAccountDropdown)}
-                  className="flex items-center space-x-2 px-4 py-2 border border-border-light rounded-lg hover:border-primary transition-colors"
-                >
-                  <span>{getAccountLabel()}</span>
-                  <i className="fas fa-chevron-down text-text-secondary"></i>
-                </button>
-                {showAccountDropdown && (
-                  <div id="account-dropdown" className="absolute top-full left-0 mt-1 w-48 bg-white border border-border-light rounded-lg shadow-lg z-10">
-                    <div className="p-2">
-                      {accountOptions.map((option) => (
-                        <div 
-                          key={option.value}
-                          onClick={() => handleAccountSelect(option.value)}
-                          className="p-2 hover:bg-gray-50 rounded cursor-pointer"
-                        >
-                          {option.label}
-                        </div>
-                      ))}
+                  )}
+                </div>
+                
+                {/* 账户切换 */}
+                <div className="relative">
+                  <button 
+                    id="account-filter-btn"
+                    onClick={() => setShowAccountDropdown(!showAccountDropdown)}
+                    className="flex items-center gap-1 px-3 py-2 border border-gray-200 rounded-lg hover:border-blue-500 text-sm bg-white"
+                  >
+                    <span>{getAccountLabel()}</span>
+                    <i className="fas fa-chevron-down text-gray-400 text-xs"></i>
+                  </button>
+                  {showAccountDropdown && (
+                    <div id="account-dropdown" className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div className="p-2">
+                        {accountOptions.map((option) => (
+                          <div 
+                            key={option.value}
+                            onClick={() => handleAccountSelect(option.value)}
+                            className="p-2 hover:bg-gray-50 rounded cursor-pointer text-sm"
+                          >
+                            {option.label}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
             
             {/* 批量操作 */}
-            <div className="flex items-center space-x-3">
-              <label className="flex items-center space-x-2 text-sm">
-                <input type="checkbox" checked={showOnlyAnomaly} onChange={(e) => setShowOnlyAnomaly(e.target.checked)} />
-                <span>仅看异常</span>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={showOnlyAnomaly} onChange={(e) => setShowOnlyAnomaly(e.target.checked)} className="rounded" />
+                <span className="text-gray-600">仅看异常</span>
               </label>
-            </div>
 
-            <div className={`flex items-center space-x-3 transition-all ${selectedTransactions.size > 0 ? '' : 'opacity-50 pointer-events-none'}`}>
-              <button onClick={handleBatchEdit} className="px-4 py-2 border border-border-light rounded-lg hover:border-primary transition-colors">
-                <i className="fas fa-edit mr-2"></i>批量编辑
-              </button>
-              <button onClick={handleBatchDelete} className="px-4 py-2 border border-danger rounded-lg hover:bg-danger hover:text-white transition-colors">
-                <i className="fas fa-trash mr-2"></i>批量删除
-              </button>
+              <div className={`flex items-center gap-2 ${selectedTransactions.size > 0 ? '' : 'opacity-50'}`}>
+                <button onClick={handleBatchEdit} className="px-3 py-1.5 border border-gray-200 rounded-lg hover:border-blue-500 text-sm flex items-center">
+                  <i className="fas fa-edit mr-1 text-xs"></i>批量编辑
+                </button>
+                <button onClick={handleBatchDelete} className="px-3 py-1.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm flex items-center">
+                  <i className="fas fa-trash mr-1 text-xs"></i>批量删除
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* 交易记录列表 */}
-        <section className="mb-6">
-          <div className={`${styles.gradientCard} rounded-xl shadow-card overflow-hidden`}>
-            <div className="overflow-x-auto">
+        {/* 交易记录列表 - 响应式：桌面表格 / 平板紧凑表格 / 移动端卡片 */}
+        <section className="mb-4 md:mb-6">
+          <div className={`${styles.solidCard} bg-white rounded-xl shadow-md overflow-hidden`}>
+            {/* 桌面端表格 (lg以上) */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-border-light">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
                     <th className="text-left py-3 px-4 w-10">
                       <input 
                         type="checkbox" 
                         checked={currentPageTransactions.length > 0 && currentPageTransactions.every(tx => selectedTransactions.has(tx.id))}
                         onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="rounded border-border-light"
+                        className="rounded border-gray-300"
                       />
                     </th>
                     <th 
-                      className={`text-left py-3 px-4 text-sm font-medium text-text-secondary cursor-pointer hover:text-primary transition-colors ${sortField === 'time' ? (sortDirection === 'asc' ? styles.sortAsc : styles.sortDesc) : ''}`}
+                      className={`text-left py-3 px-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-blue-600 whitespace-nowrap ${sortField === 'time' ? (sortDirection === 'asc' ? styles.sortAsc : styles.sortDesc) : ''}`}
                       onClick={() => handleSort('time')}
                     >
                       交易时间
-                      <i className={`fas fa-sort ml-1 ${styles.sortIcon}`}></i>
+                      <i className={`fas fa-sort ml-1 text-xs ${styles.sortIcon}`}></i>
                     </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">交易描述</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">状态</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">交易描述</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 whitespace-nowrap">状态</th>
                     <th 
-                      className={`text-left py-3 px-4 text-sm font-medium text-text-secondary cursor-pointer hover:text-primary transition-colors ${sortField === 'category' ? (sortDirection === 'asc' ? styles.sortAsc : styles.sortDesc) : ''}`}
+                      className={`text-left py-3 px-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-blue-600 whitespace-nowrap ${sortField === 'category' ? (sortDirection === 'asc' ? styles.sortAsc : styles.sortDesc) : ''}`}
                       onClick={() => handleSort('category')}
                     >
                       分类
-                      <i className={`fas fa-sort ml-1 ${styles.sortIcon}`}></i>
+                      <i className={`fas fa-sort ml-1 text-xs ${styles.sortIcon}`}></i>
                     </th>
                     <th 
-                      className={`text-left py-3 px-4 text-sm font-medium text-text-secondary cursor-pointer hover:text-primary transition-colors ${sortField === 'amount' ? (sortDirection === 'asc' ? styles.sortAsc : styles.sortDesc) : ''}`}
+                      className={`text-left py-3 px-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-blue-600 whitespace-nowrap ${sortField === 'amount' ? (sortDirection === 'asc' ? styles.sortAsc : styles.sortDesc) : ''}`}
                       onClick={() => handleSort('amount')}
                     >
                       金额
-                      <i className={`fas fa-sort ml-1 ${styles.sortIcon}`}></i>
+                      <i className={`fas fa-sort ml-1 text-xs ${styles.sortIcon}`}></i>
                     </th>
-                    <th 
-                      className={`text-left py-3 px-4 text-sm font-medium text-text-secondary cursor-pointer hover:text-primary transition-colors ${sortField === 'account' ? (sortDirection === 'asc' ? styles.sortAsc : styles.sortDesc) : ''}`}
-                      onClick={() => handleSort('account')}
-                    >
-                      账户
-                      <i className={`fas fa-sort ml-1 ${styles.sortIcon}`}></i>
-                    </th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">备注</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-text-secondary">操作</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-gray-600 whitespace-nowrap">操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentPageTransactions.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="text-center py-16">
-                        <div className={`w-24 h-24 mx-auto mb-4 ${styles.gradientBg} rounded-full flex items-center justify-center`}>
+                      <td colSpan={7} className="text-center py-16">
+                        <div className="w-20 h-20 mx-auto mb-4 bg-blue-500 rounded-full flex items-center justify-center">
                           <i className="fas fa-calculator text-white text-2xl"></i>
                         </div>
-                        <h3 className="text-lg font-medium text-text-primary mb-2">暂无交易记录</h3>
-                        <p className="text-text-secondary mb-6">开始记录您的第一笔交易吧</p>
-                        <button onClick={handleAddTransaction} className={`${styles.gradientBg} text-white px-6 py-2 rounded-lg font-medium`}>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">暂无交易记录</h3>
+                        <p className="text-gray-500 mb-4">开始记录您的第一笔交易吧</p>
+                        <button onClick={handleAddTransaction} className={`${styles.solidBg} text-white px-6 py-2 rounded-lg font-medium`}>
                           <i className="fas fa-plus mr-2"></i>添加交易
                         </button>
                       </td>
@@ -1000,41 +989,36 @@ const AccountingPage: React.FC = () => {
                     currentPageTransactions.map(tx => (
                       <tr 
                         key={tx.id}
-                        className={`${styles.transactionRow} border-b border-border-light transition-all ${selectedTransactions.has(tx.id) ? styles.tableChecked : ''}`}
+                        className={`${styles.transactionRow} border-b border-gray-100 ${selectedTransactions.has(tx.id) ? 'bg-blue-50' : ''}`}
                       >
                         <td className="py-3 px-4">
                           <input 
                             type="checkbox" 
                             checked={selectedTransactions.has(tx.id)}
                             onChange={(e) => handleTransactionSelect(tx.id, e.target.checked)}
-                            className="rounded border-border-light"
+                            className="rounded border-gray-300"
                           />
                         </td>
-                        <td className="py-3 px-4 text-sm text-text-primary">{tx.time}</td>
-                        <td className="py-3 px-4 text-sm text-text-primary">{tx.description}</td>
+                        <td className="py-3 px-4 text-sm text-gray-900 whitespace-nowrap">{tx.time}</td>
+                        <td className="py-3 px-4 text-sm text-gray-900 max-w-[150px] truncate">{tx.description}</td>
                         <td className="py-3 px-4 text-sm">
                           {tx.isAnomaly ? (
-                            <span className="px-2 py-1 text-xs rounded-full bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20">异常</span>
+                            <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-600 border border-red-200 whitespace-nowrap">异常</span>
                           ) : (
-                            <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">正常</span>
+                            <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600 whitespace-nowrap">正常</span>
                           )}
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-1 ${getCategoryColor(tx.category)} text-xs rounded-full`}>{tx.category}</span>
+                          <span className={`px-2 py-1 ${getCategoryColor(tx.category)} text-xs rounded-full whitespace-nowrap`}>{tx.category}</span>
                         </td>
-                        <td className={`py-3 px-4 text-sm font-medium ${tx.amount >= 0 ? 'text-success' : 'text-danger'}`}>
+                        <td className={`py-3 px-4 text-sm font-medium whitespace-nowrap ${tx.amount >= 0 ? 'text-green-600' : 'text-gray-900'}`}>
                           {tx.amount >= 0 ? '+' : ''}¥{tx.amount.toFixed(2)}
                         </td>
-                        <td className="py-3 px-4 text-sm text-text-secondary">{tx.account}</td>
-                        <td className="py-3 px-4 text-sm text-text-secondary">{tx.note}</td>
                         <td className="py-3 px-4">
-                          <div className="flex space-x-2">
-                            <button onClick={() => handleTransactionView(tx.id)} className="text-primary text-sm hover:underline">详情</button>
-                            <button onClick={() => handleTransactionEdit(tx.id)} className="text-text-secondary text-sm hover:text-primary">编辑</button>
-                            <button onClick={() => handleTransactionDelete(tx.id)} className="text-danger text-sm hover:underline">删除</button>
-                            <button onClick={() => toggleTransactionAnomaly(tx.id)} className={`text-sm ${tx.isAnomaly ? 'text-warning' : 'text-accent'} hover:underline`}>
-                              {tx.isAnomaly ? '取消异常' : '标记异常'}
-                            </button>
+                          <div className="flex gap-2">
+                            <button onClick={() => handleTransactionView(tx.id)} className="text-blue-600 text-sm hover:underline whitespace-nowrap">详情</button>
+                            <button onClick={() => handleTransactionEdit(tx.id)} className="text-gray-500 text-sm hover:text-blue-600 whitespace-nowrap">编辑</button>
+                            <button onClick={() => handleTransactionDelete(tx.id)} className="text-red-500 text-sm hover:underline whitespace-nowrap">删除</button>
                           </div>
                         </td>
                       </tr>
@@ -1043,33 +1027,150 @@ const AccountingPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+            {/* 平板端紧凑表格 (md到lg之间) */}
+            <div className="hidden md:block lg:hidden overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="text-left py-2 px-2 w-8">
+                      <input 
+                        type="checkbox" 
+                        checked={currentPageTransactions.length > 0 && currentPageTransactions.every(tx => selectedTransactions.has(tx.id))}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="rounded border-gray-300"
+                      />
+                    </th>
+                    <th className="text-left py-2 px-2 text-xs font-medium text-gray-600 whitespace-nowrap">时间</th>
+                    <th className="text-left py-2 px-2 text-xs font-medium text-gray-600">描述</th>
+                    <th className="text-left py-2 px-2 text-xs font-medium text-gray-600 whitespace-nowrap">分类</th>
+                    <th className="text-left py-2 px-2 text-xs font-medium text-gray-600 whitespace-nowrap">金额</th>
+                    <th className="text-left py-2 px-2 text-xs font-medium text-gray-600 whitespace-nowrap">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentPageTransactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto mb-3 bg-blue-500 rounded-full flex items-center justify-center">
+                          <i className="fas fa-calculator text-white text-xl"></i>
+                        </div>
+                        <h3 className="text-base font-medium text-gray-900 mb-1">暂无交易记录</h3>
+                        <button onClick={handleAddTransaction} className={`${styles.solidBg} text-white px-4 py-2 rounded-lg font-medium text-sm`}>
+                          <i className="fas fa-plus mr-1"></i>添加交易
+                        </button>
+                      </td>
+                    </tr>
+                  ) : (
+                    currentPageTransactions.map(tx => (
+                      <tr 
+                        key={tx.id}
+                        className={`${styles.transactionRow} border-b border-gray-100 ${selectedTransactions.has(tx.id) ? 'bg-blue-50' : ''}`}
+                      >
+                        <td className="py-2 px-2">
+                          <input 
+                            type="checkbox" 
+                            checked={selectedTransactions.has(tx.id)}
+                            onChange={(e) => handleTransactionSelect(tx.id, e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                        </td>
+                        <td className="py-2 px-2 text-xs text-gray-900 whitespace-nowrap">{tx.time.split(' ')[0]}</td>
+                        <td className="py-2 px-2 text-xs text-gray-900 max-w-[100px] truncate">{tx.description}</td>
+                        <td className="py-2 px-2">
+                          <span className={`px-1.5 py-0.5 ${getCategoryColor(tx.category)} text-xs rounded-full whitespace-nowrap`}>{tx.category}</span>
+                        </td>
+                        <td className={`py-2 px-2 text-xs font-medium whitespace-nowrap ${tx.amount >= 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                          {tx.amount >= 0 ? '+' : ''}¥{tx.amount.toFixed(0)}
+                        </td>
+                        <td className="py-2 px-2">
+                          <div className="flex gap-1">
+                            <button onClick={() => handleTransactionView(tx.id)} className="text-blue-600 text-xs hover:underline">详</button>
+                            <button onClick={() => handleTransactionEdit(tx.id)} className="text-gray-500 text-xs hover:text-blue-600">编</button>
+                            <button onClick={() => handleTransactionDelete(tx.id)} className="text-red-500 text-xs hover:underline">删</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 移动端卡片列表 (md以下) */}
+            <div className="md:hidden">
+              {currentPageTransactions.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 mx-auto mb-3 bg-blue-500 rounded-full flex items-center justify-center">
+                    <i className="fas fa-calculator text-white text-xl"></i>
+                  </div>
+                  <h3 className="text-base font-medium text-gray-900 mb-1">暂无交易记录</h3>
+                  <p className="text-gray-500 text-sm mb-3">开始记录您的第一笔交易吧</p>
+                  <button onClick={handleAddTransaction} className={`${styles.solidBg} text-white px-4 py-2 rounded-lg font-medium text-sm`}>
+                    <i className="fas fa-plus mr-1"></i>添加交易
+                  </button>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {currentPageTransactions.map(tx => (
+                    <div 
+                      key={tx.id}
+                      className={`p-4 ${selectedTransactions.has(tx.id) ? 'bg-blue-50' : ''}`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="checkbox" 
+                            checked={selectedTransactions.has(tx.id)}
+                            onChange={(e) => handleTransactionSelect(tx.id, e.target.checked)}
+                            className="rounded border-gray-300"
+                          />
+                          <span className="text-sm text-gray-500">{tx.time}</span>
+                        </div>
+                        <span className={`px-2 py-0.5 text-xs rounded-full ${getCategoryColor(tx.category)}`}>{tx.category}</span>
+                      </div>
+                      <div className="flex items-center justify-between ml-6">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{tx.description}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            {tx.isAnomaly ? (
+                              <span className="text-xs text-red-600">异常</span>
+                            ) : (
+                              <span className="text-xs text-gray-500">正常</span>
+                            )}
+                          </div>
+                        </div>
+                        <p className={`text-sm font-semibold ${tx.amount >= 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                          {tx.amount >= 0 ? '+' : ''}¥{tx.amount.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
-        {/* 分页区域 */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-text-secondary">
-            共 <span>{filteredTransactions.length}</span> 条记录，每页显示 
-            <select value={pageSize} onChange={handlePageSizeChange} className="border border-border-light rounded px-2 py-1 text-sm ml-1">
-              <option value="10">10</option>
-              <option value="20">20</option>
-              <option value="50">50</option>
-            </select> 条
+        {/* 分页区域 - 移动端优化 */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-sm text-gray-500">
+            共 <span>{filteredTransactions.length}</span> 条记录
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-1">
             <button 
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="px-3 py-1 border border-border-light rounded hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 border border-gray-200 rounded hover:border-blue-500 disabled:opacity-50 text-sm"
             >
-              <i className="fas fa-chevron-left"></i>
+              <i className="fas fa-chevron-left text-xs"></i>
             </button>
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center gap-1">
               {generatePageNumbers().map(page => (
                 <button 
                   key={page}
                   onClick={() => handlePageChange(page)}
-                  className={`px-3 py-1 border rounded transition-colors ${page === currentPage ? 'bg-primary text-white border-primary' : 'border-border-light hover:border-primary'}`}
+                  className={`px-3 py-1.5 border rounded text-sm ${page === currentPage ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-200 hover:border-blue-500'}`}
                 >
                   {page}
                 </button>
@@ -1078,9 +1179,9 @@ const AccountingPage: React.FC = () => {
             <button 
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages || totalPages === 0}
-              className="px-3 py-1 border border-border-light rounded hover:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 border border-gray-200 rounded hover:border-blue-500 disabled:opacity-50 text-sm"
             >
-              <i className="fas fa-chevron-right"></i>
+              <i className="fas fa-chevron-right text-xs"></i>
             </button>
           </div>
         </div>
@@ -1090,11 +1191,3 @@ const AccountingPage: React.FC = () => {
 };
 
 export default AccountingPage;
-
-
-
-
-
-
-
-

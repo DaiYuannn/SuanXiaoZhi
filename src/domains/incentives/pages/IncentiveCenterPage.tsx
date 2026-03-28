@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './styles.module.css';
 import { fetchIncentives, claimIncentive } from '../api/incentives-api';
 import type { IncentiveItem } from '../../../shared/types/api';
@@ -48,7 +48,7 @@ const IncentiveCenterPage: React.FC = () => {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>

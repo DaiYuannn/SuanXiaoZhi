@@ -10,6 +10,8 @@ export interface AppRoute {
 export const mobileRoutes: AppRoute[] = [
   { path: "/", name: "home", component: "HomePage" },
   { path: "/accounting", name: "accounting", component: "AccountingPage", permission: Permission.TRANSACTION_WRITE },
+  { path: "/ledger/transfer", name: "transfer", component: "TransferPage", permission: Permission.TRANSACTION_WRITE },
+  { path: "/ledger/transfer/success", name: "transferSuccess", component: "TransferSuccessPage", permission: Permission.TRANSACTION_WRITE },
   { path: "/add-transaction", name: "addTransaction", component: "AddTransactionPage", permission: Permission.TRANSACTION_WRITE },
   { path: "/transaction/:id", name: "transactionDetail", component: "TransactionDetailPage", permission: Permission.TRANSACTION_READ },
   { path: "/bill-upload", name: "billUpload", component: "BillUploadPage", permission: Permission.TRANSACTION_WRITE },

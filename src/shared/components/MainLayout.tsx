@@ -89,7 +89,7 @@ const MainLayout: React.FC = () => {
         </aside>
 
         {/* 主内容区 */}
-          <main className="flex-1 md:ml-64 w-full bg-white min-h-[calc(100vh-4rem)]">
+          <main className="flex-1 md:ml-64 w-full bg-bg-primary min-h-[calc(100vh-4rem)] pb-20 md:pb-0">
            <Outlet />
         </main>
       </div>

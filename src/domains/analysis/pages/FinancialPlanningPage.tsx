@@ -1,4 +1,4 @@
-﻿
+
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -314,15 +314,12 @@ const FinancialPlanningPage: React.FC = () => {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {/* 页面头部 */}
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-text-primary mb-1">财务规划</h2>
-              <nav className="text-sm text-text-secondary">
-                <span>财务规划</span>
-              </nav>
+              <h2 className="text-2xl font-bold text-text-primary">财务规划</h2>
             </div>
             <button 
               onClick={handleCreatePlan}

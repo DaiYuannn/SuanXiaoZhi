@@ -58,7 +58,7 @@ const FamilyPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto w-full">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto w-full">
       {members.length === 0 && !loading ? (
         <div className="text-center py-12 bg-white rounded-xl shadow-sm">
           <h2 className="text-lg font-medium mb-4">您还没有加入任何家庭</h2>

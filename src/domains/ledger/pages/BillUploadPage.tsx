@@ -324,7 +324,7 @@ const PageBillUpload: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <h1 className="text-xl font-semibold">票据上传识别</h1>
       <p className="text-sm text-gray-600">支持多图片拖拽/选择，基础旋转与简易裁剪（占位），调用分类与OCR接口。</p>
       {/* 文本快速分类 */}

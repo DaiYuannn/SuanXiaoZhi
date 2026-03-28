@@ -76,10 +76,11 @@ router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res,
         return {
           accountId: ledger.id,
           name: ledger.name,
+          icon: ledger.icon,
           type: ledger.type,
           balance: balances.get(ledger.id) ?? 0,
           institution: meta.institution,
-          currency: meta.currency ?? "CNY"
+          currency: ledger.currency ?? meta.currency ?? "USD"
         };
       })
     });
@@ -113,10 +114,11 @@ router.post("/", requirePermission(Permission.TRANSACTION_WRITE), async (req, re
       data: {
         accountId: row.id,
         name: row.name,
+        icon: row.icon,
         type: row.type,
         balance: 0,
         institution: meta.institution,
-        currency: meta.currency ?? "CNY"
+        currency: row.currency ?? meta.currency ?? "USD"
       }
     });
   } catch (error) {
@@ -166,10 +168,11 @@ router.patch("/:id", requirePermission(Permission.TRANSACTION_WRITE), async (req
       data: {
         accountId: row.id,
         name: row.name,
+        icon: row.icon,
         type: row.type,
         balance: balance._sum.amountCent ?? 0,
         institution: meta.institution,
-        currency: meta.currency ?? "CNY"
+        currency: row.currency ?? meta.currency ?? "USD"
       }
     });
   } catch (error) {

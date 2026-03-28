@@ -1,4 +1,4 @@
-﻿
+
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -429,56 +429,51 @@ const ConsumptionAnalysisPage: React.FC = () => {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {/* 页面头部 */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-text-primary mb-1">消费分析</h2>
-              <nav className="text-sm text-text-secondary">
-                <span>首页</span>
-                <i className="fas fa-chevron-right mx-2"></i>
-                <span>消费分析</span>
-              </nav>
+              <h2 className="text-2xl font-bold text-text-primary">消费分析</h2>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex flex-wrap gap-2">
                 <button 
                   onClick={() => handleTimeRangeChange('7d')}
-                  className={`px-3 py-1 text-sm rounded-lg ${
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
                     selectedTimeRange === '7d' 
                       ? 'bg-primary text-white' 
-                      : 'text-text-secondary hover:text-primary'
+                      : 'text-text-secondary hover:text-primary hover:bg-gray-100'
                   }`}
                 >
                   近7天
                 </button>
                 <button 
                   onClick={() => handleTimeRangeChange('30d')}
-                  className={`px-3 py-1 text-sm rounded-lg ${
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
                     selectedTimeRange === '30d' 
                       ? 'bg-primary text-white' 
-                      : 'text-text-secondary hover:text-primary'
+                      : 'text-text-secondary hover:text-primary hover:bg-gray-100'
                   }`}
                 >
                   近30天
                 </button>
                 <button 
                   onClick={() => handleTimeRangeChange('3m')}
-                  className={`px-3 py-1 text-sm rounded-lg ${
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
                     selectedTimeRange === '3m' 
                       ? 'bg-primary text-white' 
-                      : 'text-text-secondary hover:text-primary'
+                      : 'text-text-secondary hover:text-primary hover:bg-gray-100'
                   }`}
                 >
                   近3月
                 </button>
                 <button 
                   onClick={() => handleTimeRangeChange('1y')}
-                  className={`px-3 py-1 text-sm rounded-lg ${
+                  className={`px-3 py-1.5 text-sm rounded-lg transition-all ${
                     selectedTimeRange === '1y' 
                       ? 'bg-primary text-white' 
-                      : 'text-text-secondary hover:text-primary'
+                      : 'text-text-secondary hover:text-primary hover:bg-gray-100'
                   }`}
                 >
                   近1年
@@ -486,7 +481,7 @@ const ConsumptionAnalysisPage: React.FC = () => {
               </div>
               <button 
                 onClick={handleExportReport}
-                className="px-4 py-2 bg-white border border-border-light text-text-primary rounded-lg hover:shadow-lg transition-all"
+                className="px-4 py-2 bg-white border border-border-light text-text-primary rounded-lg hover:shadow-lg transition-all whitespace-nowrap"
               >
                 <i className="fas fa-download mr-2"></i>
                 导出报告
@@ -610,82 +605,83 @@ const ConsumptionAnalysisPage: React.FC = () => {
 
         {/* 用户画像概览区 */}
         <section className="mb-8">
-          <div className={`${styles.gradientCard} rounded-xl p-6 shadow-card`}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-text-primary">用户画像概览</h3>
+          <div className={`${styles.solidCard} bg-white rounded-xl p-4 md:p-6 shadow-md`}>
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h3 className="text-base md:text-lg font-semibold text-gray-900">用户画像概览</h3>
               <button 
                 onClick={handleViewFullProfile}
-                className="text-primary text-sm font-medium hover:underline"
+                className="text-blue-600 text-xs md:text-sm font-medium hover:underline"
               >
                 查看完整画像 <i className="fas fa-arrow-right ml-1"></i>
               </button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="text-center">
-                <div className={`w-16 h-16 ${styles.gradientBg} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                  <i className="fas fa-user text-white text-2xl"></i>
+            {/* 移动端2列，桌面端4列 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+              <div className="text-center p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl">
+                <div className={`w-12 h-12 md:w-16 md:h-16 ${styles.solidBg} rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3`}>
+                  <i className="fas fa-user text-white text-lg md:text-2xl"></i>
                 </div>
-                <h4 className="font-medium text-text-primary mb-1">消费能力</h4>
-                <p className="text-lg font-bold text-primary">中等偏上</p>
+                <h4 className="font-medium text-gray-700 text-xs md:text-sm mb-1">消费能力</h4>
+                <p className="text-sm md:text-lg font-bold text-blue-600">中等偏上</p>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-success bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <i className="fas fa-shield-alt text-success text-2xl"></i>
+              <div className="text-center p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
+                  <i className="fas fa-shield-alt text-green-600 text-lg md:text-2xl"></i>
                 </div>
-                <h4 className="font-medium text-text-primary mb-1">风险偏好</h4>
-                <p className="text-lg font-bold text-success">稳健型</p>
+                <h4 className="font-medium text-gray-700 text-xs md:text-sm mb-1">风险偏好</h4>
+                <p className="text-sm md:text-lg font-bold text-green-600">稳健型</p>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-warning bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <i className="fas fa-clock text-warning text-2xl"></i>
+              <div className="text-center p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
+                  <i className="fas fa-clock text-yellow-600 text-lg md:text-2xl"></i>
                 </div>
-                <h4 className="font-medium text-text-primary mb-1">消费习惯</h4>
-                <p className="text-lg font-bold text-warning">规律理性</p>
+                <h4 className="font-medium text-gray-700 text-xs md:text-sm mb-1">消费习惯</h4>
+                <p className="text-sm md:text-lg font-bold text-yellow-600">规律理性</p>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-info bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <i className="fas fa-chart-line text-info text-2xl"></i>
+              <div className="text-center p-3 md:p-0 bg-gray-50 md:bg-transparent rounded-xl">
+                <div className="w-12 h-12 md:w-16 md:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2 md:mb-3">
+                  <i className="fas fa-chart-line text-purple-600 text-lg md:text-2xl"></i>
                 </div>
-                <h4 className="font-medium text-text-primary mb-1">储蓄倾向</h4>
-                <p className="text-lg font-bold text-info">较高</p>
+                <h4 className="font-medium text-gray-700 text-xs md:text-sm mb-1">储蓄倾向</h4>
+                <p className="text-sm md:text-lg font-bold text-purple-600">较高</p>
               </div>
             </div>
-            <div className="mt-6">
-              <h4 className="font-medium text-text-primary mb-3">核心标签</h4>
+            <div className="mt-4 md:mt-6">
+              <h4 className="font-medium text-gray-900 mb-2 md:mb-3 text-sm">核心标签</h4>
               <div className="flex flex-wrap gap-2">
                 <span 
                   onClick={() => handleUserTagClick('白领阶层')}
-                  className={`${styles.userTag} px-3 py-1 text-sm rounded-full cursor-pointer`}
+                  className="bg-gray-100 text-gray-700 border border-gray-200 px-2 md:px-3 py-1 text-xs md:text-sm rounded-full cursor-pointer hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all"
                 >
                   白领阶层
                 </span>
                 <span 
                   onClick={() => handleUserTagClick('品质生活追求者')}
-                  className={`${styles.userTag} px-3 py-1 text-sm rounded-full cursor-pointer`}
+                  className="bg-gray-100 text-gray-700 border border-gray-200 px-2 md:px-3 py-1 text-xs md:text-sm rounded-full cursor-pointer hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all"
                 >
                   品质生活追求者
                 </span>
                 <span 
                   onClick={() => handleUserTagClick('理性消费者')}
-                  className={`${styles.userTag} px-3 py-1 text-sm rounded-full cursor-pointer`}
+                  className="bg-gray-100 text-gray-700 border border-gray-200 px-2 md:px-3 py-1 text-xs md:text-sm rounded-full cursor-pointer hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all"
                 >
                   理性消费者
                 </span>
                 <span 
                   onClick={() => handleUserTagClick('稳健投资者')}
-                  className={`${styles.userTag} px-3 py-1 text-sm rounded-full cursor-pointer`}
+                  className="bg-gray-100 text-gray-700 border border-gray-200 px-2 md:px-3 py-1 text-xs md:text-sm rounded-full cursor-pointer hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all"
                 >
                   稳健投资者
                 </span>
                 <span 
                   onClick={() => handleUserTagClick('健康生活方式')}
-                  className={`${styles.userTag} px-3 py-1 text-sm rounded-full cursor-pointer`}
+                  className="bg-gray-100 text-gray-700 border border-gray-200 px-2 md:px-3 py-1 text-xs md:text-sm rounded-full cursor-pointer hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all"
                 >
                   健康生活方式
                 </span>
                 <span 
                   onClick={() => handleUserTagClick('科技产品爱好者')}
-                  className={`${styles.userTag} px-3 py-1 text-sm rounded-full cursor-pointer`}
+                  className="bg-gray-100 text-gray-700 border border-gray-200 px-2 md:px-3 py-1 text-xs md:text-sm rounded-full cursor-pointer hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-all"
                 >
                   科技产品爱好者
                 </span>

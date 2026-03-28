@@ -64,7 +64,7 @@ router.get("/profile/tags", requirePermission(Permission.TRANSACTION_READ), asyn
 
     const byCategory = new Map<string, number>();
     for (const row of rows) {
-      byCategory.set(row.category, (byCategory.get(row.category) ?? 0) + Math.abs(row.amountCent));
+      byCategory.set((row.categoryName || 'Uncategorized'), (byCategory.get((row.categoryName || 'Uncategorized')) ?? 0) + Math.abs(row.amountCent));
     }
 
     const topCategories = Array.from(byCategory.entries())

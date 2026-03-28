@@ -1,61 +1,49 @@
-﻿
-
 .pageWrapper {
-  background-color: #F9FAFB;
+  background: #F9FAFB;
   min-height: 100vh;
 }
 
-.gradientBg {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
+.solidBg {
+  background: #3B82F6;
 }
 
-.gradientCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+.solidBg:hover {
+  background: #2563EB;
 }
 
-.gradientText {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.solidCard {
+  background: #FFFFFF;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 150ms ease;
 }
 
-.sidebarItem:hover {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
-  color: white;
+.solidCard:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.sidebarItem.active {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
-  color: white;
+.transactionRow {
+  transition: all 150ms ease;
 }
 
 .transactionRow:hover {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-}
-
-.tableChecked {
-  background: linear-gradient(135deg, #6DC58F 0%, #2F8F5B 100%);
-  color: white;
-}
-
-.tableChecked .text-text-secondary {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.sortIcon {
-  opacity: 0.3;
-  transition: opacity 0.2s;
+  background: #F9FAFB;
 }
 
 .sortAsc .sortIcon {
-  opacity: 1;
-  transform: rotate(0deg);
-}
-
-.sortDesc .sortIcon {
-  opacity: 1;
   transform: rotate(180deg);
 }
 
+.sortDesc .sortIcon {
+  transform: rotate(0deg);
+}
 
+.sortIcon {
+  transition: transform 200ms ease;
+}
+
+@media (max-width: 768px) {
+  .pageWrapper {
+    padding-bottom: 80px;
+  }
+}

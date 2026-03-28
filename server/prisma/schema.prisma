@@ -28,6 +28,7 @@ model User {
   userAchievements UserAchievement[]
   riskAssessments  RiskAssessment[]
   auditEvents      AuditEvent[]
+  categories       Category[]
 
   roles         UserRole[]
   createdAt     DateTime @default(now())
@@ -49,6 +50,9 @@ model Ledger {
   name        String
   description String?
   type        String   @default("PERSONAL")
+  icon        String?
+  currency    String   @default("USD")
+  balanceCent Int      @default(0)
 
   ownerId String?
   owner   User?   @relation(fields: [ownerId], references: [id])
@@ -56,9 +60,24 @@ model Ledger {
   familyId String?
   family   Family? @relation(fields: [familyId], references: [id])
 
-  transactions Transaction[]
+  transactions    Transaction[] @relation("SourceLedger")
+  incomingTransfers Transaction[] @relation("TargetLedger")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  icon        String?
+  color       String?
+  type        String   @default("EXPENSE") // EXPENSE, INCOME, TRANSFER
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  
+  transactions Transaction[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model PointLog {
@@ -92,7 +111,13 @@ model ChatMessage {
 model Transaction {
   id         String   @id @default(cuid())
   amountCent Int
-  category   String
+  type       String   @default("EXPENSE") // EXPENSE, INCOME, TRANSFER
+  feeCent    Int      @default(0)
+  
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryName String?
+  
   note       String?
   ts         DateTime
   isAnomaly  Boolean  @default(false)
@@ -102,7 +127,10 @@ model Transaction {
   user   User? @relation(fields: [userId], references: [id])
 
   ledgerId String?
-  ledger   Ledger? @relation(fields: [ledgerId], references: [id])
+  ledger   Ledger? @relation("SourceLedger", fields: [ledgerId], references: [id])
+
+  targetLedgerId String?
+  targetLedger   Ledger? @relation("TargetLedger", fields: [targetLedgerId], references: [id])
 
   createdAt DateTime @default(now())
 }

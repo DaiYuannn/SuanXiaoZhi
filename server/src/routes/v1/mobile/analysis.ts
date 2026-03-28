@@ -12,25 +12,25 @@ router.get("/summary", requirePermission(Permission.TRANSACTION_READ), async (re
 
     const rows = await prisma.transaction.findMany({
       where: { ts: { gte: from, lte: to } },
-      select: { amountCent: true, category: true, ts: true }
+      select: { amountCent: true, categoryName: true, ts: true }
     });
 
     const byCategoryMap = new Map<string, { amount: number; count: number }>();
     const trendMap = new Map<string, number>();
 
     for (const row of rows) {
-      const category = row.category || "未分类";
-      const stat = byCategoryMap.get(category) ?? { amount: 0, count: 0 };
+      const categoryName = (row.categoryName || 'Uncategorized') || "未分类";
+      const stat = byCategoryMap.get(categoryName) ?? { amount: 0, count: 0 };
       stat.amount += row.amountCent;
       stat.count += 1;
-      byCategoryMap.set(category, stat);
+      byCategoryMap.set(categoryName, stat);
 
       const day = row.ts.toISOString().slice(0, 10);
       trendMap.set(day, (trendMap.get(day) ?? 0) + row.amountCent);
     }
 
-    const byCategory = Array.from(byCategoryMap.entries()).map(([category, value]) => ({
-      category,
+    const byCategory = Array.from(byCategoryMap.entries()).map(([categoryName, value]) => ({
+      categoryName,
       amount: value.amount,
       count: value.count
     }));
@@ -39,7 +39,7 @@ router.get("/summary", requirePermission(Permission.TRANSACTION_READ), async (re
       .map(([date, amount]) => ({ date, amount }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
-    const frequency = byCategory.map((item) => ({ category: item.category, count: item.count }));
+    const frequency = byCategory.map((item) => ({ categoryName: item.categoryName, count: item.count }));
 
     res.json({ ok: true, code: 0, message: "ok", data: { byCategory, trend, frequency } });
   } catch (error) {
@@ -56,7 +56,7 @@ router.get("/insights", requirePermission(Permission.TRANSACTION_READ), async (r
 
     const byCategory = new Map<string, number>();
     for (const row of rows) {
-      byCategory.set(row.category, (byCategory.get(row.category) ?? 0) + Math.abs(row.amountCent));
+      byCategory.set((row.categoryName || 'Uncategorized'), (byCategory.get((row.categoryName || 'Uncategorized')) ?? 0) + Math.abs(row.amountCent));
     }
 
     const top = Array.from(byCategory.entries()).sort((a, b) => b[1] - a[1])[0];

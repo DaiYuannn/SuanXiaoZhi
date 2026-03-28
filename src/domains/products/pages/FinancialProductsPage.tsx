@@ -1,4 +1,4 @@
-﻿
+
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -227,7 +227,7 @@ const FinancialProductsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       {/* 页面头部 */}
       <div className="mb-6">
         <div className="flex items-center justify-between">

@@ -15,6 +15,7 @@ import mobileRemindersRouter from "./v1/mobile/reminders.js";
 import mobileTransactionsRouter from "./v1/mobile/transactions.js";
 import mobileAccountsRouter from "./v1/mobile/accounts.js";
 import mobileFlowsRouter from "./v1/mobile/flows.js";
+import mobileCategoriesRouter from "./v1/mobile/categories.js";
 import adminProductsRouter from "./v1/admin/products.js";
 import adminReportsRouter from "./v1/admin/reports.js";
 import adminRiskRouter from "./v1/admin/risk.js";
@@ -40,6 +41,7 @@ router.use("/api/v1/mobile/plans", mobilePlansRouter);
 router.use("/api/v1/mobile/user", mobilePersonaRouter);
 router.use("/api/v1/mobile/intent", mobileIntentRouter);
 router.use("/api/v1/mobile/flows", mobileFlowsRouter);
+router.use("/api/v1/mobile/categories", mobileCategoriesRouter);
 
 router.use("/api/v1/admin/users", adminUsersRouter);
 router.use("/api/v1/admin/transactions", adminTransactionsRouter);

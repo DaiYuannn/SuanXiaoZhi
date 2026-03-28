@@ -87,6 +87,7 @@ pnpm start
 注意：
 - GitHub Pages 仅托管前端静态资源，不运行 Express/Prisma。
 - 若未配置可访问的线上后端，部分需要后端接口的功能会使用降级/占位行为。
+- 若页面显示 `There isn't a GitHub Pages site here`，请到仓库 `Settings -> Pages` 将 `Build and deployment` 设置为 `GitHub Actions`，然后在 `Actions` 页面重新运行 `Deploy To GitHub Pages` 工作流。
 
 ## 不同身份组登录账号（本地演示）
 

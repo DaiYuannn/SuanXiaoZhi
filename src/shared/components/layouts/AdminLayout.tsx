@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Permission, SessionUser, UserRole } from "../../types/permission.js";
 import { hasPermission } from "../../utils/permission-map.js";
-import { AUTH_TOKEN_KEY } from "../../config/env.js";
+import { clearStoredSession, readStoredSession } from "../../utils/auth-session.js";
 
 const parseRole = (value: string | null): UserRole | null => {
   if (value === UserRole.OWNER || value === UserRole.FAMILY_MEMBER || value === UserRole.SUPER_ADMIN || value === UserRole.OPERATOR || value === UserRole.VIEWER) {
@@ -16,9 +16,9 @@ const AdminLayout: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    const role = parseRole(localStorage.getItem("sx-role"));
-    if (!token || (role !== UserRole.SUPER_ADMIN && role !== UserRole.OPERATOR && role !== UserRole.VIEWER)) {
+    const session = readStoredSession();
+    const role = session ? parseRole(session.role) : null;
+    if (!session || (role !== UserRole.SUPER_ADMIN && role !== UserRole.OPERATOR && role !== UserRole.VIEWER)) {
       if (location.pathname.startsWith("/admin")) {
         navigate("/login", { replace: true });
       }
@@ -33,17 +33,16 @@ const AdminLayout: React.FC = () => {
     { name: "系统设置", path: "/admin/system", icon: "fa-cog", permission: Permission.SYSTEM_MANAGE }
   ];
 
-  const currentRole = parseRole(localStorage.getItem("sx-role")) ?? UserRole.VIEWER;
+  const session = readStoredSession();
+  const currentRole = parseRole(session?.role ?? null) ?? UserRole.VIEWER;
   const sessionUser: SessionUser = {
-    id: localStorage.getItem("sx-user-id") || "",
+    id: session?.userId ?? "",
     role: currentRole
   };
   const visibleMenuItems = menuItems.filter((item) => hasPermission(sessionUser.role, item.permission));
 
   const handleLogout = () => {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem("sx-role");
-    localStorage.removeItem("sx-user-id");
+    clearStoredSession();
     navigate("/login", { replace: true });
   };
 

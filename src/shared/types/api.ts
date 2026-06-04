@@ -7,9 +7,24 @@ export interface ApiResponse<T> {
 
 export interface UserProfile {
   userId: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+  gender?: string;
+  address?: string;
   riskLevel?: 'LOW' | 'MID' | 'HIGH';
-  preferences?: Record<string, number>; // 消费偏好权重，如 { food: 0.4, travel: 0.2 }
-  tags?: string[]; // 其他标签
+  preferences?: Record<string, number>;
+  tags?: string[];
+}
+
+// 用户个人资料详情（用于 /me 接口和设置页）
+export interface UserProfileDetail {
+  userId: string;
+  username: string;
+  email?: string;
+  phone?: string;
+  gender?: string;
+  address?: string;
 }
 
 export interface PlanProgress {
@@ -193,4 +208,22 @@ export interface RecommendedProduct {
 export interface ReportData {
   type: 'income-expense' | 'balance-sheet' | 'cashflow';
   payload: any;
+}
+
+// 登录历史
+export interface LoginHistoryItem {
+  id: string;
+  ipAddress?: string;
+  userAgent?: string;
+  success: boolean;
+  createdAt: string;
+}
+
+// 风险测评历史记录
+export interface RiskAssessmentHistoryItem {
+  assessmentId: string;
+  score: number;
+  level: string;
+  status: string;
+  createdAt: string;
 }

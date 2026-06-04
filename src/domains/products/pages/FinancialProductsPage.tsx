@@ -89,7 +89,9 @@ const FinancialProductsPage: React.FC = () => {
       try {
         const riskPreference = (profile?.riskLevel as ('LOW'|'MID'|'HIGH'|undefined)) || 'MID';
         const res = await fetchRecommendedProducts({ budget, termDays, riskPreference });
-        setRecommended(res.data || []);
+        // 按推荐分降序排列
+        const sorted = (res.data || []).sort((a, b) => b.score - a.score);
+        setRecommended(sorted);
       } catch (e: any) {
         setRecoError(e?.message || '推荐加载失败');
       } finally {
@@ -113,6 +115,7 @@ const FinancialProductsPage: React.FC = () => {
     setCurrentPage(1); // 重置到第一页
   };
 
+  const [showAdvancedSearch, setShowAdvancedSearch] = useState(false);
   const [riskPrompt, setRiskPrompt] = useState<{visible: boolean; product?: ProductInfo}>(() => ({ visible: false }));
   const [drawer, setDrawer] = useState<{ open: boolean; product?: ProductInfo }>({ open: false });
 
@@ -275,9 +278,9 @@ const FinancialProductsPage: React.FC = () => {
                   try{
                     const riskPreference = (profile?.riskLevel as ('LOW'|'MID'|'HIGH'|undefined)) || 'MID';
                     const res = await fetchRecommendedProducts({ budget, termDays, riskPreference });
-                    setRecommended(res.data || []);
+                    setRecommended((res.data || []).sort((a, b) => b.score - a.score));
                   }catch(e:any){ setRecoError(e?.message||'推荐失败'); }
-                  finally{ setRecoLoading(false);} 
+                  finally{ setRecoLoading(false);}
                 }} className={`${styles.gradientBg} text-white px-3 py-1 rounded-lg text-sm`}>智能推荐</button>
               </div>
               {/* 画像推荐提示 */}
@@ -371,11 +374,75 @@ const FinancialProductsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 理财产品列表 */}
+      {/* 高级搜索区（方案B：折叠，显示当前筛选标签） */}
+      <section className="mb-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => setShowAdvancedSearch(v => !v)}
+            className="flex items-center gap-1 text-sm px-3 py-1.5 border border-border-light rounded-lg hover:bg-gray-50 text-text-secondary"
+          >
+            <i className={`fas fa-sliders-h mr-1`}></i>
+            高级搜索
+            <i className={`fas fa-chevron-${showAdvancedSearch ? 'up' : 'down'} ml-1 text-xs`}></i>
+          </button>
+          {/* 当前生效的筛选标签提示 */}
+          {filters.risk !== 'all' && (
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+              风险：{filters.risk === 'low' ? '低风险' : filters.risk === 'medium' ? '中风险' : '高风险'}
+              <button onClick={() => handleFilterChange('risk', 'all')} className="ml-0.5 hover:text-danger">×</button>
+            </span>
+          )}
+          {filters.return !== 'all' && (
+            <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-accent/10 text-accent">
+              收益：{filters.return === 'low' ? '3%以下' : filters.return === 'medium' ? '3%-6%' : '6%以上'}
+              <button onClick={() => handleFilterChange('return', 'all')} className="ml-0.5 hover:text-danger">×</button>
+            </span>
+          )}
+          {(filters.risk !== 'all' || filters.return !== 'all') && (
+            <span className="text-xs text-text-secondary">
+              提示：风险等级与预期收益同时生效为 AND（同时满足）。如需单独筛选，请清除另一条件。
+            </span>
+          )}
+        </div>
+        {showAdvancedSearch && (
+          <div className={`${styles.gradientCard} rounded-xl p-4 mt-3 shadow-card border border-border-light`}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm font-medium text-text-secondary mb-2">风险等级筛选</p>
+                <div className="flex flex-wrap gap-2">
+                  {[{value:'all',label:'全部'},{value:'low',label:'低风险'},{value:'medium',label:'中风险'},{value:'high',label:'高风险'}].map(o => (
+                    <button key={o.value} onClick={() => handleFilterChange('risk', o.value)}
+                      className={`px-3 py-1.5 text-sm rounded-lg border ${filters.risk === o.value ? styles.filterButtonActive : 'border-border-light text-text-secondary'}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-text-secondary mb-2">预期收益筛选</p>
+                <div className="flex flex-wrap gap-2">
+                  {[{value:'all',label:'全部'},{value:'low',label:'3%以下'},{value:'medium',label:'3%-6%'},{value:'high',label:'6%以上'}].map(o => (
+                    <button key={o.value} onClick={() => handleFilterChange('return', o.value)}
+                      className={`px-3 py-1.5 text-sm rounded-lg border ${filters.return === o.value ? styles.filterButtonActive : 'border-border-light text-text-secondary'}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-text-secondary">两个条件同时选择时为 AND 逻辑（同时满足），只选一个时独立过滤。</p>
+          </div>
+        )}
+      </section>
+
+      {/* 为你推荐（基于画像，独立于筛选条件） */}
       {(
         <section className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-lg font-semibold text-text-primary">为你推荐</h3>
+            <div>
+              <h3 className="text-lg font-semibold text-text-primary">为你推荐</h3>
+              <p className="text-xs text-text-secondary mt-0.5">基于你的风险画像智能匹配，与下方筛选条件独立</p>
+            </div>
             {recoLoading && <span className="text-xs text-text-secondary">计算中…</span>}
           </div>
           {recoError && <div className="text-sm text-danger mb-2">{recoError}</div>}
@@ -417,6 +484,14 @@ const FinancialProductsPage: React.FC = () => {
         </section>
       )}
       <section className="mb-8">
+        <div className="mb-3">
+          <h3 className="text-lg font-semibold text-text-primary">全部产品（筛选结果）</h3>
+          <p className="text-xs text-text-secondary mt-0.5">
+            {filters.risk !== 'all' || filters.return !== 'all'
+              ? `已筛选，共 ${filteredProducts.length} 条`
+              : `全部产品，共 ${filteredProducts.length} 条`}
+          </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {loading && <div className="col-span-full text-center text-text-secondary">加载中...</div>}
           {error && <div className="col-span-full text-center text-danger">{error}</div>}

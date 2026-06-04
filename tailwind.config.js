@@ -17,8 +17,8 @@ export default {
           light: "#34D399"
         },
         warning: {
-          DEFAULT: "#F59E0B",
-          light: "#FBBF24"
+          DEFAULT: "#D97706",
+          light: "#F59E0B"
         },
         danger: {
           DEFAULT: "#EF4444",
@@ -41,8 +41,8 @@ export default {
           900: "#111827"
         },
         "text-primary": "#1E232C",
-        "text-secondary": "#8B929A",
-        "text-tertiary": "#A5ABB3",
+        "text-secondary": "#6B7280",
+        "text-tertiary": "#9CA3AF",
         "bg-primary": "#F7F9FC",
         "bg-card": "#FFFFFF",
         "border-light": "#F1F2F4"

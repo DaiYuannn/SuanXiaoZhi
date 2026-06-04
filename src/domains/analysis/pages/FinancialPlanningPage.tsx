@@ -6,7 +6,9 @@ import styles from './FinancialPlanningPage.module.css';
 import DualAxisProgress from '../../../shared/components/DualAxisProgress';
 import KeywordAnchors from '../../../shared/components/KeywordAnchors';
 import { createPlan, generatePlans } from '../api/analysis-api';
+import { fetchPlans, updatePlan, deletePlan } from '../../../shared/constants/endpoints';
 import ComplianceNotice from '../../../shared/components/ComplianceNotice';
+import type { PlanItem } from '../../../shared/types/api';
 
 interface PlanDetail {
   title: string;
@@ -24,7 +26,64 @@ const FinancialPlanningPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [showPlanDetail, setShowPlanDetail] = useState<boolean>(false);
-  // const { progress } = useUserAndProgress();
+
+  // 服务端规划列表
+  const [serverPlans, setServerPlans] = useState<PlanItem[]>([]);
+  const [plansLoading, setPlansLoading] = useState(false);
+
+  // 编辑弹窗
+  const [editModal, setEditModal] = useState<{ open: boolean; plan?: PlanItem }>({ open: false });
+  const [editName, setEditName] = useState('');
+  const [editGoal, setEditGoal] = useState('');
+  const [editStatus, setEditStatus] = useState<PlanItem['status']>('ongoing');
+  const [editSaving, setEditSaving] = useState(false);
+
+  useEffect(() => {
+    loadServerPlans();
+  }, []);
+
+  const loadServerPlans = async () => {
+    setPlansLoading(true);
+    try {
+      const res = await fetchPlans();
+      setServerPlans(res.data || []);
+    } catch {
+      // 静默失败，显示本地静态数据
+    } finally {
+      setPlansLoading(false);
+    }
+  };
+
+  const openEditModal = (plan: PlanItem) => {
+    setEditName(plan.name);
+    setEditGoal(plan.goal || '');
+    setEditStatus(plan.status);
+    setEditModal({ open: true, plan });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editModal.plan) return;
+    setEditSaving(true);
+    try {
+      await updatePlan(editModal.plan.planId, { name: editName, goal: editGoal, status: editStatus });
+      setEditModal({ open: false });
+      await loadServerPlans();
+    } catch (e: any) {
+      alert('保存失败：' + (e?.message || '未知错误'));
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleDeleteServerPlan = async (planId: string) => {
+    if (!confirm('确定要删除这个规划方案吗？')) return;
+    try {
+      await deletePlan(planId);
+      await loadServerPlans();
+    } catch (e: any) {
+      alert('删除失败：' + (e?.message || '未知错误'));
+    }
+  };
 
   // 生成规划（服务端）
   const [genTarget, setGenTarget] = useState<string>('一年存下 2 万');
@@ -83,15 +142,14 @@ const FinancialPlanningPage: React.FC = () => {
   function saveLocalPlans(list: LocalPlan[]) {
     try { localStorage.setItem(LOCAL_PLANS_KEY, JSON.stringify(list)); } catch {}
   }
-  const localPlans = loadLocalPlans();
+  const [localPlans, setLocalPlans] = useState<LocalPlan[]>(loadLocalPlans);
   const appliedMap = new Map(localPlans.map(p => [p.goalId, p]));
 
   function handleApplySuggestion(id: string) {
     if (appliedMap.has(id)) return;
     const next = [...localPlans, { goalId: id, progress: 0, updatedAt: new Date().toISOString() }];
     saveLocalPlans(next);
-    // 触发重新渲染：简单方式刷新页面或使用 state；这里选择刷新
-    window.location.reload();
+    setLocalPlans(next);
   }
 
   function handleRecordExecution(id: string) {
@@ -103,7 +161,13 @@ const FinancialPlanningPage: React.FC = () => {
       return p;
     });
     saveLocalPlans(next);
-    window.location.reload();
+    setLocalPlans(next);
+  }
+
+  function handleStopSuggestion(id: string) {
+    const next = localPlans.filter(p => p.goalId !== id);
+    saveLocalPlans(next);
+    setLocalPlans(next);
   }
 
   useEffect(() => {
@@ -155,16 +219,13 @@ const FinancialPlanningPage: React.FC = () => {
 
   const handleEditPlan = (planId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    console.log('编辑规划:', planId);
-    // 这里可以打开规划编辑弹窗
+    const plan = serverPlans.find(p => p.planId === planId);
+    if (plan) openEditModal(plan);
   };
 
   const handleDeletePlan = (planId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (confirm('确定要删除这个规划方案吗？')) {
-      console.log('删除规划:', planId);
-      // 这里可以执行删除操作
-    }
+    handleDeleteServerPlan(planId);
   };
 
   const handleClosePlanDetail = () => {
@@ -172,16 +233,31 @@ const FinancialPlanningPage: React.FC = () => {
     setSelectedPlanId(null);
   };
 
-  const handleViewSavingsDetail = (savingsId: string) => {
-    console.log('查看储蓄计划详情:', savingsId);
-    // 这里可以打开储蓄计划详情
+  const handleViewSavingsDetail = (productId: string) => {
+    navigate(`/product-detail?productId=${productId}`);
   };
 
   const handleViewInvestmentProduct = (productId: string) => {
-    navigate(`/financial-products?productId=${productId}`);
+    navigate(`/product-detail?productId=${productId}`);
   };
 
   const getPlanDetail = (planId: string): PlanDetail | null => {
+    // 优先从服务端规划查找
+    const serverPlan = serverPlans.find(p => p.planId === planId);
+    if (serverPlan) {
+      return {
+        title: serverPlan.name,
+        target: serverPlan.goal || '—',
+        current: serverPlan.status === 'done' ? serverPlan.goal || '—' : '进行中',
+        progress: serverPlan.status === 'done' ? 100 : serverPlan.status === 'adjusted' ? 30 : 50,
+        description: serverPlan.goal || '暂无描述',
+        steps: [
+          { title: '制定计划', status: '已完成' },
+          { title: '执行计划', status: serverPlan.status === 'ongoing' ? '进行中' : '已完成' },
+          { title: '达成目标', status: serverPlan.status === 'done' ? '已完成' : '待完成' },
+        ],
+      };
+    }
     const planDetails: Record<string, PlanDetail> = {
       'plan-001': {
         title: '紧急备用金计划',
@@ -334,8 +410,38 @@ const FinancialPlanningPage: React.FC = () => {
         {/* 规划方案列表区 */}
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">我的规划方案</h3>
+          {/* 服务端规划 */}
+          {plansLoading && <p className="text-sm text-text-secondary mb-4">加载中…</p>}
+          {serverPlans.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              {serverPlans.map(plan => (
+                <div key={plan.planId} className={`${styles.planCard} rounded-xl p-6 cursor-pointer`}
+                  onClick={(e) => handlePlanCardClick(plan.planId, e)}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      plan.status === 'done' ? 'bg-success bg-opacity-20 text-success' :
+                      plan.status === 'adjusted' ? 'bg-warning bg-opacity-20 text-warning' :
+                      'bg-info bg-opacity-20 text-info'
+                    }`}>
+                      {plan.status === 'done' ? '已完成' : plan.status === 'adjusted' ? '已调整' : '进行中'}
+                    </span>
+                  </div>
+                  <h4 className="text-lg font-semibold text-text-primary mb-1">{plan.name}</h4>
+                  {plan.goal && <p className="text-sm text-text-secondary mb-4">{plan.goal}</p>}
+                  <div className="flex justify-end space-x-2 mt-4">
+                    <button className="edit-plan-btn text-primary text-sm hover:underline"
+                      onClick={(e) => { e.stopPropagation(); openEditModal(plan); }}>编辑</button>
+                    <button className="delete-plan-btn text-danger text-sm hover:underline"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteServerPlan(plan.planId); }}>删除</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* 本地静态示例规划（无服务端数据时显示） */}
+          {serverPlans.length === 0 && !plansLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div 
+            <div
               className={`${styles.planCard} rounded-xl p-6`}
               onClick={(e) => handlePlanCardClick('plan-001', e)}
             >
@@ -358,20 +464,7 @@ const FinancialPlanningPage: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-text-secondary">目标: ¥50,000</span>
-                <div className="flex space-x-2">
-                  <button 
-                    className="edit-plan-btn text-primary text-sm hover:underline"
-                    onClick={(e) => handleEditPlan('plan-001', e)}
-                  >
-                    编辑
-                  </button>
-                  <button 
-                    className="delete-plan-btn text-danger text-sm hover:underline"
-                    onClick={(e) => handleDeletePlan('plan-001', e)}
-                  >
-                    删除
-                  </button>
-                </div>
+                <span className="text-xs text-text-secondary">点击查看详情</span>
               </div>
             </div>
 
@@ -398,20 +491,7 @@ const FinancialPlanningPage: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-text-secondary">目标: ¥300,000</span>
-                <div className="flex space-x-2">
-                  <button 
-                    className="edit-plan-btn text-primary text-sm hover:underline"
-                    onClick={(e) => handleEditPlan('plan-002', e)}
-                  >
-                    编辑
-                  </button>
-                  <button 
-                    className="delete-plan-btn text-danger text-sm hover:underline"
-                    onClick={(e) => handleDeletePlan('plan-002', e)}
-                  >
-                    删除
-                  </button>
-                </div>
+                <span className="text-xs text-text-secondary">点击查看详情</span>
               </div>
             </div>
 
@@ -438,24 +518,45 @@ const FinancialPlanningPage: React.FC = () => {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-xs text-text-secondary">目标: ¥15,000</span>
-                <div className="flex space-x-2">
-                  <button 
-                    className="edit-plan-btn text-primary text-sm hover:underline"
-                    onClick={(e) => handleEditPlan('plan-003', e)}
-                  >
-                    编辑
-                  </button>
-                  <button 
-                    className="delete-plan-btn text-danger text-sm hover:underline"
-                    onClick={(e) => handleDeletePlan('plan-003', e)}
-                  >
-                    删除
-                  </button>
-                </div>
+                <span className="text-xs text-text-secondary">点击查看详情</span>
               </div>
             </div>
           </div>
+          )}
         </section>
+
+        {/* 编辑规划弹窗 */}
+        {editModal.open && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl w-11/12 max-w-md p-6">
+              <h4 className="text-lg font-semibold text-text-primary mb-4">编辑规划</h4>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">规划名称</label>
+                  <input className="w-full px-3 py-2 border border-border-light rounded-lg" value={editName} onChange={e => setEditName(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">目标描述</label>
+                  <input className="w-full px-3 py-2 border border-border-light rounded-lg" value={editGoal} onChange={e => setEditGoal(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-primary mb-1">状态</label>
+                  <select className="w-full px-3 py-2 border border-border-light rounded-lg" value={editStatus} onChange={e => setEditStatus(e.target.value as PlanItem['status'])}>
+                    <option value="ongoing">进行中</option>
+                    <option value="done">已完成</option>
+                    <option value="adjusted">已调整</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button onClick={() => setEditModal({ open: false })} className="px-4 py-2 text-sm border border-border-light rounded-lg hover:bg-gray-50">取消</button>
+                <button disabled={editSaving} onClick={handleSaveEdit} className={`${styles.gradientBg} text-white px-4 py-2 text-sm rounded-lg disabled:opacity-60`}>
+                  {editSaving ? '保存中…' : '保存'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* AI 生成规划 */}
         <section className="mb-8">
@@ -535,9 +636,15 @@ const FinancialPlanningPage: React.FC = () => {
                         <div className={`${styles.progressBar} h-2 rounded-full`} style={{ width: `${Math.round(applied.progress * 100)}%` }}></div>
                       </div>
                       {applied.progress < 1 ? (
-                        <button onClick={() => handleRecordExecution(s.id)} className="w-full text-xs px-3 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition-colors">记录执行（+10%）</button>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleRecordExecution(s.id)} className="flex-1 text-xs px-3 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition-colors">记录执行（+10%）</button>
+                          <button onClick={() => handleStopSuggestion(s.id)} className="text-xs px-3 py-2 rounded-lg border border-danger text-danger hover:bg-danger/10 transition-colors">停止</button>
+                        </div>
                       ) : (
-                        <div className="text-center text-xs text-success font-medium">已完成该控支策略</div>
+                        <div className="flex gap-2">
+                          <div className="flex-1 text-center text-xs text-success font-medium py-2">已完成该控支策略</div>
+                          <button onClick={() => handleStopSuggestion(s.id)} className="text-xs px-3 py-2 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 transition-colors">移除</button>
+                        </div>
                       )}
                     </div>
                   ) : (
@@ -646,7 +753,7 @@ const FinancialPlanningPage: React.FC = () => {
                 <span className="text-xs text-text-secondary">起存金额: ¥1,000</span>
                 <button 
                   className="text-primary text-sm hover:underline"
-                  onClick={() => handleViewSavingsDetail('savings-001')}
+                  onClick={() => handleViewSavingsDetail('P001')}
                 >
                   查看详情
                 </button>
@@ -666,7 +773,7 @@ const FinancialPlanningPage: React.FC = () => {
                 <span className="text-xs text-text-secondary">起存金额: ¥1</span>
                 <button 
                   className="text-primary text-sm hover:underline"
-                  onClick={() => handleViewSavingsDetail('savings-002')}
+                  onClick={() => handleViewSavingsDetail('P004')}
                 >
                   查看详情
                 </button>
@@ -686,7 +793,7 @@ const FinancialPlanningPage: React.FC = () => {
                 <span className="text-xs text-text-secondary">起存金额: ¥100</span>
                 <button 
                   className="text-primary text-sm hover:underline"
-                  onClick={() => handleViewSavingsDetail('savings-003')}
+                  onClick={() => handleViewSavingsDetail('P005')}
                 >
                   查看详情
                 </button>
@@ -712,7 +819,7 @@ const FinancialPlanningPage: React.FC = () => {
                 <span className="text-xs text-text-secondary">起投金额: ¥1,000</span>
                 <button 
                   className="text-primary text-sm hover:underline"
-                  onClick={() => handleViewInvestmentProduct('fund-001')}
+                  onClick={() => handleViewInvestmentProduct('P002')}
                 >
                   查看产品
                 </button>
@@ -732,7 +839,7 @@ const FinancialPlanningPage: React.FC = () => {
                 <span className="text-xs text-text-secondary">起投金额: ¥100</span>
                 <button 
                   className="text-primary text-sm hover:underline"
-                  onClick={() => handleViewInvestmentProduct('etf-001')}
+                  onClick={() => handleViewInvestmentProduct('P003')}
                 >
                   查看产品
                 </button>
@@ -752,7 +859,7 @@ const FinancialPlanningPage: React.FC = () => {
                 <span className="text-xs text-text-secondary">起投金额: ¥5,000</span>
                 <button 
                   className="text-primary text-sm hover:underline"
-                  onClick={() => handleViewInvestmentProduct('portfolio-001')}
+                  onClick={() => handleViewInvestmentProduct('P001')}
                 >
                   查看产品
                 </button>

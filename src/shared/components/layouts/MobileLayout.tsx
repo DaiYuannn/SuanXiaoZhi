@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import MobileTabBar from "../MobileTabBar";
 import { UserRole } from "../../types/permission.js";
-import { AUTH_TOKEN_KEY } from "../../config/env.js";
+import { clearStoredSession, readStoredSession } from "../../utils/auth-session.js";
 
 const MobileLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -20,9 +20,9 @@ const MobileLayout: React.FC = () => {
 
   // 若为管理员，不应进入此布局，应重定向至 B 端
   useEffect(() => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    const role = localStorage.getItem("sx-role") as UserRole;
-    if (token && (role === UserRole.SUPER_ADMIN || role === UserRole.OPERATOR || role === UserRole.VIEWER)) {
+    const session = readStoredSession();
+    const role = session?.role;
+    if (session && (role === UserRole.SUPER_ADMIN || role === UserRole.OPERATOR || role === UserRole.VIEWER)) {
       if (!location.pathname.startsWith("/admin")) {
         navigate("/admin", { replace: true });
       }
@@ -34,9 +34,7 @@ const MobileLayout: React.FC = () => {
   const isShowTab = showTabPaths.includes(location.pathname);
 
   const handleLogout = () => {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem("sx-role");
-    localStorage.removeItem("sx-user-id");
+    clearStoredSession();
     navigate("/login", { replace: true });
   };
 

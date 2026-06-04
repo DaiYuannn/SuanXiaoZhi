@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './AccountingPage.module.css';
 import { classifyAccounting, fetchTransactions, scanTransactionAnomalies } from '../api/ledger-api';
+import { deleteTransaction } from '../../../shared/constants/endpoints';
 import type { TransactionItem } from '../../../shared/types/api';
 import DynamicAlert, { DynamicAlertItem } from '../../../shared/components/DynamicAlert';
 import { auditUI, auditError } from '../../../shared/audit/audit-service';
+import { readStoredSession } from '../../../shared/utils/auth-session.js';
+import { UserRole } from '../../../shared/types/permission.js';
 
 interface Transaction {
   id: string;
@@ -32,6 +36,10 @@ interface AccountOption {
 }
 
 const AccountingPage: React.FC = () => {
+  const navigate = useNavigate();
+  const session = readStoredSession();
+  const canWrite = session?.role !== UserRole.FAMILY_MEMBER;
+
   // 分类显示层映射：后端内部码 -> 中文
   const toCnCategory = (code?: string): string => {
     const map: Record<string, string> = {
@@ -244,6 +252,14 @@ const AccountingPage: React.FC = () => {
       if (!Array.isArray(list)) return [];
       return list as Transaction[];
     } catch { return []; }
+  };
+
+  const removeLocalTransaction = (txId: string) => {
+    try {
+      const list = loadLocalTransactions();
+      const filtered = list.filter((t) => t.id !== txId);
+      localStorage.setItem('local_transactions', JSON.stringify(filtered));
+    } catch {}
   };
 
   // 将后端返回的 TransactionItem 映射为本页使用的 Transaction
@@ -607,30 +623,43 @@ const AccountingPage: React.FC = () => {
     });
   };
 
-  const handleBatchDelete = () => {
-    if (selectedTransactions.size > 0) {
-      if (confirm(`确定要删除选中的 ${selectedTransactions.size} 笔交易吗？`)) {
-        console.log('批量删除选中的交易:', Array.from(selectedTransactions));
-        // 实际项目中这里会执行删除操作
-        setSelectedTransactions(new Set());
+  const handleBatchDelete = async () => {
+    if (selectedTransactions.size === 0) return;
+    if (!confirm(`确定要删除选中的 ${selectedTransactions.size} 笔交易吗？`)) return;
+    try {
+      for (const txId of selectedTransactions) {
+        if (txId.startsWith('local-')) {
+          removeLocalTransaction(txId);
+        } else {
+          await deleteTransaction(txId);
+        }
       }
+      setSelectedTransactions(new Set());
+      await loadTransactions();
+    } catch (e: any) {
+      alert('批量删除失败：' + (e?.message || '未知错误'));
     }
   };
 
   const handleTransactionView = (txId: string) => {
-    console.log('查看交易详情:', txId);
-    // 实际项目中这里会打开P-TRANSACTION_DETAIL弹窗
+    navigate(`/transaction/${txId}`);
   };
 
   const handleTransactionEdit = (txId: string) => {
-    console.log('编辑交易:', txId);
-    // 实际项目中这里会打开P-ADD_TRANSACTION弹窗进行编辑
+    navigate(`/add-transaction?transactionId=${txId}`);
   };
 
-  const handleTransactionDelete = (txId: string) => {
-    if (confirm('确定要删除这笔交易吗？')) {
-      console.log('删除交易:', txId);
-      // 实际项目中这里会执行删除操作
+  const handleTransactionDelete = async (txId: string) => {
+    if (!confirm('确定要删除这笔交易吗？')) return;
+    try {
+      if (txId.startsWith('local-')) {
+        removeLocalTransaction(txId);
+      } else {
+        await deleteTransaction(txId);
+      }
+      await loadTransactions();
+    } catch (e: any) {
+      alert('删除失败：' + (e?.message || '未知错误'));
     }
   };
 
@@ -705,11 +734,13 @@ const AccountingPage: React.FC = () => {
               <h2 className="text-2xl font-bold text-text-primary">智能记账</h2>
             </div>
             <div className="flex flex-wrap gap-2">
+              {canWrite && (
               <button onClick={handleAddTransaction} className={`${styles.solidBg} text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center`}>
                 <i className="fas fa-plus mr-1"></i>
                 <span className="hidden sm:inline">添加新交易</span>
                 <span className="sm:hidden">添加</span>
               </button>
+              )}
               <button onClick={() => window.location.assign('/bill-upload')} className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center">
                 <i className="fas fa-file-upload mr-1"></i>
                 <span className="hidden sm:inline">票据上传</span>
@@ -917,6 +948,7 @@ const AccountingPage: React.FC = () => {
                 <span className="text-gray-600">仅看异常</span>
               </label>
 
+              {canWrite && (
               <div className={`flex items-center gap-2 ${selectedTransactions.size > 0 ? '' : 'opacity-50'}`}>
                 <button onClick={handleBatchEdit} className="px-3 py-1.5 border border-gray-200 rounded-lg hover:border-blue-500 text-sm flex items-center">
                   <i className="fas fa-edit mr-1 text-xs"></i>批量编辑
@@ -925,6 +957,7 @@ const AccountingPage: React.FC = () => {
                   <i className="fas fa-trash mr-1 text-xs"></i>批量删除
                 </button>
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -980,9 +1013,11 @@ const AccountingPage: React.FC = () => {
                         </div>
                         <h3 className="text-lg font-medium text-gray-900 mb-2">暂无交易记录</h3>
                         <p className="text-gray-500 mb-4">开始记录您的第一笔交易吧</p>
+                        {canWrite && (
                         <button onClick={handleAddTransaction} className={`${styles.solidBg} text-white px-6 py-2 rounded-lg font-medium`}>
                           <i className="fas fa-plus mr-2"></i>添加交易
                         </button>
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -1017,8 +1052,12 @@ const AccountingPage: React.FC = () => {
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
                             <button onClick={() => handleTransactionView(tx.id)} className="text-blue-600 text-sm hover:underline whitespace-nowrap">详情</button>
+                            {canWrite && (
+                            <>
                             <button onClick={() => handleTransactionEdit(tx.id)} className="text-gray-500 text-sm hover:text-blue-600 whitespace-nowrap">编辑</button>
                             <button onClick={() => handleTransactionDelete(tx.id)} className="text-red-500 text-sm hover:underline whitespace-nowrap">删除</button>
+                            </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1056,9 +1095,11 @@ const AccountingPage: React.FC = () => {
                           <i className="fas fa-calculator text-white text-xl"></i>
                         </div>
                         <h3 className="text-base font-medium text-gray-900 mb-1">暂无交易记录</h3>
+                        {canWrite && (
                         <button onClick={handleAddTransaction} className={`${styles.solidBg} text-white px-4 py-2 rounded-lg font-medium text-sm`}>
                           <i className="fas fa-plus mr-1"></i>添加交易
                         </button>
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -1086,8 +1127,12 @@ const AccountingPage: React.FC = () => {
                         <td className="py-2 px-2">
                           <div className="flex gap-1">
                             <button onClick={() => handleTransactionView(tx.id)} className="text-blue-600 text-xs hover:underline">详</button>
+                            {canWrite && (
+                            <>
                             <button onClick={() => handleTransactionEdit(tx.id)} className="text-gray-500 text-xs hover:text-blue-600">编</button>
                             <button onClick={() => handleTransactionDelete(tx.id)} className="text-red-500 text-xs hover:underline">删</button>
+                            </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1106,9 +1151,11 @@ const AccountingPage: React.FC = () => {
                   </div>
                   <h3 className="text-base font-medium text-gray-900 mb-1">暂无交易记录</h3>
                   <p className="text-gray-500 text-sm mb-3">开始记录您的第一笔交易吧</p>
+                  {canWrite && (
                   <button onClick={handleAddTransaction} className={`${styles.solidBg} text-white px-4 py-2 rounded-lg font-medium text-sm`}>
                     <i className="fas fa-plus mr-1"></i>添加交易
                   </button>
+                  )}
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">

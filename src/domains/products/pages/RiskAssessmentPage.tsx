@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './RiskAssessmentPage.module.css';
-import { startRiskAssessment, submitRiskAssessment } from '../api/products-api';
+import { startMobileRiskAssessment, submitMobileRiskAssessment } from '../api/products-api';
 
 interface RiskAssessmentAnswers {
   age?: string;
@@ -102,7 +102,7 @@ const RiskAssessmentPage: React.FC = () => {
           const opt = q.options.find((o: any) => o.value === v) || q.options[0];
           mapped.push({ qid: q.id, optionId: opt.id });
         }
-        const r = await submitRiskAssessment(serverAssessmentId, mapped);
+        const r = await submitMobileRiskAssessment(serverAssessmentId, mapped);
         alert(`测评完成！后端计算风险等级：${r.data.level}`);
         handleCloseModal();
         return;
@@ -399,12 +399,12 @@ const RiskAssessmentPage: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const r = await startRiskAssessment();
+        const r = await startMobileRiskAssessment();
         const data = r.data;
         setServerAssessmentId(data.assessmentId);
         // 将后端题目映射到当前渲染结构
         const mapped = (data.questions || []).map((q: any, idx: number) => ({
-          id: q.id,
+          id: q.qid,
           number: idx + 1,
           name: `q_${idx+1}`,
           title: `${idx+1}. ${q.text}`,
@@ -471,19 +471,20 @@ const RiskAssessmentPage: React.FC = () => {
               </div>
             </div>
 
-            {/* 测评问卷 */}
+            {/* 测评问卷 — 只渲染当前题目 */}
             <form className="space-y-6">
-              {questions.map((question) => (
-                <div 
-                  key={question.number}
-                  className={`${styles.questionContainer} ${currentQuestion !== question.number ? styles.questionHidden : ''}`}
-                >
-                  <h3 className="text-lg font-semibold text-text-primary mb-4">{question.title}</h3>
-                  <div className="space-y-3">
-                    {renderOptions(question.number, question.options)}
+              {(() => {
+                const current = questions.find(q => q.number === currentQuestion);
+                if (!current) return null;
+                return (
+                  <div key={current.number} className={styles.questionContainer}>
+                    <h3 className="text-lg font-semibold text-text-primary mb-4">{current.title}</h3>
+                    <div className="space-y-3">
+                      {renderOptions(current.number, current.options)}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })()}
             </form>
 
             {/* 操作按钮区 */}

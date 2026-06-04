@@ -1,7 +1,7 @@
 ﻿
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import styles from './ProductDetailPage.module.css';
 import { fetchProductDetail, fetchProducts, estimateProductYield } from '../api/products-api';
 import type { ProductInfo } from '../../../shared/types/api';
@@ -23,6 +23,7 @@ interface ProductData {
 const ProductDetail: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { id: pathId } = useParams();
   const [investmentAmount, setInvestmentAmount] = useState<number>(10000);
   const [expectedEarnings, setExpectedEarnings] = useState<string>('—');
   const [totalAmount, setTotalAmount] = useState<string>('—');
@@ -49,7 +50,7 @@ const ProductDetail: React.FC = () => {
 
   // 获取产品数据并初始化（优先走详情接口，失败回退列表过滤）
   useEffect(() => {
-    const productId = searchParams.get('productId');
+    const productId = pathId || searchParams.get('productId');
     if (!productId) return;
     const mapProduct = (info: ProductInfo): ProductData => ({
       name: info.name,
@@ -151,19 +152,32 @@ const ProductDetail: React.FC = () => {
   };
 
   // 处理申购
-  const handlePurchase = () => {
-    const productId = searchParams.get('productId') || 'prod1';
-    console.log('申购产品:', productId);
-    alert('跳转到申购确认页面');
+  const handlePurchase = async () => {
+    const amountCent = Math.round(investmentAmount * 100);
+    const productId = searchParams.get('productId') || pathId || '';
+    try {
+      await fetch('/api/v1/mobile/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('sx-token') ?? ''}` },
+        body: JSON.stringify({ amountCent: -amountCent, type: 'EXPENSE', categoryName: '投资支出', note: `申购 ${currentProduct?.name ?? productId}` })
+      });
+      alert(`申购成功！金额 ¥${investmentAmount.toLocaleString()}`);
+    } catch { alert('申购失败，请重试'); }
   };
 
   // 处理赎回
-  const handleRedemption = () => {
-    if (currentProduct?.hasHolding) {
-      const productId = searchParams.get('productId') || 'prod1';
-      console.log('赎回产品:', productId);
-      alert('跳转到赎回确认页面');
-    }
+  const handleRedemption = async () => {
+    if (!currentProduct?.hasHolding) return;
+    const amountCent = Math.round(investmentAmount * 100);
+    const productId = searchParams.get('productId') || pathId || '';
+    try {
+      await fetch('/api/v1/mobile/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('sx-token') ?? ''}` },
+        body: JSON.stringify({ amountCent, type: 'INCOME', categoryName: '理财收益', note: `赎回 ${currentProduct?.name ?? productId}` })
+      });
+      alert(`赎回申请已提交！金额 ¥${investmentAmount.toLocaleString()}`);
+    } catch { alert('赎回失败，请重试'); }
   };
 
   // ESC键关闭抽屉

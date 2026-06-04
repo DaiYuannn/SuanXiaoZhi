@@ -1,8 +1,12 @@
 ﻿
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import styles from './TransactionDetailPage.module.css';
+import { readStoredSession } from '../../../shared/utils/auth-session.js';
+import { UserRole } from '../../../shared/types/permission.js';
+import { fetchTransactions, deleteTransaction } from '../../../shared/constants/endpoints';
+import type { TransactionItem } from '../../../shared/types/api';
 
 interface TransactionData {
   id: string;
@@ -16,103 +20,132 @@ interface TransactionData {
   account: string;
   note: string;
   status: string;
-  receiptImage: string;
 }
+
+const categoryMeta: Record<string, { icon: string; color: string }> = {
+  '餐饮': { icon: 'fas fa-utensils', color: 'warning' },
+  '购物': { icon: 'fas fa-shopping-cart', color: 'info' },
+  '交通': { icon: 'fas fa-bus', color: 'success' },
+  '娱乐': { icon: 'fas fa-gamepad', color: 'accent' },
+  '医疗': { icon: 'fas fa-hospital', color: 'danger' },
+  '教育': { icon: 'fas fa-book', color: 'primary' },
+  '住房': { icon: 'fas fa-home', color: 'secondary' },
+  '水电煤': { icon: 'fas fa-bolt', color: 'warning' },
+  '工资': { icon: 'fas fa-money-bill-wave', color: 'success' },
+  '奖金': { icon: 'fas fa-gift', color: 'accent' },
+  '理财收益': { icon: 'fas fa-chart-line', color: 'primary' },
+  '转账收入': { icon: 'fas fa-exchange-alt', color: 'info' },
+  '转账支出': { icon: 'fas fa-exchange-alt', color: 'danger' },
+  '其他': { icon: 'fas fa-ellipsis-h', color: 'secondary' },
+};
+
+const toCnCategory = (code?: string): string => {
+  const map: Record<string, string> = {
+    food: '餐饮', shopping: '购物', transport: '交通', entertainment: '娱乐',
+    medical: '医疗', education: '教育', housing: '住房', utilities: '水电煤',
+    salary: '工资', bonus: '奖金', investment: '理财收益', 'investment-out': '投资',
+    'other-income': '转账收入', transfer: '转账支出', other: '其他',
+  };
+  if (!code) return '其他';
+  return map[code] || code;
+};
 
 const TransactionDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { id: pathId } = useParams();
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [currentTransactionData, setCurrentTransactionData] = useState<TransactionData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  // 设置页面标题
+  const session = readStoredSession();
+  const canWrite = session?.role !== UserRole.FAMILY_MEMBER;
+
   useEffect(() => {
     const originalTitle = document.title;
     document.title = '算小智 - 交易详情';
     return () => { document.title = originalTitle; };
   }, []);
 
-  // 模拟交易数据
-  const mockTransactionsData: Record<string, TransactionData> = {
-    "txn1": {
-      id: "txn1",
-      amount: "-¥45.00",
-      type: "支出",
-      description: "星巴克咖啡",
-      category: "餐饮",
-      categoryIcon: "fas fa-utensils",
-      categoryColor: "warning",
-      dateTime: "2024-01-15 14:30:25",
-      account: "招商银行储蓄卡",
-      note: "下午茶咖啡",
-      status: "已完成",
-      receiptImage: "https://s.coze.cn/image/eHSE9XMALP0/"
-    },
-    "txn2": {
-      id: "txn2",
-      amount: "+¥15,680.00",
-      type: "收入",
-      description: "工资收入",
-      category: "工资",
-      categoryIcon: "fas fa-money-bill-wave",
-      categoryColor: "success",
-      dateTime: "2024-01-15 10:15:00",
-      account: "工商银行储蓄卡",
-      note: "月度工资",
-      status: "已完成",
-      receiptImage: "https://s.coze.cn/image/ylSZDFyJ2kA/"
-    },
-    "txn3": {
-      id: "txn3",
-      amount: "-¥236.80",
-      type: "支出",
-      description: "超市购物",
-      category: "购物",
-      categoryIcon: "fas fa-shopping-cart",
-      categoryColor: "info",
-      dateTime: "2024-01-14 19:45:30",
-      account: "支付宝",
-      note: "生活用品采购",
-      status: "已完成",
-      receiptImage: "https://s.coze.cn/image/RzX_oHayS3w/"
-    }
-  };
-
-  // 加载交易详情
+  // Load transaction from API
   useEffect(() => {
-    const transactionId = searchParams.get('transactionId') || 'txn1';
-    const transactionData = mockTransactionsData[transactionId] || mockTransactionsData["txn1"];
-    setCurrentTransactionData(transactionData);
-  }, [searchParams]);
+    const transactionId = pathId || searchParams.get('transactionId');
+    if (!transactionId) { setError('未指定交易ID'); setLoading(false); return; }
 
-  // 关闭弹窗
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await fetchTransactions({ page: 1, size: 200 });
+        const list: TransactionItem[] = (res as any)?.data?.list || [];
+        const found = list.find((t) => t.transactionId === transactionId);
+        if (found) {
+          const amountYuan = (found.amount ?? 0) / 100;
+          const isExpense = found.type !== 'INCOME';
+          const cnCat = toCnCategory(found.categoryName);
+          const meta = categoryMeta[cnCat] || { icon: 'fas fa-receipt', color: 'primary' };
+          setCurrentTransactionData({
+            id: found.transactionId || transactionId,
+            amount: `${isExpense ? '-' : '+'}¥${Math.abs(amountYuan).toFixed(2)}`,
+            type: found.type === 'INCOME' ? '收入' : '支出',
+            description: found.description || found.remark || '交易',
+            category: cnCat,
+            categoryIcon: meta.icon,
+            categoryColor: meta.color,
+            dateTime: new Date(found.time).toLocaleString(),
+            account: found.accountId || '—',
+            note: found.remark || '',
+            status: found.isAnomaly ? '异常' : '已完成',
+          });
+        } else {
+          setError('未找到该交易');
+        }
+      } catch (e: any) {
+        setError('加载失败：' + (e?.message || '网络错误'));
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [pathId, searchParams]);
+
   const handleCloseModal = () => {
     navigate(-1);
   };
 
-  // 编辑交易
   const handleEditTransaction = () => {
-    const transactionId = currentTransactionData?.id || 'txn1';
-    navigate(`/add-transaction?transactionId=${transactionId}`);
+    const transactionId = currentTransactionData?.id;
+    if (transactionId) navigate(`/add-transaction?transactionId=${transactionId}`);
   };
 
-  // 删除交易
   const handleDeleteTransaction = () => {
     setShowDeleteConfirmModal(true);
   };
 
-  // 取消删除
   const handleCancelDelete = () => {
     setShowDeleteConfirmModal(false);
   };
 
-  // 确认删除
-  const handleConfirmDelete = () => {
-    const transactionId = currentTransactionData?.id || 'txn1';
-    console.log('删除交易:', transactionId);
-    setShowDeleteConfirmModal(false);
-    alert('交易已删除');
-    navigate('/accounting');
+  const handleConfirmDelete = async () => {
+    const transactionId = currentTransactionData?.id;
+    if (!transactionId) return;
+    setDeleting(true);
+    try {
+      if (transactionId.startsWith('local-')) {
+        // Remove from localStorage
+        const list = JSON.parse(localStorage.getItem('local_transactions') || '[]');
+        localStorage.setItem('local_transactions', JSON.stringify(list.filter((t: any) => t.id !== transactionId)));
+      } else {
+        await deleteTransaction(transactionId);
+      }
+      setShowDeleteConfirmModal(false);
+      navigate('/accounting');
+    } catch (e: any) {
+      alert('删除失败：' + (e?.message || '未知错误'));
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // 键盘事件处理
@@ -143,8 +176,22 @@ const TransactionDetailPage: React.FC = () => {
     }
   };
 
-  if (!currentTransactionData) {
-    return <div>加载中...</div>;
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><div className="text-text-secondary">加载中…</div></div>;
+  }
+
+  if (error || !currentTransactionData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="w-16 h-16 bg-danger/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i className="fas fa-exclamation-circle text-danger text-2xl"></i>
+          </div>
+          <p className="text-text-primary font-medium mb-2">{error || '未找到交易'}</p>
+          <button onClick={() => navigate('/accounting')} className="text-primary text-sm hover:underline">返回记账</button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -276,58 +323,30 @@ const TransactionDetailPage: React.FC = () => {
               </div>
             </div>
             
-            {/* 原始凭证区域 */}
-            <div className="px-6 pb-6 border-t border-border-light">
-              <h3 className="text-lg font-semibold text-text-primary mb-4">原始凭证</h3>
-              <div className="space-y-4">
-                <div className="bg-bg-light rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-text-primary">银行流水截图</span>
-                    <span className="text-xs text-text-secondary">JPG格式 • 245KB</span>
-                  </div>
-                  <img 
-                    src={currentTransactionData.receiptImage}
-                    alt={`${currentTransactionData.description}凭证`}
-                    className={styles.receiptImage}
-                    loading="lazy"
-                  />
-                </div>
-                
-                <div className="bg-bg-light rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-medium text-text-primary">电子发票</span>
-                    <span className="text-xs text-text-secondary">PDF格式 • 128KB</span>
-                  </div>
-                  <div className="flex items-center justify-center p-8 border-2 border-dashed border-border-light rounded-lg">
-                    <div className="text-center">
-                      <i className="fas fa-file-pdf text-danger text-3xl mb-2"></i>
-                      <p className="text-sm text-text-secondary">点击查看电子发票</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div className="h-2"></div>
           </div>
           
           {/* 弹窗底部操作按钮 */}
-          <div className="bg-bg-light px-6 py-4 border-t border-border-light">
-            <div className="flex items-center justify-end space-x-3">
-              <button 
-                onClick={handleEditTransaction}
-                className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-opacity-90 transition-all flex items-center space-x-2"
-              >
-                <i className="fas fa-edit"></i>
-                <span>编辑</span>
-              </button>
-              <button 
-                onClick={handleDeleteTransaction}
-                className="px-6 py-2 bg-danger text-white rounded-lg font-medium hover:bg-opacity-90 transition-all flex items-center space-x-2"
-              >
-                <i className="fas fa-trash"></i>
-                <span>删除</span>
-              </button>
+          {canWrite && (
+            <div className="bg-bg-light px-6 py-4 border-t border-border-light">
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={handleEditTransaction}
+                  className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-opacity-90 transition-all flex items-center space-x-2"
+                >
+                  <i className="fas fa-edit"></i>
+                  <span>编辑</span>
+                </button>
+                <button
+                  onClick={handleDeleteTransaction}
+                  className="px-6 py-2 bg-danger text-white rounded-lg font-medium hover:bg-opacity-90 transition-all flex items-center space-x-2"
+                >
+                  <i className="fas fa-trash"></i>
+                  <span>删除</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -352,11 +371,12 @@ const TransactionDetailPage: React.FC = () => {
                   >
                     取消
                   </button>
-                  <button 
+                  <button
                     onClick={handleConfirmDelete}
-                    className="flex-1 px-4 py-2 bg-danger text-white rounded-lg font-medium hover:bg-opacity-90 transition-all"
+                    disabled={deleting}
+                    className="flex-1 px-4 py-2 bg-danger text-white rounded-lg font-medium hover:bg-opacity-90 transition-all disabled:opacity-50"
                   >
-                    删除
+                    {deleting ? '删除中…' : '删除'}
                   </button>
                 </div>
               </div>

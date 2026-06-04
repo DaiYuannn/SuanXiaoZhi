@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './UserSettingsPage.module.css';
 import { loadAuditReminderSettings, saveAuditReminderSettings, AuditReminderFrequency } from '../../../shared/hooks/useAuditReminder';
-import { fetchReminders, createReminder, updateReminder, updateReminderStatus } from '../api/auth-api';
-import type { ReminderItem } from '../../../shared/types/api';
-import { AUTH_TOKEN_KEY } from '../../../shared/config/env.js';
+import { fetchReminders, createReminder, updateReminder, updateReminderStatus, updateUserProfile, changePassword, fetchLoginHistory } from '../api/auth-api';
+import { fetchAccounts, createAccount, updateAccount, deleteAccount, fetchRiskAssessments } from '../../../shared/constants/endpoints';
+import { get } from '../../../shared/utils/http-client.js';
+import type { ReminderItem, AccountInfo, LoginHistoryItem, RiskAssessmentHistoryItem, ApiResponse } from '../../../shared/types/api';
+import { clearStoredSession } from '../../../shared/utils/auth-session.js';
 
 interface ProfileFormData {
   username: string;
@@ -39,20 +41,86 @@ type SettingsTab = 'profile' | 'accounts' | 'security' | 'notifications' | 'risk
 const UserSettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+
+  // 账户管理
+  const [accounts, setAccounts] = useState<AccountInfo[]>([]);
+  const [accountModal, setAccountModal] = useState<{open: boolean; mode: 'add'|'edit'; account?: AccountInfo}>({open: false, mode: 'add'});
+  const [accName, setAccName] = useState('');
+  const [accType, setAccType] = useState<AccountInfo['type']>('BANK');
+  const [accBalance, setAccBalance] = useState('0');
+  const [accSaving, setAccSaving] = useState(false);
+
+  useEffect(() => { if (activeTab === 'accounts') loadAccounts(); }, [activeTab]);
+
+  const loadAccounts = async () => {
+    try {
+      const res = await fetchAccounts();
+      setAccounts(res.data || []);
+    } catch {}
+  };
+
+  const openAddModal = () => {
+    setAccName(''); setAccType('BANK'); setAccBalance('0');
+    setAccountModal({open: true, mode: 'add'});
+  };
+
+  const openEditModal = (acc: AccountInfo) => {
+    setAccName(acc.name); setAccType(acc.type); setAccBalance(String(acc.balance || 0));
+    setAccountModal({open: true, mode: 'edit', account: acc});
+  };
+
+  const handleSaveAccount = async () => {
+    setAccSaving(true);
+    try {
+      const payload = {name: accName, type: accType, balance: parseFloat(accBalance)};
+      if (accountModal.mode === 'add') await createAccount(payload);
+      else if (accountModal.account) await updateAccount(accountModal.account.accountId, payload);
+      setAccountModal({open: false, mode: 'add'});
+      await loadAccounts();
+    } catch (e: any) { alert('保存失败：' + (e?.message || '')); }
+    finally { setAccSaving(false); }
+  };
+
+  const handleDelAccount = async (id: string) => {
+    if (!confirm('确定删除？')) return;
+    try { await deleteAccount(id); await loadAccounts(); }
+    catch (e: any) { alert('删除失败：' + (e?.message || '')); }
+  };
   
   const [profileFormData, setProfileFormData] = useState<ProfileFormData>({
-    username: '张先生',
-    email: 'zhang.san@example.com',
-    phone: '138****8888',
+    username: '',
+    email: '',
+    phone: '',
     gender: 'male',
-    address: '北京市朝阳区金融街88号'
+    address: ''
   });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileFieldErrors, setProfileFieldErrors] = useState<Partial<Record<keyof ProfileFormData, string>>>({});
 
   const [passwordFormData, setPasswordFormData] = useState<PasswordFormData>({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordFieldErrors, setPasswordFieldErrors] = useState<Partial<Record<keyof PasswordFormData, string>>>({});
+
+  // 手机绑定行内编辑
+  const [phoneEditing, setPhoneEditing] = useState(false);
+  const [newPhone, setNewPhone] = useState('');
+  const [phoneSaving, setPhoneSaving] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
+
+  // 登录历史
+  const [loginHistory, setLoginHistory] = useState<LoginHistoryItem[]>([]);
+  const [loginHistoryLoading, setLoginHistoryLoading] = useState(false);
+
+  // 风险测评
+  const [riskAssessments, setRiskAssessments] = useState<RiskAssessmentHistoryItem[]>([]);
+  const [riskLoading, setRiskLoading] = useState(false);
 
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
     billReminder: true,
@@ -79,6 +147,66 @@ const UserSettingsPage: React.FC = () => {
     document.title = '算小智 - 个人中心';
     return () => { document.title = originalTitle; };
   }, []);
+
+  // 加载基本资料
+  useEffect(() => {
+    if (activeTab === 'profile') loadProfile();
+  }, [activeTab]);
+
+  const loadProfile = async () => {
+    setProfileLoading(true);
+    setProfileError('');
+    try {
+      const res = await get<ApiResponse<{id:string;username:string;email?:string;phone?:string;gender?:string;address?:string}>>('/api/v1/mobile/auth/me');
+      if (res?.data) {
+        setProfileFormData({
+          username: res.data.username || '',
+          email: res.data.email || '',
+          phone: res.data.phone || '',
+          gender: res.data.gender || 'male',
+          address: res.data.address || ''
+        });
+      }
+    } catch {
+      // keep current values
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // 加载登录历史
+  useEffect(() => {
+    if (activeTab === 'security') loadLoginHistory();
+  }, [activeTab]);
+
+  const loadLoginHistory = async () => {
+    setLoginHistoryLoading(true);
+    try {
+      const res = await fetchLoginHistory();
+      setLoginHistory((res as any)?.data || []);
+    } catch {
+      setLoginHistory([]);
+    } finally {
+      setLoginHistoryLoading(false);
+    }
+  };
+
+  // 加载风险测评
+  useEffect(() => {
+    if (activeTab === 'risk') loadRiskAssessments();
+  }, [activeTab]);
+
+  const loadRiskAssessments = async () => {
+    setRiskLoading(true);
+    try {
+      const res = await fetchRiskAssessments();
+      setRiskAssessments((res as any)?.data || []);
+    } catch {
+      setRiskAssessments([]);
+    } finally {
+      setRiskLoading(false);
+    }
+  };
 
   useEffect(() => {
     const s = loadAuditReminderSettings();
@@ -130,50 +258,132 @@ const UserSettingsPage: React.FC = () => {
     }));
   };
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const validateEmail = (value: string): { valid: boolean; message: string } => {
+    if (!value.trim()) return { valid: true, message: '' };
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return { valid: false, message: '请输入有效的邮箱地址' };
+    return { valid: true, message: '' };
+  };
+
+  const validatePhone = (value: string): { valid: boolean; message: string } => {
+    if (!value.trim()) return { valid: true, message: '' };
+    if (!/^1[3-9]\d{9}$/.test(value)) return { valid: false, message: '请输入有效的手机号' };
+    return { valid: true, message: '' };
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('保存基本资料', profileFormData);
-    alert('基本资料保存成功！');
+    setProfileError('');
+    setProfileFieldErrors({});
+
+    const emailV = validateEmail(profileFormData.email);
+    const phoneV = validatePhone(profileFormData.phone);
+    const fieldErrors: Partial<Record<keyof ProfileFormData, string>> = {};
+    if (emailV.message) fieldErrors.email = emailV.message;
+    if (phoneV.message) fieldErrors.phone = phoneV.message;
+    if (Object.keys(fieldErrors).length > 0) {
+      setProfileFieldErrors(fieldErrors);
+      return;
+    }
+
+    setProfileSaving(true);
+    try {
+      await updateUserProfile({
+        email: profileFormData.email || undefined,
+        phone: profileFormData.phone || undefined,
+        gender: profileFormData.gender,
+        address: profileFormData.address || undefined
+      });
+      alert('基本资料保存成功！');
+    } catch (e: any) {
+      setProfileError(e?.responseBody?.message || e?.message || '保存失败，请稍后重试');
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   const handleProfileCancel = () => {
-    setProfileFormData({
-      username: '张先生',
-      email: 'zhang.san@example.com',
-      phone: '138****8888',
-      gender: 'male',
-      address: '北京市朝阳区金融街88号'
-    });
+    setProfileFieldErrors({});
+    setProfileError('');
+    loadProfile();
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!passwordFormData.currentPassword || !passwordFormData.newPassword || !passwordFormData.confirmPassword) {
-      alert('请填写完整的密码信息');
-      return;
-    }
+    setPasswordError('');
+    setPasswordFieldErrors({});
 
+    let hasError = false;
+    const fieldErrors: Partial<Record<keyof PasswordFormData, string>> = {};
+    if (!passwordFormData.currentPassword) {
+      fieldErrors.currentPassword = '请输入当前密码';
+      hasError = true;
+    }
+    if (!passwordFormData.newPassword || passwordFormData.newPassword.length < 6) {
+      fieldErrors.newPassword = '新密码至少需要6位';
+      hasError = true;
+    }
     if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
-      alert('新密码与确认密码不一致');
+      fieldErrors.confirmPassword = '两次密码输入不一致';
+      hasError = true;
+    }
+    if (hasError) {
+      setPasswordFieldErrors(fieldErrors);
       return;
     }
 
-    console.log('修改密码', passwordFormData);
-    alert('密码修改成功！');
-    setPasswordFormData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
+    setPasswordSaving(true);
+    try {
+      await changePassword({
+        currentPassword: passwordFormData.currentPassword,
+        newPassword: passwordFormData.newPassword
+      });
+      alert('密码修改成功！');
+      setPasswordFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordFieldErrors({});
+    } catch (e: any) {
+      setPasswordError(e?.responseBody?.message || e?.message || '密码修改失败，请检查当前密码是否正确');
+    } finally {
+      setPasswordSaving(false);
+    }
   };
 
   const handlePasswordCancel = () => {
-    setPasswordFormData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    });
+    setPasswordFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setPasswordFieldErrors({});
+    setPasswordError('');
+  };
+
+  // 手机绑定
+  const handlePhoneEditStart = () => {
+    setNewPhone(profileFormData.phone || '');
+    setPhoneEditing(true);
+    setPhoneError('');
+  };
+
+  const handlePhoneEditCancel = () => {
+    setPhoneEditing(false);
+    setNewPhone('');
+    setPhoneError('');
+  };
+
+  const handlePhoneEditSave = async () => {
+    const phoneV = validatePhone(newPhone);
+    if (phoneV.message) {
+      setPhoneError(phoneV.message);
+      return;
+    }
+    setPhoneSaving(true);
+    setPhoneError('');
+    try {
+      await updateUserProfile({ phone: newPhone || undefined });
+      setProfileFormData(prev => ({ ...prev, phone: newPhone }));
+      setPhoneEditing(false);
+      alert('手机号更新成功！');
+    } catch (e: any) {
+      setPhoneError(e?.responseBody?.message || e?.message || '更新失败');
+    } finally {
+      setPhoneSaving(false);
+    }
   };
 
   const handleNotificationSubmit = async (e: React.FormEvent) => {
@@ -240,43 +450,26 @@ const UserSettingsPage: React.FC = () => {
     });
   };
 
-  const handleAddAccount = () => {
-    console.log('添加新账户');
-    alert('添加账户功能开发中...');
-  };
-
+  const handleAddAccount = openAddModal;
   const handleAccountEdit = (accountId: string) => {
-    console.log('编辑账户', accountId);
-    alert('编辑账户功能开发中...');
+    const acc = accounts.find(a => a.accountId === accountId);
+    if (acc) openEditModal(acc);
   };
+  const handleAccountDelete = handleDelAccount;
 
-  const handleAccountDelete = (accountId: string) => {
-    if (confirm('确定要删除这个账户吗？')) {
-      console.log('删除账户', accountId);
-      // 这里应该调用删除API
-    }
-  };
-
-  const handleChangePhone = () => {
-    console.log('更换手机号');
-    alert('更换手机号功能开发中...');
-  };
+  // (replaced by phoneEditing handlers above)
 
   const handleStartRiskAssessment = () => {
-    console.log('开始风险测评');
-    alert('即将跳转到风险测评页面...');
+    navigate('/risk');
   };
 
   const handleLogout = () => {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem('sx-role');
-    localStorage.removeItem('sx-user-id');
+    clearStoredSession();
     navigate('/login', { replace: true });
   };
 
-  const handleViewRiskDetail = (date: string) => {
-    console.log('查看测评详情', date);
-    alert('查看测评详情功能开发中...');
+  const handleViewRiskDetail = (assessmentId: string) => {
+    navigate(`/risk?assessmentId=${encodeURIComponent(assessmentId)}`);
   };
 
   return (
@@ -363,51 +556,64 @@ const UserSettingsPage: React.FC = () => {
           <section className={activeTab === 'profile' ? styles.settingSectionActive : styles.settingSection}>
             <div className={`${styles.gradientCard} rounded-xl p-6 shadow-card`}>
               <h3 className="text-lg font-semibold text-text-primary mb-6">基本资料</h3>
+              {profileLoading ? (
+                <div className={styles.loadingOverlay}>
+                  <i className="fas fa-spinner fa-spin text-2xl"></i>
+                  <span className="ml-3 text-text-secondary">加载中...</span>
+                </div>
+              ) : (
               <form onSubmit={handleProfileSubmit} className="space-y-6">
+                {profileError && (
+                  <div className={styles.errorBanner}>
+                    <i className="fas fa-exclamation-circle mr-2"></i>{profileError}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label htmlFor="username" className="block text-sm font-medium text-text-primary">用户名</label>
-                    <input 
-                      type="text" 
-                      id="username" 
-                      name="username" 
-                      className={`w-full px-4 py-3 border border-border-light rounded-lg ${styles.formInputFocus}`}
+                    <input
+                      type="text"
+                      id="username"
+                      name="username"
+                      className={`w-full px-4 py-3 border border-border-light rounded-lg bg-gray-50 text-text-secondary ${styles.formInputFocus}`}
                       value={profileFormData.username}
-                      onChange={(e) => handleProfileInputChange('username', e.target.value)}
-                      required 
+                      readOnly
                     />
+                    <p className="text-xs text-text-secondary">用户名不可修改</p>
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="email" className="block text-sm font-medium text-text-primary">邮箱</label>
-                    <input 
-                      type="email" 
-                      id="email" 
-                      name="email" 
-                      className={`w-full px-4 py-3 border border-border-light rounded-lg ${styles.formInputFocus}`}
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      className={`w-full px-4 py-3 border rounded-lg ${styles.formInputFocus} ${profileFieldErrors.email ? 'border-red-400' : 'border-border-light'}`}
                       value={profileFormData.email}
                       onChange={(e) => handleProfileInputChange('email', e.target.value)}
-                      required 
+                      placeholder="请输入邮箱"
                     />
+                    {profileFieldErrors.email && <p className={styles.fieldError}>{profileFieldErrors.email}</p>}
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label htmlFor="phone" className="block text-sm font-medium text-text-primary">手机号</label>
-                    <input 
-                      type="tel" 
-                      id="phone" 
-                      name="phone" 
-                      className={`w-full px-4 py-3 border border-border-light rounded-lg ${styles.formInputFocus}`}
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      className={`w-full px-4 py-3 border rounded-lg ${styles.formInputFocus} ${profileFieldErrors.phone ? 'border-red-400' : 'border-border-light'}`}
                       value={profileFormData.phone}
                       onChange={(e) => handleProfileInputChange('phone', e.target.value)}
-                      required 
+                      placeholder="请输入手机号"
                     />
+                    {profileFieldErrors.phone && <p className={styles.fieldError}>{profileFieldErrors.phone}</p>}
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="gender" className="block text-sm font-medium text-text-primary">性别</label>
-                    <select 
-                      id="gender" 
-                      name="gender" 
+                    <select
+                      id="gender"
+                      name="gender"
                       className={`w-full px-4 py-3 border border-border-light rounded-lg ${styles.formInputFocus}`}
                       value={profileFormData.gender}
                       onChange={(e) => handleProfileInputChange('gender', e.target.value)}
@@ -420,9 +626,9 @@ const UserSettingsPage: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <label htmlFor="address" className="block text-sm font-medium text-text-primary">联系地址</label>
-                  <textarea 
-                    id="address" 
-                    name="address" 
+                  <textarea
+                    id="address"
+                    name="address"
                     rows={3}
                     className={`w-full px-4 py-3 border border-border-light rounded-lg ${styles.formInputFocus}`}
                     placeholder="请输入联系地址"
@@ -431,21 +637,23 @@ const UserSettingsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex justify-end space-x-4 pt-4">
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={handleProfileCancel}
                     className="px-6 py-3 border border-border-light text-text-secondary rounded-lg hover:bg-gray-50 transition-all"
                   >
                     取消
                   </button>
-                  <button 
-                    type="submit" 
-                    className={`${styles.gradientBg} text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all`}
+                  <button
+                    type="submit"
+                    disabled={profileSaving}
+                    className={`${styles.gradientBg} text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-60`}
                   >
-                    保存
+                    {profileSaving ? <><i className="fas fa-spinner fa-spin mr-2"></i>保存中...</> : '保存'}
                   </button>
                 </div>
               </form>
+              )}
             </div>
           </section>
 
@@ -463,92 +671,27 @@ const UserSettingsPage: React.FC = () => {
                 </button>
               </div>
               <div className="space-y-4">
-                <div className={`${styles.accountCard} rounded-lg p-4`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <i className="fas fa-university text-blue-600 text-xl"></i>
+                {accounts.map(acc => (
+                  <div key={acc.accountId} className={`${styles.accountCard} rounded-lg p-4`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <i className="fas fa-university text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                          <h4 className="font-medium text-text-primary">{acc.name}</h4>
+                          <p className="text-sm text-text-secondary">{acc.type}</p>
+                          <p className="text-sm text-success">余额：¥{((acc.balance || 0) / 100).toFixed(2)}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-medium text-text-primary">招商银行储蓄卡</h4>
-                        <p className="text-sm text-text-secondary">****1234</p>
-                        <p className="text-sm text-success">余额：¥85,680.00</p>
+                      <div className="flex space-x-2">
+                        <button onClick={() => handleAccountEdit(acc.accountId)} className="text-primary hover:text-secondary transition-colors"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => handleAccountDelete(acc.accountId)} className="text-danger hover:text-red-700 transition-colors"><i className="fas fa-trash"></i></button>
                       </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => handleAccountEdit('1')}
-                        className="text-primary hover:text-secondary transition-colors"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        onClick={() => handleAccountDelete('1')}
-                        className="text-danger hover:text-red-700 transition-colors"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
                     </div>
                   </div>
-                </div>
-                
-                <div className={`${styles.accountCard} rounded-lg p-4`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                        <i className="fas fa-credit-card text-red-600 text-xl"></i>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-text-primary">招商银行信用卡</h4>
-                        <p className="text-sm text-text-secondary">****5678</p>
-                        <p className="text-sm text-warning">欠款：¥5,280.00</p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => handleAccountEdit('2')}
-                        className="text-primary hover:text-secondary transition-colors"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        onClick={() => handleAccountDelete('2')}
-                        className="text-danger hover:text-red-700 transition-colors"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className={`${styles.accountCard} rounded-lg p-4`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <i className="fab fa-alipay text-green-600 text-xl"></i>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-text-primary">支付宝</h4>
-                        <p className="text-sm text-text-secondary">zhang.san@example.com</p>
-                        <p className="text-sm text-success">余额：¥12,580.00</p>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => handleAccountEdit('3')}
-                        className="text-primary hover:text-secondary transition-colors"
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button 
-                        onClick={() => handleAccountDelete('3')}
-                        className="text-danger hover:text-red-700 transition-colors"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                ))}
+                {accounts.length === 0 && <p className="text-sm text-text-secondary text-center py-4">暂无账户，点击右上角"添加账户"开始使用</p>}
               </div>
             </div>
           </section>
@@ -561,103 +704,144 @@ const UserSettingsPage: React.FC = () => {
                 <div className="border-b border-border-light pb-6">
                   <h4 className="font-medium text-text-primary mb-4">修改密码</h4>
                   <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                    {passwordError && (
+                      <div className={styles.errorBanner}>
+                        <i className="fas fa-exclamation-circle mr-2"></i>{passwordError}
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label htmlFor="current-password" className="block text-sm font-medium text-text-primary">当前密码</label>
-                        <input 
-                          type="password" 
-                          id="current-password" 
-                          name="current-password" 
-                          className={`w-full px-4 py-3 border border-border-light rounded-lg ${styles.formInputFocus}`}
+                        <input
+                          type="password"
+                          id="current-password"
+                          name="current-password"
+                          className={`w-full px-4 py-3 border rounded-lg ${styles.formInputFocus} ${passwordFieldErrors.currentPassword ? 'border-red-400' : 'border-border-light'}`}
                           placeholder="请输入当前密码"
                           value={passwordFormData.currentPassword}
                           onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
                         />
+                        {passwordFieldErrors.currentPassword && <p className={styles.fieldError}>{passwordFieldErrors.currentPassword}</p>}
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="new-password" className="block text-sm font-medium text-text-primary">新密码</label>
-                        <input 
-                          type="password" 
-                          id="new-password" 
-                          name="new-password" 
-                          className={`w-full px-4 py-3 border border-border-light rounded-lg ${styles.formInputFocus}`}
-                          placeholder="请输入新密码"
+                        <input
+                          type="password"
+                          id="new-password"
+                          name="new-password"
+                          className={`w-full px-4 py-3 border rounded-lg ${styles.formInputFocus} ${passwordFieldErrors.newPassword ? 'border-red-400' : 'border-border-light'}`}
+                          placeholder="请输入新密码（至少6位）"
                           value={passwordFormData.newPassword}
                           onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
                         />
+                        {passwordFieldErrors.newPassword && <p className={styles.fieldError}>{passwordFieldErrors.newPassword}</p>}
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label htmlFor="confirm-password" className="block text-sm font-medium text-text-primary">确认新密码</label>
-                      <input 
-                        type="password" 
-                        id="confirm-password" 
-                        name="confirm-password" 
-                        className={`w-full px-4 py-3 border border-border-light rounded-lg ${styles.formInputFocus}`}
+                      <input
+                        type="password"
+                        id="confirm-password"
+                        name="confirm-password"
+                        className={`w-full px-4 py-3 border rounded-lg ${styles.formInputFocus} ${passwordFieldErrors.confirmPassword ? 'border-red-400' : 'border-border-light'}`}
                         placeholder="请再次输入新密码"
                         value={passwordFormData.confirmPassword}
                         onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
                       />
+                      {passwordFieldErrors.confirmPassword && <p className={styles.fieldError}>{passwordFieldErrors.confirmPassword}</p>}
                     </div>
                     <div className="flex justify-end space-x-4">
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         onClick={handlePasswordCancel}
                         className="px-6 py-3 border border-border-light text-text-secondary rounded-lg hover:bg-gray-50 transition-all"
                       >
                         取消
                       </button>
-                      <button 
-                        type="submit" 
-                        className={`${styles.gradientBg} text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all`}
+                      <button
+                        type="submit"
+                        disabled={passwordSaving}
+                        className={`${styles.gradientBg} text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-60`}
                       >
-                        保存
+                        {passwordSaving ? <><i className="fas fa-spinner fa-spin mr-2"></i>保存中...</> : '提交'}
                       </button>
                     </div>
                   </form>
                 </div>
-                
+
                 <div className="border-b border-border-light pb-6">
                   <h4 className="font-medium text-text-primary mb-4">绑定手机</h4>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-text-primary">138****8888</p>
-                      <p className="text-sm text-text-secondary">已绑定</p>
+                  {phoneEditing ? (
+                    <div className={styles.inlineEdit}>
+                      <div className="flex-1 space-y-1">
+                        <input
+                          type="tel"
+                          className={`w-full px-4 py-3 border rounded-lg ${styles.formInputFocus} ${phoneError ? 'border-red-400' : 'border-border-light'}`}
+                          placeholder="请输入新手机号"
+                          value={newPhone}
+                          onChange={(e) => { setNewPhone(e.target.value); setPhoneError(''); }}
+                        />
+                        {phoneError && <p className={styles.fieldError}>{phoneError}</p>}
+                      </div>
+                      <button
+                        onClick={handlePhoneEditSave}
+                        disabled={phoneSaving}
+                        className={`${styles.gradientBg} text-white px-4 py-3 rounded-lg font-medium text-sm disabled:opacity-60`}
+                      >
+                        {phoneSaving ? <i className="fas fa-spinner fa-spin"></i> : '保存'}
+                      </button>
+                      <button
+                        onClick={handlePhoneEditCancel}
+                        className="px-4 py-3 border border-border-light text-text-secondary rounded-lg text-sm"
+                      >
+                        取消
+                      </button>
                     </div>
-                    <button 
-                      onClick={handleChangePhone}
-                      className="px-4 py-2 border border-border-light text-text-secondary rounded-lg hover:bg-gray-50 transition-all"
-                    >
-                      更换
-                    </button>
-                  </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-text-primary">{profileFormData.phone || '未绑定'}</p>
+                        <p className="text-sm text-text-secondary">{profileFormData.phone ? '已绑定' : '请绑定手机号'}</p>
+                      </div>
+                      <button
+                        onClick={handlePhoneEditStart}
+                        className="px-4 py-2 border border-border-light text-text-secondary rounded-lg hover:bg-gray-50 transition-all"
+                      >
+                        更换
+                      </button>
+                    </div>
+                  )}
                 </div>
-                
+
                 <div>
                   <h4 className="font-medium text-text-primary mb-4">登录日志</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">2024-01-15 14:30</p>
-                        <p className="text-xs text-text-secondary">IP: 192.168.1.100 | 设备: Windows Chrome</p>
-                      </div>
-                      <span className="text-xs text-success">成功</span>
+                  {loginHistoryLoading ? (
+                    <div className={styles.loadingOverlay}>
+                      <i className="fas fa-spinner fa-spin"></i>
+                      <span className="ml-3 text-sm text-text-secondary">加载中...</span>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">2024-01-14 09:15</p>
-                        <p className="text-xs text-text-secondary">IP: 192.168.1.100 | 设备: Windows Chrome</p>
-                      </div>
-                      <span className="text-xs text-success">成功</span>
+                  ) : loginHistory.length === 0 ? (
+                    <p className="text-sm text-text-secondary py-4 text-center">暂无登录记录</p>
+                  ) : (
+                    <div className="space-y-3 max-h-64 overflow-y-auto">
+                      {loginHistory.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div>
+                            <p className="text-sm font-medium text-text-primary">
+                              {new Date(item.createdAt).toLocaleString('zh-CN')}
+                            </p>
+                            <p className="text-xs text-text-secondary">
+                              IP: {item.ipAddress || '未知'}
+                              {item.userAgent ? ` | ${item.userAgent.slice(0, 40)}${item.userAgent.length > 40 ? '...' : ''}` : ''}
+                            </p>
+                          </div>
+                          <span className={`text-xs ${item.success ? 'text-success' : 'text-danger'}`}>
+                            {item.success ? '成功' : '失败'}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">2024-01-13 20:45</p>
-                        <p className="text-xs text-text-secondary">IP: 10.0.0.5 | 设备: Mac Safari</p>
-                      </div>
-                      <span className="text-xs text-success">成功</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -851,87 +1035,116 @@ const UserSettingsPage: React.FC = () => {
             <div className={`${styles.gradientCard} rounded-xl p-6 shadow-card`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-text-primary">风险测评</h3>
-                <button 
+                <button
                   onClick={handleStartRiskAssessment}
                   className={`${styles.gradientBg} text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all`}
                 >
                   开始测评
                 </button>
               </div>
-              
-              <div className="space-y-6">
-                <div className="p-4 bg-success bg-opacity-10 rounded-lg border border-success border-opacity-20">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-10 h-10 bg-success bg-opacity-20 rounded-lg flex items-center justify-center">
-                      <i className="fas fa-check text-success text-lg"></i>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-text-primary">已完成风险测评</h4>
-                      <p className="text-sm text-text-secondary">测评时间：2024-01-01</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-3 bg-white rounded-lg">
-                      <p className="text-2xl font-bold text-primary">稳健型</p>
-                      <p className="text-sm text-text-secondary">风险等级</p>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg">
-                      <p className="text-2xl font-bold text-success">75分</p>
-                      <p className="text-sm text-text-secondary">测评得分</p>
-                    </div>
-                    <div className="text-center p-3 bg-white rounded-lg">
-                      <p className="text-2xl font-bold text-warning">中等</p>
-                      <p className="text-sm text-text-secondary">承受能力</p>
-                    </div>
-                  </div>
+
+              {riskLoading ? (
+                <div className={styles.loadingOverlay}>
+                  <i className="fas fa-spinner fa-spin text-2xl"></i>
+                  <span className="ml-3 text-text-secondary">加载中...</span>
                 </div>
-                
-                <div className="border-t border-border-light pt-6">
-                  <h4 className="font-medium text-text-primary mb-4">历史测评记录</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">2024-01-01</p>
-                        <p className="text-xs text-text-secondary">稳健型 | 75分</p>
-                      </div>
-                      <button 
-                        onClick={() => handleViewRiskDetail('2024-01-01')}
-                        className="text-primary text-sm hover:underline"
-                      >
-                        查看详情
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">2023-07-15</p>
-                        <p className="text-xs text-text-secondary">稳健型 | 72分</p>
-                      </div>
-                      <button 
-                        onClick={() => handleViewRiskDetail('2023-07-15')}
-                        className="text-primary text-sm hover:underline"
-                      >
-                        查看详情
-                      </button>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">2023-01-20</p>
-                        <p className="text-xs text-text-secondary">保守型 | 65分</p>
-                      </div>
-                      <button 
-                        onClick={() => handleViewRiskDetail('2023-01-20')}
-                        className="text-primary text-sm hover:underline"
-                      >
-                        查看详情
-                      </button>
-                    </div>
-                  </div>
+              ) : riskAssessments.length === 0 ? (
+                <div className="text-center py-8">
+                  <i className="fas fa-clipboard-list text-4xl text-text-secondary mb-3"></i>
+                  <p className="text-text-secondary">暂无风险测评记录</p>
+                  <p className="text-sm text-text-secondary mt-1">点击"开始测评"完成首次风险测评</p>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* 最近一次测评 */}
+                  {(() => {
+                    const latest = riskAssessments[0];
+                    const levelLabel = latest.level === 'HIGH' ? '进取型' : latest.level === 'LOW' ? '保守型' : '稳健型';
+                    const levelClass = latest.level === 'HIGH' ? styles.riskHigh : latest.level === 'LOW' ? styles.riskLow : styles.riskMid;
+                    return (
+                      <div className="p-4 bg-success bg-opacity-10 rounded-lg border border-success border-opacity-20">
+                        <div className="flex items-center space-x-3 mb-3">
+                          <div className="w-10 h-10 bg-success bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <i className="fas fa-check text-success text-lg"></i>
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-text-primary">
+                              {latest.status === 'COMPLETED' ? '已完成风险测评' : '测评进行中'}
+                            </h4>
+                            <p className="text-sm text-text-secondary">
+                              测评时间：{new Date(latest.createdAt).toLocaleDateString('zh-CN')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="text-center p-3 bg-white rounded-lg">
+                            <p className={`text-2xl font-bold ${levelClass}`}>{levelLabel}</p>
+                            <p className="text-sm text-text-secondary">风险等级</p>
+                          </div>
+                          <div className="text-center p-3 bg-white rounded-lg">
+                            <p className="text-2xl font-bold text-success">{latest.score}分</p>
+                            <p className="text-sm text-text-secondary">测评得分</p>
+                          </div>
+                          <div className="text-center p-3 bg-white rounded-lg">
+                            <p className="text-2xl font-bold text-warning">{latest.status === 'COMPLETED' ? '已完成' : '进行中'}</p>
+                            <p className="text-sm text-text-secondary">测评状态</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* 历史记录 */}
+                  {riskAssessments.length > 1 && (
+                    <div className="border-t border-border-light pt-6">
+                      <h4 className="font-medium text-text-primary mb-4">历史测评记录</h4>
+                      <div className="space-y-3">
+                        {riskAssessments.slice(1).map((item) => {
+                          const lvlLabel = item.level === 'HIGH' ? '进取型' : item.level === 'LOW' ? '保守型' : '稳健型';
+                          return (
+                            <div key={item.assessmentId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                              <div>
+                                <p className="text-sm font-medium text-text-primary">
+                                  {new Date(item.createdAt).toLocaleDateString('zh-CN')}
+                                </p>
+                                <p className="text-xs text-text-secondary">{lvlLabel} | {item.score}分 | {item.status === 'COMPLETED' ? '已完成' : '进行中'}</p>
+                              </div>
+                              <button
+                                onClick={() => handleViewRiskDetail(item.assessmentId)}
+                                className="text-primary text-sm hover:underline"
+                              >
+                                查看详情
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         </div>
       </div>
+
+      {/* 账户管理弹窗 */}
+      {accountModal.open && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-11/12 max-w-md p-6">
+            <h4 className="text-lg font-semibold text-text-primary mb-4">{accountModal.mode === 'add' ? '添加账户' : '编辑账户'}</h4>
+            <div className="space-y-4">
+              <div><label className="block text-sm mb-1">账户名称</label><input className="w-full px-3 py-2 border rounded-lg" value={accName} onChange={e=>setAccName(e.target.value)}/></div>
+              <div><label className="block text-sm mb-1">类型</label><select className="w-full px-3 py-2 border rounded-lg" value={accType} onChange={e=>setAccType(e.target.value as AccountInfo['type'])}><option value="BANK">银行卡</option><option value="CREDIT">信用卡</option><option value="CASH">现金</option></select></div>
+              <div><label className="block text-sm mb-1">余额</label><input type="number" className="w-full px-3 py-2 border rounded-lg" value={accBalance} onChange={e=>setAccBalance(e.target.value)}/></div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button onClick={()=>setAccountModal({open:false,mode:'add'})} className="px-4 py-2 text-sm border rounded-lg">取消</button>
+              <button disabled={accSaving} onClick={handleSaveAccount} className={`${styles.gradientBg} text-white px-4 py-2 text-sm rounded-lg disabled:opacity-60`}>{accSaving?'保存中…':'保存'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

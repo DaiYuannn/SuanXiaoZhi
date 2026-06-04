@@ -6,6 +6,7 @@ import {
   DEFAULT_TIMEOUT_MS
 } from "../config/env.js";
 import { auditApi, auditError } from "../audit/audit-service.js";
+import { clearStoredSession } from "./auth-session.js";
 
 export interface HttpClientOptions {
   baseUrl?: string;
@@ -76,9 +77,7 @@ const handleUnauthenticated = (): void => {
   }
 
   try {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem("sx-role");
-    localStorage.removeItem("sx-user-id");
+    clearStoredSession();
   } catch {
     // ignore storage errors
   }

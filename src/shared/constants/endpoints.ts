@@ -9,6 +9,7 @@ import type {
   FamilyMember,
   IncentiveItem,
   LedgerInfo,
+  LoginHistoryItem,
   PageResp,
   PlanItem,
   PlanProgress,
@@ -16,10 +17,12 @@ import type {
   RecommendedProduct,
   ReminderItem,
   ReportData,
+  RiskAssessmentHistoryItem,
   RiskAssessmentState,
   TransactionFlow,
   TransactionItem,
   UserProfile,
+  UserProfileDetail,
   UserProfileTags
 } from "../types/api.js";
 
@@ -32,6 +35,7 @@ export type {
   FamilyMember,
   IncentiveItem,
   LedgerInfo,
+  LoginHistoryItem,
   PageResp,
   PlanItem,
   PlanProgress,
@@ -39,10 +43,12 @@ export type {
   RecommendedProduct,
   ReminderItem,
   ReportData,
+  RiskAssessmentHistoryItem,
   RiskAssessmentState,
   TransactionFlow,
   TransactionItem,
   UserProfile,
+  UserProfileDetail,
   UserProfileTags
 } from "../types/api.js";
 
@@ -283,3 +289,33 @@ export const classifyTextQuick = async (text: string): Promise<AccountingClassif
 
 export const classifyText = (text: string): Promise<ApiResponse<AccountingClassifyResponse>> =>
   post<ApiResponse<AccountingClassifyResponse>>(`${mobile}/ocr/classify-text`, { text });
+
+// ---- 个人设置相关 ----
+
+export const updateUserProfile = (
+  payload: { email?: string; phone?: string; gender?: string; address?: string }
+): Promise<ApiResponse<UserProfileDetail>> =>
+  patch<ApiResponse<UserProfileDetail>>(`${mobile}/user/profile`, payload);
+
+export const changePassword = (
+  payload: { currentPassword: string; newPassword: string }
+): Promise<ApiResponse<{ ok: boolean }>> =>
+  post<ApiResponse<{ ok: boolean }>>(`${mobile}/auth/change-password`, payload);
+
+export const fetchLoginHistory = (): Promise<ApiResponse<LoginHistoryItem[]>> =>
+  get<ApiResponse<LoginHistoryItem[]>>(`${mobile}/auth/login-history`);
+
+export const fetchRiskAssessments = (): Promise<ApiResponse<RiskAssessmentHistoryItem[]>> =>
+  get<ApiResponse<RiskAssessmentHistoryItem[]>>(`${mobile}/risk/assessments`);
+
+export const startMobileRiskAssessment = (): Promise<ApiResponse<RiskAssessmentState>> =>
+  post<ApiResponse<RiskAssessmentState>>(`${mobile}/risk/assessment/start`, {});
+
+export const submitMobileRiskAssessment = (
+  assessmentId: string,
+  answers: Array<{ qid: string; optionId: string }>
+): Promise<ApiResponse<RiskAssessmentState>> =>
+  post<ApiResponse<RiskAssessmentState>>(`${mobile}/risk/assessment/submit`, { assessmentId, answers });
+
+export const fetchMobileRiskResult = (assessmentId: string): Promise<ApiResponse<RiskAssessmentState>> =>
+  get<ApiResponse<RiskAssessmentState>>(`${mobile}/risk/assessment/result`, { assessmentId });

@@ -1,18 +1,26 @@
 import {
   estimateProductYield,
+  fetchMobileRiskResult,
   fetchProductDetail,
   fetchProducts,
   fetchRecommendedProducts,
+  fetchRiskAssessments,
+  startMobileRiskAssessment,
   startRiskAssessment,
+  submitMobileRiskAssessment,
   submitRiskAssessment
 } from "../../../shared/constants/endpoints.js";
 
 export {
   estimateProductYield,
+  fetchMobileRiskResult,
   fetchProductDetail,
   fetchProducts,
   fetchRecommendedProducts,
+  fetchRiskAssessments,
+  startMobileRiskAssessment,
   startRiskAssessment,
+  submitMobileRiskAssessment,
   submitRiskAssessment
 };
 

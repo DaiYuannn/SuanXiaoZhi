@@ -44,7 +44,10 @@ const ConsumptionAnalysisPage: React.FC = () => {
     }
 
     const totalExpense = Number((summary.byCategory.reduce((acc, item) => acc + (item.amount || 0), 0) / 100).toFixed(2));
-    const totalIncome = Number((totalExpense * 1.45).toFixed(2));
+    const totalIncome = Number(((summary as any).totalIncomeCent != null
+      ? (summary as any).totalIncomeCent / 100
+      : totalExpense * 1.2
+    ).toFixed(2));
     const netIncome = Number((totalIncome - totalExpense).toFixed(2));
 
     const trendRows = summary.trend.map((item) => (item.amount || 0) / 100);
@@ -462,8 +465,7 @@ const ConsumptionAnalysisPage: React.FC = () => {
   };
 
   const handleExportReport = () => {
-    console.log('导出消费分析报告');
-    alert('报告正在生成中，请稍候...');
+    window.print();
   };
 
   const handleViewFullProfile = () => {

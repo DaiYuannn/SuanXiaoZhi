@@ -6,7 +6,7 @@ import { ErrorBoundary } from "../shared/components/ErrorBoundary";
 import { adminRoutes, AppRoute, mobileRoutes } from "./routes.js";
 import { canAccessRoute } from "./permission-guard.js";
 import { SessionUser, UserRole } from "../shared/types/permission.js";
-import { AUTH_TOKEN_KEY } from "../shared/config/env.js";
+import { readStoredSession, subscribeAuthChanged } from "../shared/utils/auth-session.js";
 
 import HomePage from "../domains/home/pages/HomePage";
 import AccountingPage from "../domains/ledger/pages/AccountingPage";
@@ -60,26 +60,13 @@ const componentRegistry: Record<string, React.ComponentType> = {
 
 const publicPaths = new Set(["/login", "/register", "/403"]);
 
-const resolveRole = (input: string | null): UserRole | null => {
-  if (input === UserRole.OWNER || input === UserRole.FAMILY_MEMBER || input === UserRole.SUPER_ADMIN || input === UserRole.OPERATOR || input === UserRole.VIEWER) {
-    return input;
-  }
-  return null;
-};
-
 const resolveSessionUser = (): SessionUser | null => {
-  if (typeof window === "undefined") {
+  const session = readStoredSession();
+  if (!session) {
     return null;
   }
 
-  const token = localStorage.getItem(AUTH_TOKEN_KEY);
-  const id = localStorage.getItem("sx-user-id");
-  const role = resolveRole(localStorage.getItem("sx-role"));
-  if (!token || !id || !role) {
-    return null;
-  }
-
-  return { id, role };
+  return { id: session.userId, role: session.role };
 };
 
 const renderRouteElement = (route: AppRoute): React.ReactElement => {
@@ -140,6 +127,14 @@ const resolveFallbackPath = (): string => {
 };
 
 export const AppRouterProvider: React.FC = () => {
+  const [, setAuthVersion] = React.useState(0);
+
+  React.useEffect(() => {
+    return subscribeAuthChanged(() => {
+      setAuthVersion((value) => value + 1);
+    });
+  }, []);
+
   const authRoutes = mobileRoutes.filter((route) => authPaths.has(route.path));
   const appRoutes = mobileRoutes.filter((route) => !authPaths.has(route.path));
   const useHashRouter = typeof window !== "undefined" && window.location.hostname.endsWith("github.io");

@@ -9,7 +9,7 @@ export interface AppRoute {
 
 export const mobileRoutes: AppRoute[] = [
   { path: "/", name: "home", component: "HomePage" },
-  { path: "/accounting", name: "accounting", component: "AccountingPage", permission: Permission.TRANSACTION_WRITE },
+  { path: "/accounting", name: "accounting", component: "AccountingPage", permission: Permission.TRANSACTION_READ },
   { path: "/ledger/transfer", name: "transfer", component: "TransferPage", permission: Permission.TRANSACTION_WRITE },
   { path: "/ledger/transfer/success", name: "transferSuccess", component: "TransferSuccessPage", permission: Permission.TRANSACTION_WRITE },
   { path: "/add-transaction", name: "addTransaction", component: "AddTransactionPage", permission: Permission.TRANSACTION_WRITE },
@@ -43,5 +43,6 @@ export const adminRoutes: AppRoute[] = [
   { path: "/admin/users", name: "users", component: "UsersPage", permission: Permission.USER_MANAGE },
   { path: "/admin/transactions", name: "transactions", component: "AdminTransactionsPage", permission: Permission.TRANSACTION_MANAGE },
   { path: "/admin/products", name: "products", component: "AdminProductsPage", permission: Permission.PRODUCT_MANAGE },
+  { path: "/admin/reports", name: "reports", component: "AdminReportsPage", permission: Permission.REPORT_READ },
   { path: "/admin/system", name: "system", component: "SystemPage", permission: Permission.SYSTEM_MANAGE }
 ];

@@ -1,4 +1,7 @@
 import express from "express";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +16,19 @@ const webDistPath = path.resolve(__dirname, "../../dist");
 export const createApp = () => {
   const app = express();
 
+  // Security headers
+  app.use(helmet({ contentSecurityPolicy: false }));
+
+  // Request logging
+  app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+
+  // Rate limiting
+  const authLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, message: { ok: false, code: 429, message: "请求过于频繁，请稍后重试" } });
+  const generalLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, message: { ok: false, code: 429, message: "请求过于频繁，请稍后重试" } });
+
+  app.use("/api/v1/mobile/auth", authLimiter);
+  app.use(generalLimiter);
+
   const configuredOrigins = (process.env.ALLOWED_ORIGINS ?? "")
     .split(",")
     .map((item) => item.trim())
@@ -26,7 +42,6 @@ export const createApp = () => {
 
   app.use((req, res, next) => {
     const origin = req.header("origin");
-
     if (origin && allowedOrigins.has(origin)) {
       res.header("Access-Control-Allow-Origin", origin);
       res.header("Vary", "Origin");
@@ -34,12 +49,7 @@ export const createApp = () => {
       res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
       res.header("Access-Control-Allow-Headers", "Content-Type,Authorization");
     }
-
-    if (req.method === "OPTIONS") {
-      res.status(204).end();
-      return;
-    }
-
+    if (req.method === "OPTIONS") { res.status(204).end(); return; }
     next();
   });
 
@@ -49,7 +59,6 @@ export const createApp = () => {
 
   // Production deployment: serve frontend static assets from Vite build output.
   if (fs.existsSync(webDistPath)) {
-    // Serve both root and GitHub Pages-style prefixed assets for local compatibility.
     app.use(express.static(webDistPath));
     app.use("/SuanXiaoZhi", express.static(webDistPath));
     app.get(/^\/(?!api|health).*/, (_req, res) => {
@@ -57,7 +66,8 @@ export const createApp = () => {
     });
   }
 
-  app.get("/health", (_req, res) => {
+  app.get("/health", async (_req, res) => {
+    try { await import("./db.js").then(m => m.prisma.$queryRaw`SELECT 1`); } catch {}
     res.json({ ok: true });
   });
   app.use(errorHandler);

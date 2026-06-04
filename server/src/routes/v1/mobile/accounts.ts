@@ -40,6 +40,45 @@ const toMetaString = (meta: AccountMeta): string | null => {
   return JSON.stringify(clean);
 };
 
+// 账户汇总：总资产/负债/净资产/本月收支
+router.get("/summary", requirePermission(Permission.TRANSACTION_READ), async (req, res, next) => {
+  try {
+    const user = await resolveRequestUser(req);
+
+    const ledgers = await prisma.ledger.findMany({ where: { ownerId: user.id }, select: { id: true } });
+    const ledgerIds = ledgers.map(l => l.id);
+
+    // 所有交易（正=收入，负=支出）
+    const allTx = ledgerIds.length > 0
+      ? await prisma.transaction.findMany({ where: { ledgerId: { in: ledgerIds } }, select: { amountCent: true, ts: true } })
+      : [];
+
+    const totalCent = allTx.reduce((s, r) => s + r.amountCent, 0);
+    const assetCent = Math.max(0, totalCent);
+    const debtCent = Math.abs(Math.min(0, totalCent));
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthIncome = allTx
+      .filter(r => r.ts >= monthStart && r.amountCent > 0)
+      .reduce((s, r) => s + r.amountCent, 0);
+    const monthExpense = allTx
+      .filter(r => r.ts >= monthStart && r.amountCent < 0)
+      .reduce((s, r) => s + Math.abs(r.amountCent), 0);
+
+    res.json({
+      ok: true, code: 0, message: "ok",
+      data: {
+        totalAssetCent: assetCent,
+        totalDebtCent: debtCent,
+        netAssetCent: assetCent - debtCent,
+        monthIncomeCent: monthIncome,
+        monthExpenseCent: monthExpense
+      }
+    });
+  } catch (error) { next(error); }
+});
+
 router.get("/", requirePermission(Permission.TRANSACTION_READ), async (req, res, next) => {
   try {
     const user = await resolveRequestUser(req);

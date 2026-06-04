@@ -1,54 +1,40 @@
 // @ts-nocheck
-// src/components/ErrorBoundary.tsx
-
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 
-interface Props {
-  children: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error: Error | null; // 保存错误对象本身
-}
+interface Props { children: ReactNode; }
+interface State { hasError: boolean; error: Error | null; }
 
 export class ErrorBoundary extends Component<Props, State> {
-  // 1. 初始化 state
-  public state: State = {
-    hasError: false,
-    error: null,
-  };
+  public state: State = { hasError: false, error: null };
 
-  // 2. 当子组件抛出错误时，这个静态方法会被调用来更新 state
   public static getDerivedStateFromError(error: Error): State {
-    // 更新 state，这会导致 UI 重新渲染
     return { hasError: true, error };
   }
 
-  // 3. 在错误被捕获后，这个生命周期方法被调用，适合执行“副作用”，比如记日志
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    if (!import.meta.env.DEV) {
-      return;
-    }
-    console.log('ErrorBoundary 成功捕获错误，准备发送日志...');
-    
-    // 将错误发送到 Vite 终端（我们的后端接收站）
-    fetch('/log-error-from-frontend', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-      }),
-    }).catch(e => console.error('发送错误日志到 Vite 终端失败', e));
+  public componentDidCatch(error: Error, _info: ErrorInfo) {
+    console.error('[ErrorBoundary]', error.message);
   }
 
   public render() {
-    // 在所有其他情况下（没有错误，或者在开发环境中发生错误），
-    // 都继续渲染子组件。
-    // - 在开发环境下出错时，重新渲染子组件会让错误再次抛出，从而被 Vite 的浮层捕获。
-    // - 在没有错误时，这是正常的渲染路径。
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center p-8 max-w-md">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+            </div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">页面出错了</h2>
+            <p className="text-gray-500 text-sm mb-6">{this.state.error?.message ?? '未知错误'}</p>
+            <button
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:opacity-90"
+            >
+              重试
+            </button>
+          </div>
+        </div>
+      );
+    }
     return this.props.children;
   }
 }

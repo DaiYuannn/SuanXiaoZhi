@@ -4,48 +4,13 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import styles from './LoginPage.module.css';
 import { login } from '../api/auth-api';
-import { AUTH_TOKEN_KEY } from '../../../shared/config/env.js';
+import { setStoredSession } from '../../../shared/utils/auth-session.js';
+import { UserRole } from '../../../shared/types/permission.js';
 
 interface ValidationResult {
   valid: boolean;
   message: string;
 }
-
-type LoginIdentity = "owner" | "family" | "admin";
-
-const identityProfiles: Array<{
-  key: LoginIdentity;
-  title: string;
-  subtitle: string;
-  username: string;
-  password: string;
-  nextPath: string;
-}> = [
-  {
-    key: "owner",
-    title: "账户主人（C端）",
-    subtitle: "手机优先，查看完整资产与家庭数据",
-    username: "demo_owner",
-    password: "demo123",
-    nextPath: "/"
-  },
-  {
-    key: "family",
-    title: "家庭成员（C端）",
-    subtitle: "查看家庭部分信息（脱敏显示）",
-    username: "demo_family",
-    password: "demo123",
-    nextPath: "/"
-  },
-  {
-    key: "admin",
-    title: "管理后台（B端）",
-    subtitle: "仅桌面端使用，支持全量用户查询",
-    username: "demo_admin",
-    password: "demo123",
-    nextPath: "/admin"
-  }
-];
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -53,7 +18,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [identity, setIdentity] = useState<LoginIdentity>("owner");
   const [isLoading, setIsLoading] = useState(false);
   const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -181,20 +145,6 @@ export default function LoginPage() {
     setShowPassword(!showPassword);
   };
 
-  const applyIdentityDemo = (nextIdentity: LoginIdentity) => {
-    const profile = identityProfiles.find((item) => item.key === nextIdentity);
-    setIdentity(nextIdentity);
-    if (!profile) {
-      return;
-    }
-
-    setUsername(profile.username);
-    setPassword(profile.password);
-    setUsernameError("");
-    setPasswordError("");
-    setLoginError("");
-  };
-
   // 处理表单提交
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,10 +183,8 @@ export default function LoginPage() {
         return;
       }
 
-      localStorage.setItem(AUTH_TOKEN_KEY, result.token);
-      localStorage.setItem('sx-role', result.role);
       const tokenUserId = result.token.startsWith('token-') ? result.token.slice('token-'.length) : username.trim();
-      localStorage.setItem('sx-user-id', tokenUserId);
+      setStoredSession({ token: result.token, role: result.role as UserRole, userId: tokenUserId }, rememberMe);
 
       const adminRoles = new Set(['super_admin', 'operator', 'viewer']);
       navigate(adminRoles.has(result.role) ? '/admin' : '/', { replace: true });
@@ -247,10 +195,33 @@ export default function LoginPage() {
     }
   };
 
+  // 忘记密码：输入用户名 + 手机号验证，后端重置密码
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotUsername, setForgotUsername] = useState('');
+  const [forgotPhone, setForgotPhone] = useState('');
+  const [forgotNewPwd, setForgotNewPwd] = useState('');
+  const [forgotMsg, setForgotMsg] = useState('');
+
+  const handleForgotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!forgotUsername || !forgotPhone || !forgotNewPwd) { setForgotMsg('请填写所有字段'); return; }
+    try {
+      const r = await fetch('/api/v1/mobile/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: forgotUsername, phone: forgotPhone, newPassword: forgotNewPwd })
+      });
+      const data = await r.json();
+      if (!r.ok) { setForgotMsg(data.message ?? '重置失败'); return; }
+      setForgotMsg('密码重置成功，请重新登录');
+      setTimeout(() => { setShowForgot(false); setForgotMsg(''); }, 1500);
+    } catch { setForgotMsg('网络错误，请重试'); }
+  };
+
   // 处理忘记密码点击
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    alert('忘记密码功能将在后续版本中提供');
+    setShowForgot(true);
   };
 
   return (
@@ -269,28 +240,6 @@ export default function LoginPage() {
         <div className={`${styles.loginContainer} rounded-2xl p-8 shadow-login-card border border-border-light`}>
           <h2 className="text-2xl font-bold text-text-primary text-center mb-6">欢迎登录</h2>
 
-          <div className="mb-6 grid grid-cols-1 gap-2">
-            {identityProfiles.map((item) => {
-              const selected = identity === item.key;
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => applyIdentityDemo(item.key)}
-                  className={`rounded-xl border px-3 py-2 text-left transition ${
-                    selected
-                      ? "border-primary bg-primary/10"
-                      : "border-border-light bg-white hover:border-primary/50"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-text-primary">{item.title}</p>
-                  <p className="text-xs text-text-secondary">{item.subtitle}</p>
-                  <p className="text-[11px] text-text-secondary mt-1">演示账号：{item.username} / {item.password}，登录后进入 {item.nextPath}</p>
-                </button>
-              );
-            })}
-          </div>
-          
           {/* 登录表单 */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 用户名/手机号输入框 */}
@@ -421,6 +370,29 @@ export default function LoginPage() {
             <button className={`text-text-secondary ${styles.linkHover}`}>联系我们</button>
           </div>
         </div>
+
+        {/* 忘记密码弹窗 */}
+        {showForgot && (
+          <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+              <h3 className="text-lg font-semibold text-text-primary mb-4">重置密码</h3>
+              <form onSubmit={handleForgotSubmit} className="space-y-3">
+                <input value={forgotUsername} onChange={e => setForgotUsername(e.target.value)}
+                  placeholder="用户名" className="w-full px-4 py-3 border border-border-light rounded-lg text-sm" />
+                <input value={forgotPhone} onChange={e => setForgotPhone(e.target.value)}
+                  placeholder="注册时的手机号" className="w-full px-4 py-3 border border-border-light rounded-lg text-sm" />
+                <input type="password" value={forgotNewPwd} onChange={e => setForgotNewPwd(e.target.value)}
+                  placeholder="新密码（至少6位）" className="w-full px-4 py-3 border border-border-light rounded-lg text-sm" />
+                {forgotMsg && <p className={`text-sm text-center ${forgotMsg.includes('成功') ? 'text-success' : 'text-danger'}`}>{forgotMsg}</p>}
+                <div className="flex gap-3 pt-1">
+                  <button type="button" onClick={() => { setShowForgot(false); setForgotMsg(''); }}
+                    className="flex-1 py-2.5 border border-border-light rounded-xl text-sm text-text-secondary">取消</button>
+                  <button type="submit" className="flex-1 py-2.5 bg-primary text-white rounded-xl text-sm font-medium">确认重置</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

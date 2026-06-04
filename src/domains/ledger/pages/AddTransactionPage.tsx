@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styles from './AddTransactionPage.module.css';
 import { createTransaction } from '../api/ledger-api';
+import { fetchTransactions, updateTransaction } from '../../../shared/constants/endpoints';
+import { get } from '../../../shared/utils/http-client.js';
+import type { TransactionItem, AccountInfo } from '../../../shared/types/api';
 
 interface TransactionData {
   date: string;
@@ -20,6 +23,7 @@ const AddTransactionPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const transactionId = searchParams.get('transactionId');
   const isEditMode = Boolean(transactionId);
+  const [accounts, setAccounts] = useState<AccountInfo[]>([]);
 
   const [formData, setFormData] = useState<TransactionData>({
     date: '',
@@ -37,6 +41,10 @@ const AddTransactionPage: React.FC = () => {
     const originalTitle = document.title;
     document.title = '算小智 - 添加交易';
     return () => { document.title = originalTitle; };
+  }, []);
+
+  useEffect(() => {
+    get<any>('/api/v1/mobile/accounts').then(res => setAccounts(res?.data ?? [])).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -85,38 +93,29 @@ const AddTransactionPage: React.FC = () => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const loadTransactionData = (id: string) => {
+  const loadTransactionData = async (id: string) => {
     setIsLoading(true);
-    
-    // 模拟API调用
-    const mockTransaction: Record<string, TransactionData> = {
-      '1': {
-        date: '2024-01-15',
-        type: 'expense',
-        amount: '45.00',
-        account: 'cmb-savings',
-        category: 'food',
-        description: '星巴克咖啡',
-        note: '和同事开会'
-      },
-      '2': {
-        date: '2024-01-15',
-        type: 'income', 
-        amount: '15680.00',
-        account: 'icbc-savings',
-        category: 'salary',
-        description: '工资收入',
-        note: '1月份工资'
+    try {
+      const res = await fetchTransactions({ page: 1, size: 500 });
+      const list: TransactionItem[] = (res as any)?.data?.list || [];
+      const found = list.find((t) => t.transactionId === id);
+      if (found) {
+        const amountYuan = (found.amount ?? 0) / 100;
+        setFormData({
+          date: new Date(found.time).toISOString().split('T')[0],
+          type: found.type === 'INCOME' ? 'income' : 'expense',
+          amount: Math.abs(amountYuan).toFixed(2),
+          account: found.accountId || '',
+          category: found.categoryName || 'other',
+          description: found.description || '',
+          note: found.remark || '',
+        });
       }
-    };
-
-    setTimeout(() => {
-      const transaction = mockTransaction[id];
-      if (transaction) {
-        setFormData(transaction);
-      }
+    } catch {
+      // Silent fail - user can still fill in manually
+    } finally {
       setIsLoading(false);
-    }, 300);
+    }
   };
 
   const handleCloseModal = () => {
@@ -194,7 +193,11 @@ const AddTransactionPage: React.FC = () => {
         description: formData.description,
         remark: formData.note,
       };
-      await createTransaction(payload);
+      if (isEditMode && transactionId) {
+        await updateTransaction(transactionId, payload);
+      } else {
+        await createTransaction(payload);
+      }
       alert(isEditMode ? '交易修改成功！' : '交易添加成功！');
       handleCloseModal();
     } catch (error) {
@@ -403,12 +406,17 @@ const AddTransactionPage: React.FC = () => {
                   required
                 >
                   <option value="">请选择账户</option>
-                  <option value="icbc-savings">工商银行储蓄卡</option>
-                  <option value="cmb-savings">招商银行储蓄卡</option>
-                  <option value="ccb-savings">建设银行储蓄卡</option>
-                  <option value="alipay">支付宝</option>
-                  <option value="wechat-pay">微信支付</option>
-                  <option value="cash">现金</option>
+                  {accounts.length > 0
+                    ? accounts.map(a => <option key={a.accountId} value={a.accountId}>{a.name}</option>)
+                    : <>
+                        <option value="icbc-savings">工商银行储蓄卡</option>
+                        <option value="cmb-savings">招商银行储蓄卡</option>
+                        <option value="ccb-savings">建设银行储蓄卡</option>
+                        <option value="alipay">支付宝</option>
+                        <option value="wechat-pay">微信支付</option>
+                        <option value="cash">现金</option>
+                      </>
+                  }
                 </select>
               </div>
               

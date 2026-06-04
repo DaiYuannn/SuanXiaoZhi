@@ -1,4 +1,4 @@
-﻿
+﻿﻿
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuditReminder } from '../../../shared/hooks/useAuditReminder';
@@ -10,19 +10,36 @@ import type { TransactionFlow, TransactionItem } from '../../../shared/types/api
 import { auditUI, auditError } from '../../../shared/audit/audit-service';
 import DynamicAlert, { DynamicAlertItem } from '../../../shared/components/DynamicAlert';
 import { Chart, registerables } from 'chart.js';
+import { readStoredSession } from '../../../shared/utils/auth-session.js';
+import { UserRole } from '../../../shared/types/permission.js';
+import { get } from '../../../shared/utils/http-client.js';
 Chart.register(...registerables);
+
+const fmt = (cents: number) =>
+  '¥' + (cents / 100).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+  const session = readStoredSession();
+  const canWrite = session?.role !== UserRole.FAMILY_MEMBER;
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstanceRef = useRef<any>(null);
   const [activeTrendPeriod, setActiveTrendPeriod] = useState<'7d' | '30d' | '3m'>('7d');
   const [trendLoading, setTrendLoading] = useState(false);
+  const [summary, setSummary] = useState<{
+    totalAssetCent: number; totalDebtCent: number; netAssetCent: number; monthIncomeCent: number; monthExpenseCent: number;
+  } | null>(null);
 
   useEffect(() => {
     const originalTitle = document.title;
     document.title = '算小智 - 首页';
     return () => { document.title = originalTitle; };
+  }, []);
+
+  useEffect(() => {
+    get<any>('/api/v1/mobile/accounts/summary')
+      .then(res => res?.data && setSummary(res.data))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -175,7 +192,13 @@ const HomePage: React.FC = () => {
   };
 
   const handleViewAllTransactions = () => {
-    navigate('/accounting');
+    const session = readStoredSession();
+    // FAMILY_MEMBER 没有 TRANSACTION_WRITE，跳只读分析页
+    if (session?.role === UserRole.FAMILY_MEMBER) {
+      navigate('/consumption-analysis');
+    } else {
+      navigate('/accounting');
+    }
   };
 
   // 保留占位：未来点击流水行可跳转详情
@@ -190,10 +213,10 @@ const HomePage: React.FC = () => {
         navigate('/add-transaction');
         break;
       case 'consumption-analysis':
-        navigate('/consumption-analysis');
+        navigate('/analysis');
         break;
       case 'financial-planning':
-        navigate('/financial-planning');
+        navigate('/planning');
         break;
       case 'financial-products':
         navigate('/financial-products');
@@ -226,13 +249,15 @@ const HomePage: React.FC = () => {
         const big = (res.data || []).find(f => f.amount < 0 && Math.abs(f.amount) > 5000);
         const items: DynamicAlertItem[] = [];
         if (big) {
+          const session = readStoredSession();
+          const txTarget = session?.role === UserRole.FAMILY_MEMBER ? '/consumption-analysis' : '/accounting';
           items.push({
             id: 'alert-big-expense',
             type: 'warning',
             title: '检测到大额支出',
             desc: `金额 ¥${Math.abs(big.amount).toFixed(2)} · 渠道 ${big.channel}`,
             actionText: '查看账单',
-            onAction: () => window.location.assign('/accounting')
+            onAction: () => window.location.assign(txTarget)
           });
         }
         setAlerts(items);
@@ -269,10 +294,12 @@ const HomePage: React.FC = () => {
                 <span>首页</span>
               </nav>
             </div>
+            {canWrite && (
             <button onClick={handleAddTransaction} className={`${styles.gradientBg} text-white px-5 py-2.5 rounded-xl font-medium hover:shadow-lg transition-all w-full sm:w-auto`}>
               <i className="fas fa-plus mr-2"></i>
               添加交易
             </button>
+            )}
           </div>
         </div>
 
@@ -314,42 +341,50 @@ const HomePage: React.FC = () => {
                 <div className={`w-12 h-12 ${styles.gradientBg} rounded-lg flex items-center justify-center`}>
                   <i className="fas fa-wallet text-white text-xl"></i>
                 </div>
-                <span className="text-success text-sm font-medium">+5.2%</span>
+                <span className="text-success text-sm font-medium">总计</span>
               </div>
-              <h4 className="text-2xl font-bold text-text-primary mb-1">¥128,560.00</h4>
+              <h4 className="text-2xl font-bold text-text-primary mb-1">
+                {summary ? fmt(summary.totalAssetCent) : '—'}
+              </h4>
               <p className="text-text-secondary text-sm">总资产</p>
             </div>
-            
+
             <div className={`${styles.statCard} rounded-xl p-6`}>
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-warning bg-opacity-20 rounded-lg flex items-center justify-center">
                   <i className="fas fa-credit-card text-warning text-xl"></i>
                 </div>
-                <span className="text-danger text-sm font-medium">+2.1%</span>
+                <span className="text-danger text-sm font-medium">负债</span>
               </div>
-              <h4 className="text-2xl font-bold text-text-primary mb-1">¥25,320.00</h4>
+              <h4 className="text-2xl font-bold text-danger mb-1">
+                {summary ? `-${fmt(summary.totalDebtCent)}` : '—'}
+              </h4>
               <p className="text-text-secondary text-sm">总负债</p>
             </div>
-            
+
             <div className={`${styles.statCard} rounded-xl p-6`}>
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-success bg-opacity-20 rounded-lg flex items-center justify-center">
                   <i className="fas fa-chart-line text-success text-xl"></i>
                 </div>
-                <span className="text-success text-sm font-medium">+8.3%</span>
+                <span className="text-success text-sm font-medium">净值</span>
               </div>
-              <h4 className="text-2xl font-bold text-text-primary mb-1">¥103,240.00</h4>
+              <h4 className="text-2xl font-bold text-text-primary mb-1">
+                {summary ? fmt(summary.netAssetCent) : '—'}
+              </h4>
               <p className="text-text-secondary text-sm">净资产</p>
             </div>
-            
+
             <div className={`${styles.statCard} rounded-xl p-6`}>
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-info bg-opacity-20 rounded-lg flex items-center justify-center">
                   <i className="fas fa-money-bill-wave text-info text-xl"></i>
                 </div>
-                <span className="text-success text-sm font-medium">+3.5%</span>
+                <span className="text-success text-sm font-medium">本月</span>
               </div>
-              <h4 className="text-2xl font-bold text-text-primary mb-1">¥15,680.00</h4>
+              <h4 className="text-2xl font-bold text-text-primary mb-1">
+                {summary ? fmt(summary.monthIncomeCent) : '—'}
+              </h4>
               <p className="text-text-secondary text-sm">本月收入</p>
             </div>
           </div>
@@ -534,12 +569,15 @@ const HomePage: React.FC = () => {
         <section className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">快捷功能</h3>
           <div className="grid grid-cols-3 gap-3 md:grid-cols-4 lg:grid-cols-6">
+            {canWrite && (
             <div onClick={() => handleQuickActionClick('add-transaction')} className={`${styles.gradientCard} rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer`}>
               <div className={`w-12 h-12 ${styles.gradientBg} rounded-lg flex items-center justify-center mx-auto mb-3`}>
                 <i className="fas fa-plus text-white text-xl"></i>
               </div>
               <p className="text-sm font-medium text-text-primary">添加交易</p>
             </div>
+            )}
+
             
             <div onClick={() => handleQuickActionClick('consumption-analysis')} className={`${styles.gradientCard} rounded-xl p-4 text-center shadow-card hover:shadow-card-hover transition-all cursor-pointer`}>
               <div className="w-12 h-12 bg-success bg-opacity-20 rounded-lg flex items-center justify-center mx-auto mb-3">

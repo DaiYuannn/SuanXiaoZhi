@@ -50,8 +50,7 @@
 }
 
 .questionHidden {
-  opacity: 0;
-  transform: translateX(20px);
+  display: none;
 }
 
 .fadeIn {

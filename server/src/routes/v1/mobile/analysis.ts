@@ -114,8 +114,8 @@ router.get("/", requirePermission(Permission.TRANSACTION_READ), async (_req, res
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const monthly = await prisma.transaction.findMany({ where: { ts: { gte: startOfMonth } } });
 
-    const monthExpenseCent = monthly.filter((row) => row.amountCent > 0).reduce((sum, row) => sum + row.amountCent, 0);
-    const monthIncomeCent = 1200000;
+    const monthExpenseCent = monthly.filter((row) => row.amountCent < 0).reduce((sum, row) => sum + Math.abs(row.amountCent), 0);
+    const monthIncomeCent = monthly.filter((row) => row.amountCent > 0).reduce((sum, row) => sum + row.amountCent, 0);
     const savingRate = monthIncomeCent > 0 ? Number(((monthIncomeCent - monthExpenseCent) / monthIncomeCent).toFixed(3)) : 0;
 
     res.json({

@@ -213,10 +213,9 @@ const RegisterPage: React.FC = () => {
   };
 
   // 表单提交
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 验证所有字段
     const isUsernameValid = validateUsername();
     const isContactValid = validateContact();
     const isPasswordValid = validatePassword();
@@ -232,19 +231,25 @@ const RegisterPage: React.FC = () => {
       return;
     }
 
-    // 显示加载状态
     setIsSubmitting(true);
-
-    // 模拟注册请求
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await fetch('/api/v1/mobile/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: formData.username, password: formData.password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message ?? '注册失败，请重试');
+        return;
+      }
       setShowRegisterSuccess(true);
-
-      // 3秒后跳转到登录页
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
-    }, 2000);
+      setTimeout(() => navigate('/login'), 2000);
+    } catch {
+      alert('网络错误，请重试');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // 键盘导航处理

@@ -18,3 +18,8 @@ tmp/
 temp/
 
 package-lock.json
+
+# deploy scripts with credentials
+deploy-ssh.py
+deploy-new-server.js
+upload-only.js

@@ -65,7 +65,9 @@ const buildUrl = (path: string, query?: Record<string, unknown>): string => {
 
 const getAuthToken = (): string | undefined => {
   try {
-    return typeof localStorage !== "undefined" ? localStorage.getItem(AUTH_TOKEN_KEY) ?? undefined : undefined;
+    if (typeof localStorage === "undefined") return undefined;
+    // 同时检查 localStorage 和 sessionStorage，因为 setStoredSession 默认写 sessionStorage
+    return localStorage.getItem(AUTH_TOKEN_KEY) ?? sessionStorage.getItem(AUTH_TOKEN_KEY) ?? undefined;
   } catch {
     return undefined;
   }

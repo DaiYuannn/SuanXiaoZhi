@@ -23,3 +23,9 @@ package-lock.json
 deploy-ssh.py
 deploy-new-server.js
 upload-only.js
+deploy-remote.js
+deploy-setup.sh
+deploy.sh
+check-server.js
+test_login.js
+scripts/

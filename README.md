@@ -76,30 +76,18 @@ pnpm start
 	- 应用首页：`http://localhost:3000`
 	- 健康检查：`http://localhost:3000/health`
 
-### 6. 公网部署（当前生产方案：同一台服务器）
-
-当前已部署地址：
-- 前端：`http://121.4.109.119:6130`
-- 后端健康检查：`http://121.4.109.119:3000/health`
+### 6. 生产部署（服务器）
 
 服务目录与端口：
-- 部署目录：`/opt/SuanXiaoZhi`
-- 前端端口：`6130`
-- 后端端口：`3000`
+- 部署目录：`/opt/SuanXiaoZhi`（或其他自定义目录）
+- 服务端口：`3000`（可在 `.env` 中配置）
 
-进程管理：
-- 使用 `pm2` 运行两个服务：
-	- `suanxiaozhi-frontend`：`serve -s dist -l 6130`
-	- `suanxiaozhi-backend`：`pnpm start`
-
-常用运维命令（服务器执行）：
+进程管理（推荐 pm2）：
 ```bash
 cd /opt/SuanXiaoZhi
 pm2 ls
-pm2 logs suanxiaozhi-backend --lines 100
-pm2 logs suanxiaozhi-frontend --lines 100
-pm2 restart suanxiaozhi-backend
-pm2 restart suanxiaozhi-frontend
+pm2 logs suanxiaozhi --lines 100
+pm2 restart suanxiaozhi
 curl http://127.0.0.1:3000/health
 ```
 

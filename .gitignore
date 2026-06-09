@@ -29,3 +29,6 @@ deploy.sh
 check-server.js
 test_login.js
 scripts/
+
+# claude code config
+.claude/

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { bootstrap } from "../../src/main.js";
 import { detectGesture } from "../../src/shared/components/mobile-gesture.js";
 import { AuditService } from "../../src/shared/audit/audit-service.js";
@@ -15,6 +15,10 @@ import { UserRole } from "../../src/shared/types/permission.js";
 import { mobileRoutes } from "../../src/router/routes.js";
 
 describe("frontend runtime", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("bootstraps frontend marker", () => {
     expect(bootstrap().startsWith("frontend-ready")).toBe(true);
   });
@@ -45,11 +49,35 @@ describe("frontend runtime", () => {
   });
 
   it("runs domain api placeholders", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+
+      if (url.includes("/api/v1/mobile/auth/login")) {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            code: 0,
+            message: "ok",
+            token: "jwt-test-token",
+            role: "owner",
+            data: { userId: "u-test", username: "demo_owner" }
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+      }
+
+      // 其他 domain API 在本测试中继续走各自 fallback，保持原本“占位 API 运行测试”的定位。
+      throw new Error(`unmocked frontend runtime request: ${url}`);
+    });
+
     const reply = fallbackReply("帮我看消费");
     const products = await listProducts();
     const kpi = await fetchKpiCards();
     const family = await listFamilyMembers();
-    const auth = await login({ username: "demo", password: "demo" });
+    const auth = await login({ username: "demo_owner", password: "demo123" });
     const adminUsers = await listAdminUsers();
 
     expect(reply.length).toBeGreaterThan(0);
@@ -57,7 +85,10 @@ describe("frontend runtime", () => {
     expect(kpi.length).toBeGreaterThan(0);
     expect(family.length).toBe(2);
     expect(auth.ok).toBe(true);
+    expect(auth.token).toBe("jwt-test-token");
+    expect(auth.role).toBe("owner");
     expect(adminUsers.length).toBeGreaterThan(0);
+    expect(fetchMock).toHaveBeenCalled();
   });
 
   it("filters admin menu by role", () => {

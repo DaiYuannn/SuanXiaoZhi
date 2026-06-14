@@ -183,8 +183,8 @@ export default function LoginPage() {
         return;
       }
 
-      const tokenUserId = result.token.startsWith('token-') ? result.token.slice('token-'.length) : username.trim();
-      setStoredSession({ token: result.token, role: result.role as UserRole, userId: tokenUserId }, rememberMe);
+      const userId = result.userId ?? username.trim();
+      setStoredSession({ token: result.token, role: result.role as UserRole, userId }, rememberMe);
 
       const adminRoles = new Set(['super_admin', 'operator', 'viewer']);
       navigate(adminRoles.has(result.role) ? '/admin' : '/', { replace: true });

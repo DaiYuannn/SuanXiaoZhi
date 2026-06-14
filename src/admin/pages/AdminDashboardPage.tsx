@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import SurfaceCard from "../../shared/components/ui/SurfaceCard";
+import { AUTH_TOKEN_KEY } from "../../shared/config/env.js";
 
 interface SystemOverview {
   userCount: number;
@@ -11,7 +12,11 @@ const AdminDashboardPage: React.FC = () => {
   const [data, setData] = useState<SystemOverview | null>(null);
 
   useEffect(() => {
-    fetch("/api/v1/admin/system", { headers: { "x-role": "super_admin" } })
+    fetch("/api/v1/admin/system", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem(AUTH_TOKEN_KEY) ?? ""}`
+      }
+    })
       .then((res) => res.json())
       .then((json) => setData(json.system ?? null))
       .catch(() => setData(null));

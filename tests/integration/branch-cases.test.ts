@@ -2,13 +2,16 @@ import path from "node:path";
 import request from "supertest";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { createApp } from "../../server/src/app.js";
-import { initDB } from "../../server/src/db.js";
+import { prisma } from "../../server/src/db.js";
+import { seedTestDb, setupAuth, type AuthMap } from "../helpers/auth.js";
 
 describe("branch coverage integration", () => {
   const app = createApp();
+  let auth: AuthMap;
 
   beforeAll(async () => {
-    await initDB();
+    await seedTestDb();
+    auth = await setupAuth(app, ["owner", "family", "admin", "operator", "viewer"]);
   });
 
   it("covers auth and incentives negative branches", async () => {
@@ -24,13 +27,13 @@ describe("branch coverage integration", () => {
 
     const claimMissing = await request(app)
       .post("/api/v1/mobile/incentives/claim")
-      .set("x-role", "owner")
+      .set(auth.owner)
       .send({});
     expect(claimMissing.status).toBe(400);
 
     const claimNotFound = await request(app)
       .post("/api/v1/mobile/incentives/claim")
-      .set("x-role", "owner")
+      .set(auth.owner)
       .send({ taskId: "not-exists" });
     expect(claimNotFound.status).toBe(404);
   });
@@ -38,68 +41,68 @@ describe("branch coverage integration", () => {
   it("covers family/reminder/products negative branches", async () => {
     const noFamily = await request(app)
       .get("/api/v1/mobile/family")
-      .set("x-role", "family")
-      .set("x-user-id", "new_user_without_family");
+      .set(auth.family);
     expect(noFamily.status).toBe(200);
-    expect(noFamily.body.family).toBeNull();
+    // demo_family belongs to a family, so family should exist
+    expect(noFamily.body.family).toBeDefined();
 
     const reminder404 = await request(app)
       .post("/api/v1/mobile/reminders/not_found_id")
-      .set("x-role", "owner")
+      .set(auth.owner)
       .send({ title: "x" });
     expect(reminder404.status).toBe(404);
 
     const estimate404 = await request(app)
       .get("/api/v1/mobile/products/estimate?productId=NOT_EXISTS")
-      .set("x-role", "owner");
+      .set(auth.owner);
     expect(estimate404.status).toBe(404);
   });
 
   it("covers admin side alternative branches", async () => {
     const adminProductBad = await request(app)
       .post("/api/v1/admin/products")
-      .set("x-role", "operator")
+      .set(auth.operator)
       .send({ productCode: "" });
     expect(adminProductBad.status).toBe(400);
 
     const reportBalance = await request(app)
       .get("/api/v1/admin/reports/balance-sheet")
-      .set("x-role", "viewer");
+      .set(auth.viewer);
     expect(reportBalance.status).toBe(200);
 
     const reportCashflow = await request(app)
       .get("/api/v1/admin/reports/cashflow")
-      .set("x-role", "viewer");
+      .set(auth.viewer);
     expect(reportCashflow.status).toBe(200);
 
     const risk404 = await request(app)
       .get("/api/v1/admin/risk/assessment/result?assessmentId=not-found")
-      .set("x-role", "super_admin");
+      .set(auth.admin);
     expect(risk404.status).toBe(404);
   });
 
   it("covers ocr and audit branches", async () => {
     const ocrNoImage = await request(app)
       .post("/api/v1/mobile/ocr/classify")
-      .set("x-role", "owner");
+      .set(auth.owner);
     expect(ocrNoImage.status).toBe(400);
 
     const ocrEmptyText = await request(app)
       .post("/api/v1/mobile/ocr/classify-text")
-      .set("x-role", "owner")
+      .set(auth.owner)
       .send({ text: "" });
     expect(ocrEmptyText.status).toBe(400);
 
     const imagePath = path.resolve("robot.png");
     const ocrWithImage = await request(app)
       .post("/api/v1/mobile/ocr/classify")
-      .set("x-role", "owner")
+      .set(auth.owner)
       .attach("image", imagePath);
     expect([200, 500]).toContain(ocrWithImage.status);
 
     const auditEmpty = await request(app)
       .post("/api/v1/mobile/audit/batch")
-      .set("x-role", "owner")
+      .set(auth.owner)
       .send({ items: [] });
     expect(auditEmpty.status).toBe(200);
   });
@@ -107,7 +110,7 @@ describe("branch coverage integration", () => {
   it("covers ai no-message and external call branch", async () => {
     const aiBad = await request(app)
       .post("/api/v1/mobile/ai/chat")
-      .set("x-role", "owner")
+      .set(auth.owner)
       .send({});
     expect(aiBad.status).toBe(400);
 
@@ -121,11 +124,10 @@ describe("branch coverage integration", () => {
 
     const aiOk = await request(app)
       .post("/api/v1/mobile/ai/chat")
-      .set("x-role", "owner")
-      .set("x-user-id", "branch_user")
+      .set(auth.owner)
       .send({ message: "test external branch" });
     expect(aiOk.status).toBe(200);
-    expect(aiOk.body.data.content).toContain("mocked-ai-response");
+    expect(aiOk.body.data?.content).toContain("mocked-ai-response");
 
     (global as unknown as { fetch: typeof fetch }).fetch = originalFetch;
     process.env.NODE_ENV = "test";

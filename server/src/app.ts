@@ -23,8 +23,8 @@ export const createApp = () => {
   app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 
   // Rate limiting
-  const authLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, message: { ok: false, code: 429, message: "请求过于频繁，请稍后重试" } });
-  const generalLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, message: { ok: false, code: 429, message: "请求过于频繁，请稍后重试" } });
+  const authLimiter = rateLimit({ windowMs: 60 * 1000, max: 10, skip: () => process.env.NODE_ENV === "test" || process.env.DISABLE_RATE_LIMIT_IN_TESTS === "true", message: { ok: false, code: 429, message: "请求过于频繁，请稍后重试" } });
+  const generalLimiter = rateLimit({ windowMs: 60 * 1000, max: 120, skip: () => process.env.NODE_ENV === "test" || process.env.DISABLE_RATE_LIMIT_IN_TESTS === "true", message: { ok: false, code: 429, message: "请求过于频繁，请稍后重试" } });
 
   app.use("/api/v1/mobile/auth", authLimiter);
   app.use(generalLimiter);

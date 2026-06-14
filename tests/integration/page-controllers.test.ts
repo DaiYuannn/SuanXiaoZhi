@@ -9,18 +9,35 @@ import { loadFamilyMembersPage } from "../../src/domains/family/pages/family-pag
 import { loadIncentiveTasks } from "../../src/domains/incentives/pages/incentive-center-page.js";
 import { loadAdminDashboard } from "../../src/admin/pages/dashboard-page.js";
 import { HttpClient } from "../../src/shared/utils/http-client.js";
+import request from "supertest";
 
 describe("page controllers migration", () => {
   const app = createApp();
   let server: ReturnType<typeof app.listen>;
   let client: HttpClient;
+  let adminClient: HttpClient;
 
   beforeAll(async () => {
     await initDB();
+
+    // Login to get JWT tokens
+    const ownerLogin = await request(app)
+      .post("/api/v1/mobile/auth/login")
+      .send({ username: "demo_owner", password: "demo123" });
+    const adminLogin = await request(app)
+      .post("/api/v1/mobile/auth/login")
+      .send({ username: "demo_admin", password: "demo123" });
+    const ownerToken = ownerLogin.body.token as string;
+    const adminToken = adminLogin.body.token as string;
+
     server = app.listen(3301);
     client = new HttpClient({
       baseUrl: "http://127.0.0.1:3301",
-      headers: { "Content-Type": "application/json", "x-role": "owner", "x-user-id": "demo" }
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${ownerToken}` }
+    });
+    adminClient = new HttpClient({
+      baseUrl: "http://127.0.0.1:3301",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminToken}` }
     });
   });
 
@@ -50,11 +67,6 @@ describe("page controllers migration", () => {
     const ai = await sendCustomerServiceMessage(client, "你好，分析一下最近消费");
     const familyMembers = await loadFamilyMembersPage(client);
     const tasks = await loadIncentiveTasks(client);
-
-    const adminClient = new HttpClient({
-      baseUrl: "http://127.0.0.1:3301",
-      headers: { "Content-Type": "application/json", "x-role": "super_admin", "x-user-id": "demo" }
-    });
     const dashboard = await loadAdminDashboard(adminClient);
 
     expect(ai.content.length).toBeGreaterThan(0);

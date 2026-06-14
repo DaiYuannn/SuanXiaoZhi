@@ -28,7 +28,9 @@ deploy-setup.sh
 deploy.sh
 check-server.js
 test_login.js
-scripts/
+test_seed.js
+run-seed.mjs
+verify-data.mjs
 
 # claude code config
 .claude/

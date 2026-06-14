@@ -11,9 +11,6 @@ importers:
       '@fortawesome/fontawesome-free':
         specifier: ^6.7.2
         version: 6.7.2
-      '@prisma/client':
-        specifier: ^5.20.0
-        version: 5.22.0(prisma@5.22.0)
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -66,6 +63,9 @@ importers:
         specifier: ^3.24.2
         version: 3.25.76
     devDependencies:
+      '@prisma/client':
+        specifier: ^5.22.0
+        version: 5.22.0(prisma@5.22.0)
       '@types/bcryptjs':
         specifier: ^3.0.0
         version: 3.0.0
@@ -115,7 +115,7 @@ importers:
         specifier: ^8.5.6
         version: 8.5.8
       prisma:
-        specifier: ^5.20.0
+        specifier: ^5.22.0
         version: 5.22.0
       supertest:
         specifier: ^7.1.0
